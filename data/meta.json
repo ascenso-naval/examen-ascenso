@@ -1,0 +1,1490 @@
+{
+ "version": "eed1b6b603",
+ "generado": "2026-10-06",
+ "resumen": {
+  "total": 2220,
+  "por_examen": {
+   "reglamentos": 1270,
+   "maplo": 466,
+   "ingles": 484
+  },
+  "por_dificultad": {
+   "2": 1008,
+   "1": 619,
+   "3": 593
+  },
+  "por_origen": {
+   "generada": 1246,
+   "topoyiyo": 410,
+   "oficial-maplo": 250,
+   "banco-ingles": 314
+  },
+  "en_temario": {
+   "true": 2067,
+   "false": 153
+  },
+  "verificacion": {
+   "confirmada": 1945,
+   "corregida": 253,
+   "no_verificable": 22
+  }
+ },
+ "examenes": [
+  {
+   "id": "reglamentos",
+   "nombre": "Reglamentos",
+   "preguntas_examen": 40,
+   "minutos": 60
+  },
+  {
+   "id": "maplo",
+   "nombre": "MAPLO",
+   "preguntas_examen": 40,
+   "minutos": 60
+  },
+  {
+   "id": "ingles",
+   "nombre": "Inglés",
+   "preguntas_examen": 40,
+   "minutos": 60
+  }
+ ],
+ "fuentes": [
+  {
+   "sigla": "PERMAR-13016",
+   "nombre": "Reglamento de Personal de Marinería",
+   "examen": "reglamentos",
+   "preguntas": 156,
+   "items": [
+    {
+     "item": "1.01",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO II, SECC I, ART 201, PAG 2-1",
+     "titulo": "201. COMPOSICIÓN",
+     "preguntas": 5
+    },
+    {
+     "item": "1.02",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO II, SEC. I, ART. 202 PAG.2-1",
+     "titulo": "202. CLASIFICACIÓN GENERAL",
+     "preguntas": 7
+    },
+    {
+     "item": "1.03",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO II, SECC II, ART 204, PAG 2-2",
+     "titulo": "204. PERSONAL DEL SERVICIO MILITAR",
+     "preguntas": 9
+    },
+    {
+     "item": "1.04",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO II, SECC II, ART 206, PAG 2-3",
+     "titulo": "206. OTROS ALCANCES DEL SERVICIO MILITAR",
+     "preguntas": 5
+    },
+    {
+     "item": "1.05",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO II, SECC III, ART 210, PAG 2-5",
+     "titulo": "210. COMITÉS DE AUTODEFENSA",
+     "preguntas": 9
+    },
+    {
+     "item": "1.06",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO II, SEC. IV, ART.213, PAG. 2-7",
+     "titulo": "213. EDUCACIÓN TÉCNICA - PRODUCTIVA",
+     "preguntas": 14
+    },
+    {
+     "item": "1.07",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO IV, SECC I, ART 402, PAG 4-2",
+     "titulo": "402. DISPOSICIONES PARA LAS ALTAS DE GRUMETES",
+     "preguntas": 9
+    },
+    {
+     "item": "1.08",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO IV, SECC II, ART 403, PAG 4-3",
+     "titulo": "403. DEL SERVICIO",
+     "preguntas": 7
+    },
+    {
+     "item": "1.09",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO IV, SECC II, ART 408, PAG 4-4",
+     "titulo": "408. TIEMPO DE SERVICIO EN UNIDADES NAVALES",
+     "preguntas": 7
+    },
+    {
+     "item": "1.10",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO IV, SECC II, ART 410, DESDE PAG 4-4 HASTA 4-5",
+     "titulo": "410. TIEMPO DE SERVICIOS EN ZONAS NAVALES Y FUERA DEL ÁREA DE LIMA Y CALLAO",
+     "preguntas": 5
+    },
+    {
+     "item": "1.11",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO IV, SEC. IV, ART. 429, DESDE PAG. 4-11 HASTA PAG. 4-12",
+     "titulo": "429. DISPOSICIONES GENERALES",
+     "preguntas": 10
+    },
+    {
+     "item": "1.12",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO IV, SEC. IV, ART.430, INC. \"A”, PAG.4-12",
+     "titulo": "430. REQUISITOS PARA EL ASCENSO",
+     "preguntas": 6
+    },
+    {
+     "item": "1.13",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO V, SECC II, ART 503, PAG 5-3",
+     "titulo": "503. DERECHOS COMUNES",
+     "preguntas": 7
+    },
+    {
+     "item": "1.14",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO V, SECC III, ART 506, PAG 5-6",
+     "titulo": "506. BENEFICIOS EN EL SERVICIO ACTIVO",
+     "preguntas": 13
+    },
+    {
+     "item": "1.15",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO V, SEC. III, ART. 506, INCISO. \"A\", PAG. 5-6",
+     "titulo": "506. BENEFICIOS EN EL SERVICIO ACTIVO",
+     "preguntas": 2
+    },
+    {
+     "item": "1.16",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO V, SECC III, ART 507, DESDE PAG 5-7 HASTA PAG 5-8",
+     "titulo": "507. BENEFICIOS POR INVALIDEZ Y FALLECIMIENTO EN EL SERVICIO",
+     "preguntas": 12
+    },
+    {
+     "item": "1.17",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO V, SECC V, SUB-SECCIÓN I, ART 517, PAG 5-13",
+     "titulo": "517. CRITERIOS DE EVALUACIÓN",
+     "preguntas": 4
+    },
+    {
+     "item": "1.18",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO V, SECC V, SUB-SECCIÓN I, ART 523, PAG 5-15",
+     "titulo": "523. LLENADO Y ESTRUCTURA",
+     "preguntas": 7
+    },
+    {
+     "item": "1.19",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAPITULO VI, SEC. I, ART. 603, INC. A. PAG. 6-2",
+     "titulo": "603. DE LAS CAUSALES DE BAJA",
+     "preguntas": 13
+    },
+    {
+     "item": "1.20",
+     "fuente": "PERMAR-13016",
+     "referencia": "CAP.VI, SEC. I, ART. 603, INC. E, SUB-INC. 1 LITERAL \"D\", PAG. 6-3",
+     "titulo": "603. DE LAS CAUSALES DE BAJA",
+     "preguntas": 5
+    }
+   ]
+  },
+  {
+   "sigla": "PERSUBA-13007",
+   "nombre": "Reglamento del Personal Subalterno",
+   "examen": "reglamentos",
+   "preguntas": 201,
+   "items": [
+    {
+     "item": "2.01",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO I, SEC II, ART. 109, INC. C, PAG. 1-3",
+     "titulo": "109. USO DE ABREVIATURAS Y CÓDIGOS",
+     "preguntas": 12
+    },
+    {
+     "item": "2.02",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC II, SUB-SEC. I, ART. 207, DESDE PAG. 2-5 HASTA PAG. 2-7",
+     "titulo": "207. CAMPOS OCUPACIONALES DE LAS ESPECIALIDADES TÉCNICAS NAVALES, DE APOYO Y DE SERVICIOS",
+     "preguntas": 17
+    },
+    {
+     "item": "2.03",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC II, SUB-SEC. I, ART. 207, DESDE PAG. 2-6 HASTA PAG. 2-7",
+     "titulo": "207. CAMPOS OCUPACIONALES DE LAS ESPECIALIDADES TÉCNICAS NAVALES, DE APOYO Y DE SERVICIOS",
+     "preguntas": 24
+    },
+    {
+     "item": "2.04",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC II, SUB-SEC. II, ART. 208, PAG 2-14",
+     "titulo": "208. ESPECIALIZACIONES",
+     "preguntas": 15
+    },
+    {
+     "item": "2.05",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC II, SUB-SEC. II, ART. 209, PAG. 2-16",
+     "titulo": "209. ENTRENAMIENTO",
+     "preguntas": 6
+    },
+    {
+     "item": "2.06",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC III, SUB-SEC. II, ART. 214 PAG 2-18",
+     "titulo": "214. DEFINICIÓN",
+     "preguntas": 4
+    },
+    {
+     "item": "2.07",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC III, SUB-SEC. II, ART. 215, DESDE PAG. 2-18 HASTA PAG. 2-21",
+     "titulo": "215. CAUSALES",
+     "preguntas": 26
+    },
+    {
+     "item": "2.08",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC III, SUB-SEC. III, ART. 219, INC. D, PAG. 2 - 27",
+     "titulo": "219. CAUSALES",
+     "preguntas": 12
+    },
+    {
+     "item": "2.09",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC. III, SUB-SEC. III, ART. 221, INC. D, PAG. 2-31",
+     "titulo": "221. DISPOSICIONES VARIOS",
+     "preguntas": 6
+    },
+    {
+     "item": "2.10",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC. IV, SUB.SEC. I, ART. 225, DESDE PAG. 2-33 HASTA PAG. 2-34",
+     "titulo": "225. VACANTES",
+     "preguntas": 5
+    },
+    {
+     "item": "2.11",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC. IV, SUB-SEC. I, ART. 229, DESDE PAG. 2-35 HASTA PAG. 2-36",
+     "titulo": "229. DE LA EFECTIVIDAD DEL PERSONAL SUBALTERNO ASIMILADO",
+     "preguntas": 11
+    },
+    {
+     "item": "2.12",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO II, SEC. IV, SUB-SEC. I, ART. 230, INC. C, DESDE PAG. 2-36 HASTA PAG. 2-37",
+     "titulo": "230. CAUSALES DE CESACIÓN EN EL SERVICIO DEL PERSONAL SUBALTERNO ASIMILADO",
+     "preguntas": 12
+    },
+    {
+     "item": "2.13",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO III, SECC III, ART. 314, PAG 3-5",
+     "titulo": "314. CLASES",
+     "preguntas": 2
+    },
+    {
+     "item": "2.14",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO IV, SEC. II, ART. 411, INC. G, PAG. 4-4",
+     "titulo": "411. CAUSAS QUE ORIGINAN LOS TRASLADOS",
+     "preguntas": 10
+    },
+    {
+     "item": "2.15",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO IV, SEC. II, ART. 421 INC. B, PAG. 4-9",
+     "titulo": "421. CASOS DE MOVIMIENTO TRANSITORIO",
+     "preguntas": 8
+    },
+    {
+     "item": "2.16",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO IV, SEC. III, ART. 428 INC. C, PAG 4-14",
+     "titulo": "428. DESIGNACIÓN DE AUXILIAR DE LA AGREGADURÍA NAVAL Y/O DEFENSA A LA EMBAJADA DEL PERÚ EN EL EXTERIOR",
+     "preguntas": 2
+    },
+    {
+     "item": "2.17",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO IV, SEC. III, ART. 428, INC. B, DESDE PAG 4-13 HASTA PAG 4-14",
+     "titulo": "428. DESIGNACIÓN DE AUXILIAR DE LA AGREGADURÍA NAVAL Y/O DEFENSA A LA EMBAJADA DEL PERÚ EN EL EXTERIOR",
+     "preguntas": 14
+    },
+    {
+     "item": "2.18",
+     "fuente": "PERSUBA-13007",
+     "referencia": "CAPITULO V, SEC. III, SUB-SEC. IV, ART. 514, INC. (D), SUB-INC. (4), PAG. 5-17",
+     "titulo": "514. CAUSALES",
+     "preguntas": 4
+    }
+   ]
+  },
+  {
+   "sigla": "RECERNAV-13601",
+   "nombre": "Reglamento de Ceremonial Naval",
+   "examen": "reglamentos",
+   "preguntas": 109,
+   "items": [
+    {
+     "item": "3.01",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO II, SEC. I, ART. 202, PAG. 2-1",
+     "titulo": "202. CLASIFICACIÓN",
+     "preguntas": 13
+    },
+    {
+     "item": "3.02",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO II, SEC II, ART 205, PAG 2-5",
+     "titulo": "205. Día de la Defensa Nacional",
+     "preguntas": 4
+    },
+    {
+     "item": "3.03",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO II, SEC. IV, ART. 209, PAG. 2- 6",
+     "titulo": "209. GENERALIDADES",
+     "preguntas": 4
+    },
+    {
+     "item": "3.04",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO II, SEC. VIII, ART. 231, INC. (A), PAG. 2-32",
+     "titulo": "231. CEREMONIA DE FELICITACIÓN, ENTREGA DE CAPONAS Y JINETAS AL PERSONAL",
+     "preguntas": 4
+    },
+    {
+     "item": "3.05",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO II, SEC. XIV, ART. 245, PAG 2-44",
+     "titulo": "245. CEREMONIA DE GRADUACIÓN DE CADETES",
+     "preguntas": 12
+    },
+    {
+     "item": "3.06",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO II, SEC XV, ART 247, PAG 2-45",
+     "titulo": "247. CEREMONIA DE GRADUACIÓN DE ALUMNOS",
+     "preguntas": 5
+    },
+    {
+     "item": "3.07",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO II, SEC. XVIII, ART. 253, PAG 2 -47",
+     "titulo": "253. DEFINICIÓN",
+     "preguntas": 2
+    },
+    {
+     "item": "3.08",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO III, SEC. X, ART. 348, PAG 3 -23",
+     "titulo": "348. AL MINISTRO DE DEFENSA",
+     "preguntas": 11
+    },
+    {
+     "item": "3.09",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO IV, SEC. II, ART. 404, PAG. 4-2",
+     "titulo": "404. SALUDO ENTRE UNIDADES A FLOTE DE LA MARINA",
+     "preguntas": 14
+    },
+    {
+     "item": "3.10",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO VI, SECC. I, ART. 601, PAG. 6 -1",
+     "titulo": "601. GENERALIDADES",
+     "preguntas": 6
+    },
+    {
+     "item": "3.11",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO VII, SEC. I, ART. 702, PAG 7-1",
+     "titulo": "702. LA BANDERA",
+     "preguntas": 5
+    },
+    {
+     "item": "3.12",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO VII, SECC. I, ART. 706, PAG 7-4",
+     "titulo": "706. BANDERA DE GUERRA",
+     "preguntas": 13
+    },
+    {
+     "item": "3.13",
+     "fuente": "RECERNAV-13601",
+     "referencia": "CAPITULO VIII, SEC. IV, ART. 828, PAG 8-5 (Gallardete de Comandante de Unidad)",
+     "titulo": "828. DESCRIPCIÓN",
+     "preguntas": 8
+    }
+   ]
+  },
+  {
+   "sigla": "PERSUPE-13006",
+   "nombre": "Reglamento del Personal Superior",
+   "examen": "reglamentos",
+   "preguntas": 222,
+   "items": [
+    {
+     "item": "4.01",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SEC I, ART 202, PAG 2-1",
+     "titulo": "202. CLASIFICACIÓN GENERAL",
+     "preguntas": 8
+    },
+    {
+     "item": "4.02",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SEC II, ART 203, PAG 2-2",
+     "titulo": "203. CLASIFICACIÓN",
+     "preguntas": 2
+    },
+    {
+     "item": "4.03",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SEC III, ART 205, INCISO. G, DESDE PAG 2-2 HASTA PAG. 2-4",
+     "titulo": "205. OFICIALES DE COMANDO GENERAL",
+     "preguntas": 11
+    },
+    {
+     "item": "4.04",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SEC. III, ART. 205, INC. D, PAG 2 - 3",
+     "titulo": "205. OFICIALES DE COMANDO GENERAL",
+     "preguntas": 5
+    },
+    {
+     "item": "4.05",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SEC. III, ART. 205, INC. G, PAG 2 - 3",
+     "titulo": "205. OFICIALES DE COMANDO GENERAL",
+     "preguntas": 10
+    },
+    {
+     "item": "4.06",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SECC III, ART 206, INCISO (A), DESDE PAG 2-4 HASTA 2-5",
+     "titulo": "206. OFICIALES ESPECIALISTAS",
+     "preguntas": 9
+    },
+    {
+     "item": "4.07",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SEC. V, ART. 215, INC. B, PAG 2-10",
+     "titulo": "215. INGRESO DEL OFICIAL DE SERVICIOS COMO ASIMILADO",
+     "preguntas": 3
+    },
+    {
+     "item": "4.08",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO II, SEC. V, ART. 215, INC. I, NUMERAL (7), PAG 2-14",
+     "titulo": "215. INGRESO DEL OFICIAL DE SERVICIOS COMO ASIMILADO",
+     "preguntas": 2
+    },
+    {
+     "item": "4.09",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO III, SEC I, ART 303, INCISO (A), DESDE PAG 3-1 HASTA 3-2",
+     "titulo": "303. ACREDITAMIENTO DEL GRADO MILITAR",
+     "preguntas": 8
+    },
+    {
+     "item": "4.10",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO III, SEC I, ART 306, PAG 3-3",
+     "titulo": "306. EQUIVALENCIAS DE GRADOS MILITARES CON EL PERSONAL DE OTRAS INSTITUCIONES ARMADAS",
+     "preguntas": 10
+    },
+    {
+     "item": "4.11",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO III, SEC III, ART 316, PAG 3-9",
+     "titulo": "316. CLASES",
+     "preguntas": 3
+    },
+    {
+     "item": "4.12",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO III, SEC III, ART 319, PAG 3-9",
+     "titulo": "319. APROBACIÓN",
+     "preguntas": 3
+    },
+    {
+     "item": "4.13",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO III, SEC III, ART 321, PAG 3-10",
+     "titulo": "321. ORGANISMOS QUE INTERVIENEN EN EL PROCESO DE ACTUALIZACIÓN",
+     "preguntas": 6
+    },
+    {
+     "item": "4.14",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV SEC. II, ART. 412, INC. (C), PAG. 4-7 (Designación de Agrenav)",
+     "titulo": "412. DESIGNACIÓN DE AGREGADOS NAVALES",
+     "preguntas": 3
+    },
+    {
+     "item": "4.15",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC. I, ART. 401, PAG 4 – 1",
+     "titulo": "401. GENERALIDADES",
+     "preguntas": 5
+    },
+    {
+     "item": "4.16",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC. I, ART. 404, INC. (A), PAG. 4-3 (Tiempo mínimo en Unidades Operativas)",
+     "titulo": "404. TIEMPO MÍNIMO EN UNIDADES OPERATIVAS",
+     "preguntas": 10
+    },
+    {
+     "item": "4.17",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC. I, ART. 405, PAG.4 - 4",
+     "titulo": "405. TIEMPO MÍNIMO EN DEPENDENCIAS",
+     "preguntas": 5
+    },
+    {
+     "item": "4.18",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC I, ART 406, PAG 4-4",
+     "titulo": "406. SERVICIO EN SELVA O ALTURA",
+     "preguntas": 9
+    },
+    {
+     "item": "4.19",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC II, ART 409, PAG 4-5",
+     "titulo": "409. NOMBRAMIENTO DE EMPLEO",
+     "preguntas": 10
+    },
+    {
+     "item": "4.20",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC II, ART 416, INCISO (B), PAG 4- 10",
+     "titulo": "416. DESIGNACIÓN DE OFICIALES EDECANES Y AYUDANTES",
+     "preguntas": 12
+    },
+    {
+     "item": "4.21",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC. III ART. 423, INC. (C), PAG. 4-17 (Procedimientos de cambios de colocación y destaques)",
+     "titulo": "423. PROCEDIMIENTOS ADMINISTRATIVOS DE CAMBIOS DE COLOCACIÓN Y DESTAQUES",
+     "preguntas": 2
+    },
+    {
+     "item": "4.22",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC. IV, ART. 429, PAG 4-19",
+     "titulo": "429. PROCEDIMIENTO PARA GESTIONAR LA APROBACIÓN O MODIFICACIÓN DE PLANTAS ORGÁNICAS Y REQUERIMIENTOS AUTORIZADOS DE PERSONAL",
+     "preguntas": 5
+    },
+    {
+     "item": "4.23",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC V, SUB SECC I, ART 431, PAG 4- 19",
+     "titulo": "431. OFICIALES DE COMANDO",
+     "preguntas": 4
+    },
+    {
+     "item": "4.24",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO IV, SEC V, SUB SECC I, ART 432, PAG 4- 20",
+     "titulo": "432. OFICIALES ESPECIALISTAS",
+     "preguntas": 3
+    },
+    {
+     "item": "4.25",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO V, SEC. I, ART. 502 PAG 5 - 1",
+     "titulo": "502. SITUACIONES MILITARES",
+     "preguntas": 2
+    },
+    {
+     "item": "4.26",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO V, SEC III, ART 506, PAG 5-2",
+     "titulo": "506. CAUSALES",
+     "preguntas": 6
+    },
+    {
+     "item": "4.27",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO V, SECC IV, ART 515, DESDE PAG 5-2 HASTA 5-6",
+     "titulo": "515. CAUSALES",
+     "preguntas": 9
+    },
+    {
+     "item": "4.28",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO V, SEC. IV, ART. 516, PAG 5-6",
+     "titulo": "516. CAUSAL LÍMITE DE EDAD EN EL GRADO",
+     "preguntas": 12
+    },
+    {
+     "item": "4.29",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO V, SEC V, ART 529, PAG 5-12",
+     "titulo": "529. TIEMPO DE RESERVA",
+     "preguntas": 3
+    },
+    {
+     "item": "4.30",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO VI, SEC I, ART 601, DESDE PAG 6-1 HASTA PAG 6-2",
+     "titulo": "601. OBLIGACIONES",
+     "preguntas": 13
+    },
+    {
+     "item": "4.31",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO VI, SEC. III, ART. 605, INC. (A) SUB-INC (1), PAG. 6-4",
+     "titulo": "605. REPRESENTANTES DE LA MARINA DE GUERRA EN COMITÉS DE TRABAJO PARA ASUNTOS CASTRENSES Y NO CASTRENSES",
+     "preguntas": 2
+    },
+    {
+     "item": "4.32",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO VI, SEC. VI, SUB-SEC I, ART. 637, INC. (A), SUB-INC (4), PAG 6-24",
+     "titulo": "637. REGULACIONES SOBRE VACACIONES",
+     "preguntas": 9
+    },
+    {
+     "item": "4.33",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO VI, SEC. IX, ART. 651, INC. A, PAG. 6-38",
+     "titulo": "651. REGISTRO DE DOMICILIO",
+     "preguntas": 1
+    },
+    {
+     "item": "4.34",
+     "fuente": "PERSUPE-13006",
+     "referencia": "CAPITULO VI, SEC. IX, ART. 652, INC. B, PAG 6 – 39",
+     "titulo": "652. PASAPORTES",
+     "preguntas": 5
+    },
+    {
+     "item": "4.35",
+     "fuente": "PERSUPE-13006",
+     "referencia": "ANEXO \"K\", PÁR. 1, SUB-PAR \"B\", INC \"7\", PAG. K – 3 (Beneficios previsionales que gozan los señores oficiales superiores y subalternos)",
+     "titulo": "ANEXO “K” BENEFICIOS PREVISIONALES QUE GOZAN LOS SEÑORES OFICIALES SUPERIORES Y SUBALTERNOS — 1.- PENSION DE RETIRO — b. De la pensión",
+     "preguntas": 5
+    },
+    {
+     "item": "4.36",
+     "fuente": "PERSUPE-13006",
+     "referencia": "ANEXO \"K\", PÁR. 2, SUB-PAR. B, INC. \"2\", PAG K - 4",
+     "titulo": "ANEXO “K” BENEFICIOS PREVISIONALES QUE GOZAN LOS SEÑORES OFICIALES SUPERIORES Y SUBALTERNOS — 2.- REMUNERACIÓN COMPENSATORIA POR TIEMPO DE SERVICIOS — b. Monto",
+     "preguntas": 4
+    }
+   ]
+  },
+  {
+   "sigla": "DOBAMAR-21000",
+   "nombre": "Doctrina Básica de la Marina",
+   "examen": "reglamentos",
+   "preguntas": 82,
+   "items": [
+    {
+     "item": "5.01",
+     "fuente": "DOBAMAR-21000",
+     "referencia": "CAPÍTULO I, SEC. I, ART. 104, PAG 1-3",
+     "titulo": "104. ASPECTOS COMPLEMENTARIOS",
+     "preguntas": 15
+    },
+    {
+     "item": "5.02",
+     "fuente": "DOBAMAR-21000",
+     "referencia": "CAPÍTULO I, SEC. II, ART. 105, PAG 1-9",
+     "titulo": "105. SEGURIDAD NACIONAL",
+     "preguntas": 11
+    },
+    {
+     "item": "5.03",
+     "fuente": "DOBAMAR-21000",
+     "referencia": "CAPÍTULO I, SEC. II, ART. 105, PAG 1-10",
+     "titulo": "106. DEFENSA NACIONAL; 107. ACTIVIDADES VINCULADAS CON LA SEGURIDAD Y LA DEFENSA NACIONAL",
+     "preguntas": 43
+    }
+   ]
+  },
+  {
+   "sigla": "REDROMA-13022",
+   "nombre": "Reglamento de prevención del consumo y control del tráfico ilícito de drogas",
+   "examen": "reglamentos",
+   "preguntas": 33,
+   "items": [
+    {
+     "item": "6.01",
+     "fuente": "REDROMA-13022",
+     "referencia": "CAPITULO III, SEC. IV, ART 304, INC. A, PAG. 3-2",
+     "titulo": "304. COMANDANCIA GENERAL DE OPERACIONES DEL PACÍFICO",
+     "preguntas": 5
+    },
+    {
+     "item": "6.02",
+     "fuente": "REDROMA-13022",
+     "referencia": "CAPITULO III, SEC. IV, ART 307, INC. A, SUB-INCISO 1, PAG. 3-6",
+     "titulo": "307 DIRECCIÓN GENERAL DEL PERSONAL DE LA MARINA",
+     "preguntas": 4
+    },
+    {
+     "item": "6.03",
+     "fuente": "REDROMA-13022",
+     "referencia": "CAPITULO IV, SEC. I, ART 401, INC. B, SUB-INC 3, PAG. 4-2 (Hallazgo de presunta droga en las Unidades y Dependencias dentro del territorio nacional)",
+     "titulo": "401. DURANTE LA INSPECCIÓN ANTIDROGAS",
+     "preguntas": 6
+    },
+    {
+     "item": "6.04",
+     "fuente": "REDROMA-13022",
+     "referencia": "CAPITULO IV, SEC. III, ART.404, INC. (B), SUB-INC. (1), PAG. 4-4",
+     "titulo": "404. PROCEDIMIENTOS GENERALES",
+     "preguntas": 10
+    },
+    {
+     "item": "6.05",
+     "fuente": "REDROMA-13022",
+     "referencia": "CAPITULO IV, SEC VII, ART 411, PAG. 4-14",
+     "titulo": "411. DISPOSICIONES GENERALES",
+     "preguntas": 4
+    }
+   ]
+  },
+  {
+   "sigla": "RESIEMAR-13017",
+   "nombre": "Reglamento del Sistema Educativo de la Marina",
+   "examen": "reglamentos",
+   "preguntas": 15,
+   "items": [
+    {
+     "item": "7.01",
+     "fuente": "RESIEMAR-13017",
+     "referencia": "CAPITULO IV, SEC. II, ART. 452, PAG. 4-20",
+     "titulo": "452. DURACIÓN DE LOS PROGRAMAS DE ESPECIALIZACIÓN Y CAPACITACIÓN COMPLEMENTARIA",
+     "preguntas": 4
+    },
+    {
+     "item": "7.02",
+     "fuente": "RESIEMAR-13017",
+     "referencia": "CAPITULO VII, SEC. II, ART. 708, PAG 7-10",
+     "titulo": "708. EXONERACIÓN DE EXÁMENES",
+     "preguntas": 11
+    }
+   ]
+  },
+  {
+   "sigla": "DL 1095",
+   "nombre": "DL 1095 – Reglas de empleo y uso de la fuerza por las FF. AA.",
+   "examen": "reglamentos",
+   "preguntas": 50,
+   "items": [
+    {
+     "item": "8.01",
+     "fuente": "DL 1095",
+     "referencia": "TÍTULO I, CAPÍTULO I, ART.3, PAG L-1",
+     "titulo": "Artículo 3°.- Definiciones de términos",
+     "preguntas": 15
+    },
+    {
+     "item": "8.02",
+     "fuente": "DL 1095",
+     "referencia": "TÍTULO I, CAPÍTULO I, ART.7, PAG L-3",
+     "titulo": "Artículo 7°.- Principios",
+     "preguntas": 7
+    },
+    {
+     "item": "8.03",
+     "fuente": "DL 1095",
+     "referencia": "TÍTULO I, CAPÍTULO III, ART 11, PAG L-5",
+     "titulo": "Artículo 11°.- Plazo del Estado de Emergencia",
+     "preguntas": 2
+    },
+    {
+     "item": "8.04",
+     "fuente": "DL 1095",
+     "referencia": "TÍTULO I, CAPÍTULO III, ART 13, PAG L-5",
+     "titulo": "Artículo 13°.- Reglas de enfrentamiento",
+     "preguntas": 7
+    }
+   ]
+  },
+  {
+   "sigla": "MACOMAR-11104",
+   "nombre": "Manual de conceptos y terminología sobre la realidad marítima",
+   "examen": "reglamentos",
+   "preguntas": 70,
+   "items": [
+    {
+     "item": "9.01",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO I, SEC I, ART. 105, INCISO (A), SOLO PAG. 1-2",
+     "titulo": "105. ASPECTOS INSTITUCIONALES Y ÁREAS FUNCIONALES",
+     "preguntas": 5
+    },
+    {
+     "item": "9.02",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO I, SEC II, ART.107, PAG 1-7",
+     "titulo": "107. REALIDAD MARÍTIMA, INTERESES MARÍTIMOS Y DESARROLLO NACIONAL",
+     "preguntas": 11
+    },
+    {
+     "item": "9.03",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO I, SEC II, ART. 109, PAG 1- 8",
+     "titulo": "109. POTENCIAL MARÍTIMO",
+     "preguntas": 4
+    },
+    {
+     "item": "9.04",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO I, SEC II, ART. 110, PAG 1-8",
+     "titulo": "110. PODER MARÍTIMO",
+     "preguntas": 10
+    },
+    {
+     "item": "9.05",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO I, SEC II, ART. 114, INCISO (A), SUB INCISO (3), PAG. 1-12",
+     "titulo": "114. CONCIENCIA MARÍTIMA Y DESARROLLO HUMANO",
+     "preguntas": 13
+    },
+    {
+     "item": "9.06",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO II, SEC I, ART. 203, PAG 2 – 1",
+     "titulo": "203. ALTA MAR",
+     "preguntas": 4
+    },
+    {
+     "item": "9.07",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO II, SEC I, ART. 212, PAG 2-2",
+     "titulo": "212. DERECHO MARÍTIMO NACIONAL",
+     "preguntas": 3
+    },
+    {
+     "item": "9.08",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO II, SEC I, ART. 225, PAG 2-4",
+     "titulo": "225. GOBERNABILIDAD",
+     "preguntas": 4
+    },
+    {
+     "item": "9.09",
+     "fuente": "MACOMAR-11104",
+     "referencia": "CAPITULO III, SEC I, ART. 304, INCISO (D), SUB INCISO (8), LITERAL C, DESDE PAG. 3-15 HASTA PAG. 3-16",
+     "titulo": "304. GEOGRÁFICOS — d. (8) BIOCEANIDAD E HIDROVIAS",
+     "preguntas": 10
+    }
+   ]
+  },
+  {
+   "sigla": "RECASIC-13501",
+   "nombre": "Reglamento de capacidad psicosomática de los servicios de salud",
+   "examen": "reglamentos",
+   "preguntas": 45,
+   "items": [
+    {
+     "item": "10.01",
+     "fuente": "RECASIC-13501",
+     "referencia": "CAPITULO II, SEC. I, ART. 203, SOLO PAG. 2-2",
+     "titulo": "203. DE LAS CONDICIONES DE SALUD",
+     "preguntas": 19
+    },
+    {
+     "item": "10.02",
+     "fuente": "RECASIC-13501",
+     "referencia": "CAPITULO III, SEC. I, ART. 302, PAG. 3-1",
+     "titulo": "302. CONFORMACIÓN",
+     "preguntas": 8
+    },
+    {
+     "item": "10.03",
+     "fuente": "RECASIC-13501",
+     "referencia": "CAPITULO IV, SEC. II, ART. 411, PAG. 4-3",
+     "titulo": "411. EVALUACIÓN MÉDICA OBLIGATORIA A TODO EL PERSONAL MILITAR EN SITUACIÓN DE ACTIVIDAD",
+     "preguntas": 6
+    },
+    {
+     "item": "10.04",
+     "fuente": "RECASIC-13501",
+     "referencia": "CAPITULO IV, SEC. II, ART. 412, PAG. 4–3",
+     "titulo": "412. EVALUACIÓN MÉDICA AL PERSONAL MILITAR HASTA LOS 29 AÑOS DE EDAD",
+     "preguntas": 7
+    },
+    {
+     "item": "10.05",
+     "fuente": "RECASIC-13501",
+     "referencia": "CAPITULO IV, SEC II, ART. 427, PAG 4-13",
+     "titulo": "427. EVALUACIONES NO CALENDARIZADOS",
+     "preguntas": 4
+    }
+   ]
+  },
+  {
+   "sigla": "RESIN",
+   "nombre": "Reglamento del Servicio Interno de la Marina",
+   "examen": "reglamentos",
+   "preguntas": 72,
+   "items": [
+    {
+     "item": "11.01",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO I, SECCIÓN I, ART. 201, PAG 2-1",
+     "titulo": "201. UNIDAD Y DEPENDENCIA",
+     "preguntas": 13
+    },
+    {
+     "item": "11.02",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO I, SECCIÓN I, ART. 203, PAG 2-2",
+     "titulo": "203. INVENTARIO DE UNIDADES Y DEPENDENCIAS",
+     "preguntas": 2
+    },
+    {
+     "item": "11.03",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO II, SECCIÓN I, ART. 211, PAG 2-8",
+     "titulo": "211. ORGANIZACIÓN OPERACIONAL",
+     "preguntas": 10
+    },
+    {
+     "item": "11.04",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO II, SECCIÓN II, ART. 220, PAG 2-16",
+     "titulo": "220. CLASIFICACION",
+     "preguntas": 3
+    },
+    {
+     "item": "11.05",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO II, SECCIÓN III, ART. 226, PAG 2-19",
+     "titulo": "226. ESTABLECIMIENTO NAVAL TERRESTRE",
+     "preguntas": 4
+    },
+    {
+     "item": "11.06",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO II, SECCIÓN III, ART. 229, PAG 2-21",
+     "titulo": "229. CONFORMACIÓN DEL ESTABLECIMIENTO NAVAL TERRESTRE OPERACIONAL",
+     "preguntas": 13
+    },
+    {
+     "item": "11.07",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO II, SECCIÓN III, ART. 229, PAG 2-22, 2-23",
+     "titulo": "229. CONFORMACIÓN DEL ESTABLECIMIENTO NAVAL TERRESTRE OPERACIONAL (continuación)",
+     "preguntas": 21
+    },
+    {
+     "item": "11.08",
+     "fuente": "RESIN",
+     "referencia": "CAPÍTULO II, SECCIÓN IV, ART. 232, PAG 2-24",
+     "titulo": "232. ORGANISMOS EXTRAINSTITUCIONALES",
+     "preguntas": 3
+    }
+   ]
+  },
+  {
+   "sigla": "DL 1138",
+   "nombre": "DL 1138 – Ley de la Marina de Guerra del Perú",
+   "examen": "reglamentos",
+   "preguntas": 62,
+   "items": [
+    {
+     "item": "12.01",
+     "fuente": "DL 1138",
+     "referencia": "TÍTULO I, ART. 2 PAG L-1",
+     "titulo": "Artículo 2°.- Naturaleza Jurídica",
+     "preguntas": 3
+    },
+    {
+     "item": "12.02",
+     "fuente": "DL 1138",
+     "referencia": "TÍTULO I, ART. 3 PAG L-2",
+     "titulo": "Artículo 3°.- Ámbito de competencia (*)",
+     "preguntas": 8
+    },
+    {
+     "item": "12.03",
+     "fuente": "DL 1138",
+     "referencia": "TÍTULO I, ART. 3 Y ART. 4 PAG L-2",
+     "titulo": "Artículo 4°.- Funciones (*)",
+     "preguntas": 12
+    },
+    {
+     "item": "12.04",
+     "fuente": "DL 1138",
+     "referencia": "T ÍTULO I, ART. 3 Y ART. 4 PAG L-2, L-3",
+     "titulo": "Artículo 4°.- Funciones (*)",
+     "preguntas": 23
+    },
+    {
+     "item": "12.05",
+     "fuente": "DL 1138",
+     "referencia": "TÍTULO I, ART. 5 PAG L-3",
+     "titulo": "Artículo 5°.- Estructura Orgánica Básica (*)",
+     "preguntas": 3
+    },
+    {
+     "item": "12.06",
+     "fuente": "DL 1138",
+     "referencia": "TÍTULO I, ART. 6 PAG L-4",
+     "titulo": "Artículo 6°.- Comandancia General de la Marina",
+     "preguntas": 8
+    }
+   ]
+  },
+  {
+   "sigla": "LEDIFA",
+   "nombre": "Ley del Régimen Disciplinario de las FF. AA. y su reglamento",
+   "examen": "reglamentos",
+   "preguntas": 68,
+   "items": [
+    {
+     "item": "13.01",
+     "fuente": "LEDIFA",
+     "referencia": "ARTÍCULO IV, PÁGINA L-1",
+     "titulo": "Artículo IV.- Principios (*)",
+     "preguntas": 1
+    },
+    {
+     "item": "13.02",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO I, ART. 2, PÁGINA L-2",
+     "titulo": "Artículo 2°.- Disciplina militar",
+     "preguntas": 11
+    },
+    {
+     "item": "13.03",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO I, ART. 3, PÁGINA L-2",
+     "titulo": "Artículo 3°.- Orden militar (*)",
+     "preguntas": 5
+    },
+    {
+     "item": "13.04",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO I, ART. 5, PÁGINA L-2",
+     "titulo": "Artículo 5°.- Honor, moral y ética militar",
+     "preguntas": 3
+    },
+    {
+     "item": "13.05",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO I, ART. 8, PÁGINA L-3",
+     "titulo": "Artículo 8°.- Subordinación (*)",
+     "preguntas": 7
+    },
+    {
+     "item": "13.06",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO II, CAPÍTULO I, ART. 14, PÁGINA L-6",
+     "titulo": "Artículo 14°.- Clasificación de las infracciones en atención a su fundamento",
+     "preguntas": 5
+    },
+    {
+     "item": "13.07",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO II, CAPÍTULO II, ART. 18, PÁGINA L-7",
+     "titulo": "Artículo 18°.- Amonestación",
+     "preguntas": 7
+    },
+    {
+     "item": "13.08",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO II, CAPÍTULO II, ART. 20, PÁGINA L-8",
+     "titulo": "Artículo 20°.- Arresto de rigor (*)",
+     "preguntas": 7
+    },
+    {
+     "item": "13.09",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO III, CAPÍTULO II, ART. 41, PÁGINA L-14",
+     "titulo": "Artículo 41°.- Clases",
+     "preguntas": 2
+    },
+    {
+     "item": "13.10",
+     "fuente": "LEDIFA",
+     "referencia": "TÍTULO IV, CAPÍTULO I, ART. 58, PÁGINA L-20",
+     "titulo": "Artículo 58°.- Agravantes (*)",
+     "preguntas": 10
+    }
+   ]
+  },
+  {
+   "sigla": "PNM",
+   "nombre": "Política Nacional Marítima",
+   "examen": "reglamentos",
+   "preguntas": 85,
+   "items": [
+    {
+     "item": "14.01",
+     "fuente": "PNM",
+     "referencia": "(sin bullet: captura suelta bajo el título \"12. POLÍTICA NACIONAL MARÍTIMA – PNM\", antes del bullet \"a.\")",
+     "titulo": "(sin título en la captura)",
+     "preguntas": 1
+    },
+    {
+     "item": "14.02",
+     "fuente": "PNM",
+     "referencia": "a. PARTE I DEL CONTENIDO DE LA PNM",
+     "titulo": "d. Horizonte temporal",
+     "preguntas": 1
+    },
+    {
+     "item": "14.03",
+     "fuente": "PNM",
+     "referencia": "b. (PARTE I DEL CONTENIDO DE LA PNM), SUB TITULO 1.4, SUB-SUB-TITULO 1.4.4, INCISO \"G\", PAG. 65",
+     "titulo": "1.4. Diagnóstico — 1.4.4. Situación actual del problema público — g. Seguridad y defensa en el ámbito marítimo",
+     "preguntas": 35
+    },
+    {
+     "item": "14.04",
+     "fuente": "PNM",
+     "referencia": "c. (PARTE II DEL CONTENIDO DE LA PNM), DESDE PAG. 77 HASTA PAG. 79",
+     "titulo": "2 OBJETIVOS PRIORITARIOS Y LINEAMIENTOS",
+     "preguntas": 33
+    },
+    {
+     "item": "14.05",
+     "fuente": "PNM",
+     "referencia": "d. (PARTE II DEL CONTENIDO DE LA PNM), PAG. 77",
+     "titulo": "2 OBJETIVOS PRIORITARIOS Y LINEAMIENTOS",
+     "preguntas": 8
+    }
+   ]
+  },
+  {
+   "sigla": "MAPLO-22516",
+   "nombre": "Manual de Planeamiento Operacional",
+   "examen": "maplo",
+   "preguntas": 466,
+   "items": [
+    {
+     "item": "Cap. 1",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 1",
+     "titulo": "Cap. 1"
+    },
+    {
+     "item": "Cap. 2",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 2",
+     "titulo": "Cap. 2"
+    },
+    {
+     "item": "Cap. 3",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 3",
+     "titulo": "Cap. 3"
+    },
+    {
+     "item": "Cap. 4",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 4",
+     "titulo": "Cap. 4"
+    },
+    {
+     "item": "Cap. 5",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 5",
+     "titulo": "Cap. 5"
+    },
+    {
+     "item": "Cap. 6",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 6",
+     "titulo": "Cap. 6"
+    },
+    {
+     "item": "Cap. 7",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 7",
+     "titulo": "Cap. 7"
+    },
+    {
+     "item": "Cap. 8",
+     "fuente": "MAPLO-22516",
+     "referencia": "Cap. 8",
+     "titulo": "Cap. 8"
+    },
+    {
+     "item": "Anexo A",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo A",
+     "titulo": "Anexo A"
+    },
+    {
+     "item": "Anexo B",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo B",
+     "titulo": "Anexo B"
+    },
+    {
+     "item": "Anexo C",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo C",
+     "titulo": "Anexo C"
+    },
+    {
+     "item": "Anexo D",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo D",
+     "titulo": "Anexo D"
+    },
+    {
+     "item": "Anexo E",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo E",
+     "titulo": "Anexo E"
+    },
+    {
+     "item": "Anexo F",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo F",
+     "titulo": "Anexo F"
+    },
+    {
+     "item": "Anexo G",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo G",
+     "titulo": "Anexo G"
+    },
+    {
+     "item": "Anexo H",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo H",
+     "titulo": "Anexo H"
+    },
+    {
+     "item": "Anexo I",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo I",
+     "titulo": "Anexo I"
+    },
+    {
+     "item": "Anexo J",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo J",
+     "titulo": "Anexo J"
+    },
+    {
+     "item": "Anexo K",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo K",
+     "titulo": "Anexo K"
+    },
+    {
+     "item": "Anexo L",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo L",
+     "titulo": "Anexo L"
+    },
+    {
+     "item": "Anexo M",
+     "fuente": "MAPLO-22516",
+     "referencia": "Anexo M",
+     "titulo": "Anexo M"
+    }
+   ]
+  },
+  {
+   "sigla": "INGLES",
+   "nombre": "Inglés",
+   "examen": "ingles",
+   "preguntas": 484,
+   "items": [
+    {
+     "item": "01",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "01. Verb To Be"
+    },
+    {
+     "item": "02",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "02. Pronombres Personales"
+    },
+    {
+     "item": "03",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "03. Artículos"
+    },
+    {
+     "item": "04",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "04. Números"
+    },
+    {
+     "item": "05",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "05. Días, meses y estaciones"
+    },
+    {
+     "item": "06",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "06. Adjetivos básicos"
+    },
+    {
+     "item": "07",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "07. Presente Simple"
+    },
+    {
+     "item": "08",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "08. There is / There are"
+    },
+    {
+     "item": "09",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "09. Preposiciones de lugar"
+    },
+    {
+     "item": "10",
+     "fuente": "INGLES",
+     "referencia": "A1",
+     "titulo": "10. Vocabulario básico"
+    },
+    {
+     "item": "11",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "11. Pasado Simple"
+    },
+    {
+     "item": "12",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "12. Futuro con Going To"
+    },
+    {
+     "item": "13",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "13. Comparativos"
+    },
+    {
+     "item": "14",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "14. Superlativos"
+    },
+    {
+     "item": "15",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "15. Adverbios de frecuencia"
+    },
+    {
+     "item": "16",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "16. Can / Can’t"
+    },
+    {
+     "item": "17",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "17. Countable and Uncountable Nouns"
+    },
+    {
+     "item": "18",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "18. Present Continuous"
+    },
+    {
+     "item": "19",
+     "fuente": "INGLES",
+     "referencia": "A2",
+     "titulo": "19. Question Words"
+    },
+    {
+     "item": "20",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "20. Present Perfect"
+    },
+    {
+     "item": "21",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "21. Present Perfect vs Past Simple"
+    },
+    {
+     "item": "22",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "22. Future Will"
+    },
+    {
+     "item": "23",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "23. First Conditional"
+    },
+    {
+     "item": "24",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "24. Second Conditional"
+    },
+    {
+     "item": "25",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "25. Modal Verbs"
+    },
+    {
+     "item": "26",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "26. Passive Voice (Básico)"
+    },
+    {
+     "item": "27",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "27. Relative Clauses"
+    },
+    {
+     "item": "28",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "28. Phrasal Verbs comunes"
+    },
+    {
+     "item": "29",
+     "fuente": "INGLES",
+     "referencia": "B1",
+     "titulo": "29. Conectores"
+    }
+   ]
+  }
+ ]
+}

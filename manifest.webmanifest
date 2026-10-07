@@ -1,0 +1,22 @@
+{
+  "name": "Ascenso 2026 — Simulador de examen",
+  "short_name": "Ascenso 2026",
+  "description": "Práctica, simulacros cronometrados y repaso inteligente para los exámenes de ascenso: Reglamentos, MAPLO e Inglés. Funciona sin conexión.",
+  "lang": "es-PE",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1F3A",
+  "theme_color": "#0B1F3A",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "iconos/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "iconos/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "iconos/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

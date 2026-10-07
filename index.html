@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es-PE" data-theme="dark" data-letra="1" data-mayus="0">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ascenso 2026</title>
+  <meta name="description" content="Simulador de los exámenes de ascenso (Reglamentos, MAPLO e Inglés): práctica con explicación, simulacros cronometrados y repaso inteligente, sin conexión.">
+  <meta name="theme-color" content="#0B1F3A">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ascenso 2026">
+  <meta name="application-name" content="Ascenso 2026">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./iconos/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="./iconos/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="./iconos/apple-touch-icon.png">
+  <link rel="stylesheet" href="./css/estilos.css">
+  <script>
+    // Aplica tema, tamaño de letra y mayúsculas antes de pintar (evita el parpadeo).
+    (function () {
+      try {
+        var e = JSON.parse(localStorage.getItem('ascenso2026:estado') || 'null');
+        var a = (e && e.ajustes) || {};
+        var t = a.tema || 'auto';
+        var oscuro = t === 'oscuro' || (t === 'auto' && (!window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches));
+        var h = document.documentElement;
+        h.setAttribute('data-theme', oscuro ? 'dark' : 'light');
+        h.setAttribute('data-letra', String(a.letra == null ? 1 : a.letra));
+        h.setAttribute('data-mayus', a.mayusculas ? '1' : '0');
+      } catch (err) { /* sin almacenamiento: valores por defecto */ }
+    })();
+  </script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="barra-estado" aria-hidden="true"></div>
+    <main id="vista"></main>
+    <nav class="nav" id="nav" aria-label="Navegación principal"></nav>
+  </div>
+  <div id="capa-modal"></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <div id="carga" class="carga" role="status">
+    <svg class="carga-marca" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.7"/>
+      <path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M5.3 5.3l2.8 2.8M15.9 15.9l2.8 2.8M18.7 5.3l-2.8 2.8M8.1 15.9l-2.8 2.8"/>
+    </svg>
+    <h1>Ascenso 2026</h1>
+    <p id="carga-texto">Cargando el banco de preguntas…</p>
+    <div class="carga-barra" aria-hidden="true"><i></i></div>
+  </div>
+  <noscript><p style="padding:24px;color:#F1ECE2;background:#0B1F3A">Esta app necesita JavaScript activado.</p></noscript>
+</body>
+</html>
