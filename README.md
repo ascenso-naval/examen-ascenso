@@ -18,7 +18,7 @@ Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 pre
 
 La primera vez se necesita internet para descargar el banco (unos 2 MB). Después funciona sin conexión.
 
-**Desde la v1.2.0 la app guía la instalación («Instalar con un toque»).** Basta compartir el enlace (`https://marconavy2510-prog.github.io/examen-ascenso/`): quien lo abre en el celular sin tener la app instalada ve primero una pantalla de instalación con la paleta de la app:
+**Desde la v1.2.0 la app guía la instalación («Instalar con un toque»).** Basta compartir el enlace (`https://ascenso-naval.github.io/examen-ascenso/`): quien lo abre en el celular sin tener la app instalada ve primero una pantalla de instalación con la paleta de la app:
 
 - **Android (Chrome, Edge, Samsung Internet):** botón grande **«Instalar la app»** que abre el aviso nativo del navegador (evento `beforeinstallprompt`). Mientras el navegador lo prepara el botón dice «Preparando instalación…»; si a los 4 s no está disponible, se muestra la guía manual del menú (⋮ → «Instalar app» / «Añadir a pantalla de inicio»; en Samsung Internet, ≡ → «Añadir página a»). Al aceptar: «Lista: ábrela desde tu pantalla de inicio».
 - **iPhone/iPad:** guía animada de 3 pasos con iconos propios: **Compartir** (cuadrado con flecha; abajo en iPhone, arriba en iPad, con una flecha que lo señala) → **Añadir a pantalla de inicio** → **Añadir**. En Chrome, Firefox o Edge para iOS el texto se adapta a su menú; dentro del navegador de otra app (Instagram, Facebook…) sugiere abrir el enlace en Safari.
