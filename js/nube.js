@@ -315,6 +315,28 @@ export const adminMarcarPlan = (usuario, plan) => rpc('admin_marcar_plan', { p_u
 /** Con {} devuelve la configuración actual sin cambiarla; con claves, la actualiza (parcial). */
 export const adminConfigurarPago = (config = {}) => rpc('admin_configurar_pago', { p_config: config });
 
+// ---------------------------------------------------------------------------
+// [1.4.0] Respaldo y restauración (esquema 1.3.0, ver backend/schema.sql §6.c)
+// ---------------------------------------------------------------------------
+
+/** Totales por tabla antes de descargar: {version_esquema, generado_en, tablas:{…}, bytes_estimados, vouchers}. */
+export const adminRespaldoResumen = () => rpc('admin_respaldo_resumen');
+/**
+ * Una página del respaldo de una tabla: {tabla, desde, limite, total, filas:[…]}.
+ * «limite» es el efectivo (máx. 500; 50 en estado_progreso). Filas ordenadas por clave primaria.
+ */
+export const adminRespaldo = (tabla, desde = 0, limite = 200) => rpc('admin_respaldo', { p_tabla: tabla, p_desde: desde, p_limite: limite });
+/** Reemplaza el estado de progreso de una cuenta (guarda antes una copia para deshacer): {usuario_id, actualizado, tamano}. */
+export const adminRestaurarEstado = (usuario, estado, versionEstado, versionApp) => rpc('admin_restaurar_estado', {
+  p_usuario: usuario, p_estado: estado, p_version_estado: versionEstado ?? null, p_version_app: versionApp ?? null,
+});
+/** Vuelve a la copia previa a la última restauración: {usuario_id, copia_id, copia_guardada_en, actualizado, tamano, sin_estado}. */
+export const adminDeshacerRestauracion = (usuario) => rpc('admin_deshacer_restauracion', { p_usuario: usuario });
+/** Restaura apodo, plan y contadores de la prueba (null deja el dato igual). */
+export const adminRestaurarPerfil = (usuario, { apodo = null, plan = null, preguntas = null, simulacros = null } = {}) => rpc('admin_restaurar_perfil', {
+  p_usuario: usuario, p_apodo: apodo, p_plan: plan, p_preguntas: preguntas, p_simulacros: simulacros,
+});
+
 export const BUCKET_COMPROBANTES = 'comprobantes';
 
 function traducirStorage(e) {
@@ -421,6 +443,16 @@ export async function diagnostico() {
     const b = diag.pagos && diag.pagos.bucket_comprobantes;
     if (diag.pagos_ok) return { ok: true, detalle: 'Tablas, funciones y almacenamiento privado de comprobantes en orden.' };
     return { ok: false, detalle: b && b.existe === false ? 'Falta el bucket privado «comprobantes» en Storage.' : 'Revisa diagnostico_esquema() → pagos en el SQL Editor.' };
+  });
+  await paso('Respaldo y restauración (esquema 1.3.0)', async () => {
+    if (!diag || !('respaldo_ok' in diag)) return { ok: false, detalle: 'El esquema no tiene la parte de respaldo: ejecuta de nuevo backend/schema.sql (1.3.0).' };
+    if (diag.respaldo_ok) return { ok: true, detalle: 'Funciones de respaldo y restauración e historial de copias en orden.' };
+    const r = diag.respaldo || {};
+    const faltan = Object.entries(r.funciones || {}).filter(([, v]) => v !== true).map(([k]) => k);
+    const partes = [];
+    if (faltan.length) partes.push(`faltan funciones: ${faltan.join(', ')}`);
+    if (r.historial_ok === false) partes.push('la tabla estado_progreso_historial no está protegida o falta');
+    return { ok: false, detalle: partes.length ? `Respaldo: ${partes.join('; ')}.` : 'Revisa diagnostico_esquema() → respaldo en el SQL Editor.' };
   });
   await paso('Aislamiento de datos', async () => {
     const filas = await rest(cliente().from('perfiles').select('id'));

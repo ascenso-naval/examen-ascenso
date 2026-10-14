@@ -9,7 +9,7 @@ export const SUPABASE_URL = 'https://gdjskhcbnjtpqjtmmzjx.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_yTLwdeFKulcZxTL5QLpMOQ_uAFcrZWG';
 export const CLAVE_SUSTITUCION = 'ascenso2026:supabase';
 /** Versión del esquema SQL que espera esta versión de la app (ver public.version_esquema()). */
-export const VERSION_ESQUEMA = 'ascenso2026-esquema 1.2.0';
+export const VERSION_ESQUEMA = 'ascenso2026-esquema 1.3.0';
 
 /** Configuración efectiva: la sustitución de localStorage (si es válida) o la de producción. */
 export function configSupabase() {

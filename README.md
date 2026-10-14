@@ -11,6 +11,7 @@ Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 pre
 - **Cuenta** con correo y contraseña (v1.1.0): el progreso se **sincroniza** entre dispositivos (offline-first), **ranking** por apodo y **panel de administración** (ver secciones 7 y 8).
 - **Instalar con un toque** (v1.2.0): quien abre el enlace en el celular sin la app instalada ve primero una pantalla que lo guía (botón nativo en Android, guía de 3 pasos en iPhone; ver sección 1).
 - **Prueba gratis y pago único** (v1.3.0): cada cuenta nueva estudia gratis hasta un límite (por defecto 50 preguntas y 1 simulacro); luego la app pide un pago único de S/ 20 por Yape o Plin con voucher y número de operación, que el administrador verifica desde el panel (ver sección 9).
+- **Respaldo y restauración** (v1.4.0): el administrador descarga desde el panel un respaldo completo de los datos del servidor en un archivo JSON y puede restaurar el progreso de un usuario desde ese archivo, con vista previa y «Deshacer» (ver sección 10).
 - Desde la v1.3.0 **se necesita una cuenta para estudiar**: sin sesión solo se ve la pantalla de acceso.
 - Sitio estático: HTML, CSS y JavaScript (módulos ES). Única dependencia: copia local de `@supabase/supabase-js` en `vendor/` (sin CDN). El backend es Supabase (`backend/schema.sql`).
 
@@ -173,8 +174,8 @@ Solo para la cuenta con `rol = 'admin'` (el correo del dueño, `marconavy2510@gm
 - **Resumen**: usuarios registrados, activos hoy y en 7 días (con preguntas o sesiones), sesiones hoy, simulacros totales y bloqueados.
 - **Tabla de usuarios** (deslizable, ordenable tocando el encabezado, con buscador por correo/apodo): correo, apodo, último ingreso, XP, nivel, racha, preguntas, simulacros, nota promedio y estado; acciones **Bloquear/Desbloquear** (no puedes bloquearte a ti mismo) y **Detalle** (`#/admin/usuario/<id>`: cifras, mapa de calor de 12 semanas y sesiones recientes).
 - **Exportar CSV** de usuarios y de eventos (UTF-8 con BOM, separador coma; se abre en Excel).
-- Desde la v1.3.0 el panel tiene tres pestañas: **Usuarios** (lo anterior, más la columna *Plan* y «Marcar plan»), **Pagos** y **Cobro** (ver sección 9). El CSV de usuarios añade `plan`, `preguntas_prueba`, `simulacros_prueba` y `pagado_en`.
-- **Diagnóstico** (`#/diagnostico`, también para cualquier usuario desde Ajustes → Cuenta): configuración, red, Auth (`/auth/v1/health`), sesión, REST y versión del esquema (`version_esquema()`), RLS activado en las 4 tablas (`diagnostico_esquema()`), aislamiento (solo se ve el perfil propio) y permisos de las funciones de administración.
+- Desde la v1.3.0 el panel tiene pestañas: **Usuarios** (lo anterior, más la columna *Plan* y «Marcar plan»), **Pagos** y **Cobro** (ver sección 9); desde la v1.4.0, también **Respaldo** (ver sección 10). El CSV de usuarios añade `plan`, `preguntas_prueba`, `simulacros_prueba` y `pagado_en`.
+- **Diagnóstico** (`#/diagnostico`, también para cualquier usuario desde Ajustes → Cuenta): configuración, red, Auth (`/auth/v1/health`), sesión, REST y versión del esquema (`version_esquema()`), RLS activado en las 4 tablas (`diagnostico_esquema()`), prueba gratis y pagos (`pagos_ok`), respaldo y restauración (`respaldo_ok`, esquema 1.3.0), aislamiento (solo se ve el perfil propio) y permisos de las funciones de administración.
 
 Pasos en el dashboard de Supabase: `backend/INSTRUCCIONES_SUPABASE.md`.
 
@@ -201,11 +202,38 @@ Requiere el esquema **1.2.0** en Supabase (`backend/schema.sql`: funciones `esta
 
 **Mejora futura:** subir la imagen del QR oficial de Yape/Plin desde el panel (hoy la pantalla de pago muestra solo el número, el titular y «Copiar número»).
 
-## 10. Datos y privacidad
+## 10. Respaldo y restauración
+
+Requiere el esquema **1.3.0** en Supabase (`backend/schema.sql` §6.c: `admin_respaldo_resumen`, `admin_respaldo`, `admin_restaurar_estado`, `admin_deshacer_restauracion`, `admin_restaurar_perfil` y la tabla `estado_progreso_historial`). La app lo comprueba en **Ajustes → Diagnóstico de conexión** («Respaldo y restauración»). El plan gratis de Supabase no hace copias: **el respaldo lo hace el administrador desde la app**. Regla: **respalda antes de cada cambio de esquema y una vez por semana.**
+
+**Dónde.** Más → Administración → pestaña **Respaldo** (`#/admin?tab=respaldo`). Arriba, el aviso fijo «Respalda antes de cambiar el esquema y una vez por semana» y el resumen: filas por tabla (perfiles, progreso, sesiones, ingresos, pagos y configuración de cobro), tamaño estimado, número de vouchers y la **última descarga** hecha en ese dispositivo (`localStorage['ascenso2026:admin:ultimo-respaldo']`). Si nunca se descargó o pasaron **más de 7 días**, la pestaña muestra un aviso ámbar «!» y Más → Administración la etiqueta **«Respaldo»**.
+
+**Descargar respaldo.** El botón **«Descargar respaldo»** pide todas las tablas por páginas con `admin_respaldo` (200 filas por página; 50 en `estado_progreso`, que pesa más) con una barra de progreso por tabla. Si una página falla por la red, se reintenta (hasta 3 veces, con espera creciente). Las filas se deduplican por clave primaria y se comprueba que cada tabla trae tantas filas como su total; si no cuadra, se vuelve a pedir esa tabla una vez y, si sigue sin cuadrar, se descarga igual con un aviso que indica la tabla y la diferencia (repite el respaldo en unos minutos). El archivo `ascenso2026-respaldo-AAAA-MM-DD-HHMM.json` contiene:
+
+```
+{ formato: 'ascenso2026-respaldo', version: 1, version_esquema, version_app, generado_en,
+  resumen,                                   // lo que devolvió admin_respaldo_resumen()
+  verificacion: { <tabla>: {filas, total, ok} },
+  tablas: { perfiles, estado_progreso, eventos_sesion, ingresos, pagos, configuracion_pago },
+  vouchers: [ rutas distintas de pagos.captura_path ] }
+```
+
+Las filas van completas (incluidos rol, bloqueado, plan, contadores, `pagado_en`, `aprobado_por`). Las **imágenes de los vouchers no van** en el archivo, solo sus rutas en el bucket `comprobantes` (descargarlas aparte es una mejora futura). En iPhone, si el sistema permite compartir archivos, aparece además **«Compartir»** (Guardar en Archivos, AirDrop, correo…). Guarda el archivo fuera del celular. Al terminar se anota la fecha y desaparece el aviso de 7 días.
+
+**Restaurar el progreso de un usuario.** En la misma pestaña: **«Elegir archivo de respaldo»** → la app valida el archivo (formato `ascenso2026-respaldo`, versión 1, tablas bien formadas; un progreso exportado desde Ajustes o cualquier otro JSON se rechaza) → lista las cuentas del respaldo (apodo, correo, XP, preguntas y fecha del progreso) cruzadas por id con las cuentas actuales. Una cuenta que ya no existe aparece como **«Sin cuenta actual»** y no se puede restaurar desde la app (habría que recrearla y restaurar por SQL, ver `backend/INSTRUCCIONES_SUPABASE.md`). Al **elegir** una cuenta se ve la **vista previa**: XP, preguntas, fecha, plan, apodo y contadores de la prueba del respaldo frente a los actuales, con la nota «El celular del usuario adoptará el progreso restaurado. Si tenía más progreso que el respaldo, ese avance quedará solo en la copia del servidor y se recupera con «Deshacer»». Es lo que hace la sincronización (`js/sincronizacion.js`): al ver en la nube un estado más reciente, el celular lo **adopta entero**; solo si tiene cambios sin subir lo combina con los suyos (fusión por máximo). Si la cuenta tiene **hoy más XP o más preguntas** que el respaldo, la vista previa muestra además una **advertencia ámbar** con las cifras, que se repite en la confirmación. La casilla **«También plan, apodo y contadores de prueba»** restaura además esos datos del perfil (`admin_restaurar_perfil`; nunca el rol ni el bloqueo; el plan «En revisión» no se restaura: se resuelve en Pagos). **«Restaurar progreso»** pide confirmación y llama a `admin_restaurar_estado`, que guarda antes una copia del estado actual en el historial del servidor. El aviso de éxito trae **«Deshacer»** (`admin_deshacer_restauracion`: vuelve a la copia anterior), disponible mientras sigas en la pestaña Respaldo; pide confirmación. Deshacer devuelve el progreso, no el plan/apodo/contadores (esos se cambian desde Usuarios). Cómo se comporta:
+- Devuelve **exactamente** el estado que había antes de restaurar. Lo que el usuario estudie **después** de la restauración no se combina: el estado de ese momento se guarda en el historial del servidor (`estado_progreso_historial`, motivo «deshacer») y queda **solo ahí**. Por eso la confirmación de «Deshacer» avisa si la cuenta tiene **actividad posterior a la restauración** (compara la última actividad de `admin_usuarios` con la hora de la restauración, que la app guarda en memoria mientras sigas en la pestaña).
+- Con **dos restauraciones seguidas** de la misma cuenta, «Deshacer» vuelve al estado **intermedio** (el que dejó la primera restauración), no al de antes de ambas; la copia más antigua sigue en el historial (consulta SQL en `backend/INSTRUCCIONES_SUPABASE.md` §8.4).
+- Si la cuenta **no tenía progreso** en la nube antes de restaurar, deshacer lo deja sin progreso y el resultado lo indica: «La cuenta no tenía progreso guardado antes; el celular volverá a subir el suyo al sincronizar». Todo queda registrado como evento «Restauración» en el detalle del usuario.
+
+**Restaurar TODO** (si se perdiera el proyecto de Supabase): proyecto nuevo → `backend/schema.sql` → `scripts/restaurar_respaldo.py` genera el SQL de inserción desde el JSON (ver `backend/INSTRUCCIONES_SUPABASE.md`, «Respaldo y restauración»).
+
+Archivos: `js/respaldo.js` (paginación, deduplicación, verificación, armado y validación del archivo, aviso de 7 días) y `js/ui/admin-respaldo.js` (la pestaña).
+
+## 11. Datos y privacidad
 
 El progreso se guarda en el navegador (`localStorage['ascenso2026:estado']`, con escritura diferida y guardado inmediato al ocultar la app) y se sincroniza con la cuenta en Supabase. En el servidor se guardan: correo, apodo, el estado de estudio, las sesiones terminadas, la fecha de los ingresos (como mucho uno cada 6 h) y, desde la v1.3.0, el plan de acceso con el consumo de la prueba y los comprobantes de pago (medio, número de operación y la captura del voucher en un almacenamiento privado que solo ven el dueño y el administrador). Cada usuario solo puede leer y escribir lo suyo (RLS); el administrador lo consulta mediante funciones del servidor; en el ranking solo se ve el apodo, XP, nota promedio y racha. La clave de la app (`publishable key`) es pública por diseño; la seguridad está en las políticas RLS. Si el navegador no permite guardar (modo privado), la app sigue funcionando en memoria y lo avisa.
 
-## 11. Estructura
+## 12. Estructura
 
 ```
 index.html              página única: carga js/main.js
@@ -221,6 +249,8 @@ js/fusion.js            fusión por secciones del estado local y remoto
 js/cuenta.js            flujo de la cuenta: tras ingresar, cerrar sesión, expulsar, apodo
 js/acceso.js            prueba gratis: estado de acceso, consumo en lotes, sondeo del pago (v1.3.0)
 js/ui/vista-bloqueo.js  pantalla de bloqueo y pago (Yape/Plin, voucher, revisión, agradecimiento)
+js/respaldo.js          respaldo completo: paginación, deduplicación, archivo, validación y aviso de 7 días (v1.4.0)
+js/ui/admin-respaldo.js pestaña Respaldo del panel: descargar y restaurar el progreso de un usuario (v1.4.0)
 js/bus.js               avisos internos (fin de sesión de estudio)
 js/router.js            enrutador por hash (#/inicio, #/practica, …)
 js/datos.js             carga del banco, índices, grupos, filtro base, barajado y búsqueda
@@ -247,20 +277,20 @@ INFORME_PRUEBAS.md      resultado de las pruebas automáticas
 
 Iconos: `python3 scripts/generar_iconos.py` los vuelve a generar con Pillow (timón dorado sobre azul marino; diseño propio, sin emblemas oficiales).
 
-## 12. Pruebas
+## 13. Pruebas
 
 ```bash
 cd pruebas
 npm install          # instala Playwright 1.56 (usa el Chromium ya instalado)
-node pruebas.mjs     # escenarios de las especificaciones (01 a 04), capturas e INFORME_PRUEBAS.md
+node pruebas.mjs     # escenarios de las especificaciones (01 a 05), capturas e INFORME_PRUEBAS.md
 node mock-supabase.mjs           # solo el servidor simulado de Supabase (puerto 54321)
 node verificar_composicion.mjs   # solo la verificación de la composición del simulacro
 node unitarias.mjs               # solo la lógica: niveles, racha, SRS, XP, nota y migración
 ```
 
-`pruebas.mjs` levanta `pruebas/mock-supabase.mjs` (emula GoTrue y PostgREST con las mismas reglas que el esquema: 401/403 al violarlas) y apunta la app a él con `localStorage['ascenso2026:supabase'] = {"url": …, "key": …}`. Los escenarios de la nube están en `pruebas/escenarios_nube.mjs`; los de la prueba gratis y el pago, en `pruebas/escenarios_pago.mjs` (el mock emula también Storage: subida multipart a `comprobantes/<uid>/…` y URL firmada; la cuenta `estudiante@prueba.pe` está en cortesía para que los escenarios del encargo 01 no choquen con el límite). El esquema SQL se prueba en un PostgreSQL 16 local con `backend/pruebas_schema.sql` (salida en `backend/pruebas_schema.out`).
+`pruebas.mjs` levanta `pruebas/mock-supabase.mjs` (emula GoTrue y PostgREST con las mismas reglas que el esquema: 401/403 al violarlas) y apunta la app a él con `localStorage['ascenso2026:supabase'] = {"url": …, "key": …}`. Los escenarios de la nube están en `pruebas/escenarios_nube.mjs`; los del respaldo y la restauración, en `pruebas/escenarios_respaldo.mjs` (reinician el mock y siembran más de 200 eventos y más de 50 estados con `__mock/sembrar_respaldo` para que la paginación sea real; `__mock/respaldo` simula cortes de red, páginas solapadas y tablas incompletas); los de la prueba gratis y el pago, en `pruebas/escenarios_pago.mjs` (el mock emula también Storage: subida multipart a `comprobantes/<uid>/…` y URL firmada; la cuenta `estudiante@prueba.pe` está en cortesía para que los escenarios del encargo 01 no choquen con el límite). El esquema SQL se prueba en un PostgreSQL 16 local con `backend/pruebas_schema.sql` (salida en `backend/pruebas_schema.out`).
 
-## 13. Limitaciones conocidas
+## 14. Limitaciones conocidas
 
 - Las pruebas automáticas usan Chromium; la instalación en iPhone (Safari) debe verificarse en un dispositivo real.
 - La conexión con el Supabase real solo se verificó con el servidor simulado y con PostgreSQL local; tras publicar, usa **Ajustes → Diagnóstico de conexión**.

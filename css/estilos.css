@@ -1334,3 +1334,31 @@ svg.en-linea { display: inline-block; vertical-align: -3px; }
 .form-cobro .campo:last-child { margin-bottom: 0; }
 .form-cobro textarea.entrada, .form-motivo textarea.entrada { min-height: 96px; resize: vertical; line-height: 1.45; }
 .form-motivo .rotulo { display: block; }
+
+/* ---------- Administración: respaldo y restauración (v1.4.0) ---------- */
+.resp-ultima { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 0; }
+.resp-progreso { list-style: none; margin: 12px 0 0; padding: 12px 16px; display: grid; gap: 10px; background: var(--casco); border-radius: var(--radio); box-shadow: var(--sombra); }
+.resp-tabla { display: grid; grid-template-columns: minmax(84px, 9.5em) 1fr auto; align-items: center; gap: 10px; }
+.resp-tabla-nombre { font-size: 0.88rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resp-tabla .mini { min-width: 4.5em; text-align: right; font-variant-numeric: tabular-nums; }
+.resp-tabla[data-estado="lista"] .barra > i { background: var(--verde-marca); }
+.resp-resultado .aviso-almacen { margin-top: 10px; }
+.resp-advertencia, .aviso-modal { border: 1.5px solid var(--ambar-marca); }
+.resp-nota { margin-top: 14px; }
+.resp-nota svg { color: var(--texto-3); }
+.lista-respaldo { list-style: none; margin: 0; padding: 0; background: var(--casco); border-radius: var(--radio); box-shadow: var(--sombra); overflow: hidden; }
+.resp-perfil { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--borde); }
+.resp-perfil:first-child { border-top: 0; }
+.resp-perfil.elegido { background: var(--sel-fondo); }
+.resp-perfil[data-sin-cuenta="1"] .fila-titulo { color: var(--texto-3); }
+.resp-perfil .btn { flex: none; }
+.resp-perfil .resp-sin-cuenta { display: inline-flex; }
+.resp-correo { word-break: break-all; }
+.resp-comparar th[scope="row"] { font-weight: 600; color: var(--texto-2); }
+.resp-comparar td.num { font-variant-numeric: tabular-nums; }
+.resp-casilla { cursor: pointer; }
+.pestanas-admin button { position: relative; }
+.pestanas-admin #tab-respaldo-aviso {
+  position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; padding: 0; margin: 0;
+  border-radius: 50%; background: var(--ambar-marca, #E0A526); font-size: 0; overflow: hidden;
+}

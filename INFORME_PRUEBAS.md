@@ -1,10 +1,10 @@
 # Informe de pruebas — Ascenso 2026 (PWA)
 
-Fecha: 14/10/2026, 3:09:01 p. m. (hora de Lima). Duración: 242 s.
+Fecha: 14/10/2026, 4:46:03 p. m. (hora de Lima). Duración: 272 s.
 
 Entorno: Chromium (Playwright 1.56.0), viewport 390×844, `isMobile: true`, `hasTouch`, escala 2, locale es-PE, zona America/Lima. App servida con `python3 -m http.server 8123 --directory app`.
 
-**Resultado: 336 de 336 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
+**Resultado: 415 de 415 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
 
 Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `node verificar_composicion.mjs`, `node unitarias.mjs`).
 
@@ -19,13 +19,13 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | Exportar → borrar → importar restaura | Exportar e importar | OK (4 comprobaciones) |
 | El modo ampliado cambia el conteo disponible | Modo ampliado | OK (3 comprobaciones) |
 | Segunda carga con la red cortada funciona (también bajo un subdirectorio) | Sin conexión, Subdirectorio | OK (5 comprobaciones) |
-| Capturas de cada pantalla principal en `app/_capturas/` | — | 56 capturas |
+| Capturas de cada pantalla principal en `app/_capturas/` | — | 58 capturas |
 | `node --check` de todos los módulos y JSON del manifest | Estáticas | OK (13 comprobaciones) |
 | Extra: lógica (niveles, racha, SRS, XP, nota, migración), interacciones, tema claro, nueva versión del SW | Lógica (unitarias), Interacciones, Pantallas, Tema claro, Nueva versión | OK (58 comprobaciones) |
 
 ## Cobertura del encargo 02 (sección 5)
 
-Comprobaciones del encargo 01 (sin los grupos «Nube»): 258 de 258 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
+Comprobaciones del encargo 01 (sin los grupos «Nube»): 337 de 337 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
 
 | Requisito | Grupos de pruebas | Resultado |
 |---|---|---|
@@ -42,7 +42,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 258 de 258 superadas (l
 
 ## Cobertura del encargo 03 («Instalar con un toque»)
 
-Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir en el navegador» ya elegido, sembrado por `usarMock`). Nuevas del encargo 03: 34 de 34.
+Comprobaciones de los encargos 01 y 02: 286 de 286 superadas (parten de «Seguir en el navegador» ya elegido, sembrado por `usarMock`). Nuevas del encargo 03: 34 de 34.
 
 | Requisito | Grupos de pruebas | Resultado |
 |---|---|---|
@@ -52,7 +52,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | (c) iPhone Safari: guía de 3 pasos con flecha animada; reduced motion; Chrome en iOS; iPad | Instalación: iPhone | OK (6 comprobaciones) |
 | (d) «Seguir en el navegador»: 7 días, reaparece al vencer, Escape, Ajustes → «Instalar en el celular» | Instalación: seguir en el navegador | OK (8 comprobaciones) |
 | (e) Escritorio: tarjeta breve con el enlace y continuar | Instalación: escritorio | OK (3 comprobaciones) |
-| (f) Sin errores de consola; las comprobaciones anteriores siguen en verde | Instalación: consola | OK (1 comprobaciones) · anteriores: 207/207 |
+| (f) Sin errores de consola; las comprobaciones anteriores siguen en verde | Instalación: consola | OK (1 comprobaciones) · anteriores: 286/286 |
 
 ## Cobertura del encargo 04 (prueba gratis y pago único, v1.3.0)
 
@@ -82,17 +82,38 @@ Comprobaciones de los encargos 01 a 03: 241 de 241 superadas. Nuevas del encargo
 
 Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la prueba gratis; (2) la pantalla de pago ya no muestra QR (número grande, titular y «Copiar número» con confirmación «¡Copiado!»; librería de QR eliminada).
 
+## Cobertura del encargo 05 (respaldo y restauración, v1.4.0 · esquema 1.3.0)
+
+Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo 05: 79 de 79. Los escenarios de respaldo reinician el mock y siembran 230 eventos, 55 cuentas con progreso y 4 pagos (3 vouchers distintos) para que la paginación sea real.
+
+| Escenario (§3 de la especificación) | Grupos de pruebas | Resultado |
+|---|---|---|
+| Versión 1.4.0, precache, esquema 1.3.0, RPC en nube.js y mock, README §10 | Respaldo (estáticas) | OK (5 comprobaciones) |
+| Paginación, límite efectivo, deduplicación, reintento por página, «filas = total» con un reintento de la tabla, vouchers, validación del archivo | Respaldo: lógica (unitarias) | OK (13 comprobaciones) |
+| Aviso de 7 días (badge en la pestaña y en Más → Administración) | Respaldo: aviso de 7 días | OK (5 comprobaciones) |
+| Resumen (totales por tabla, tamaño, vouchers, aviso fijo) | Respaldo: resumen | OK (4 comprobaciones) |
+| Descarga completa interceptada y validada (formato, totales = filas, dedupe, vouchers), paginación con > límite, 2 cortes de red, fecha guardada y badge que desaparece | Respaldo: descarga completa | OK (13 comprobaciones) |
+| Tabla que no cuadra: se repite una vez y se descarga avisando la diferencia | Respaldo: filas que no cuadran | OK (2 comprobaciones) |
+| Restauración con vista previa, confirmación y «Deshacer» (verificado en el mock); «Deshacer» hasta cambiar de pestaña | Respaldo: restauración y deshacer | OK (13 comprobaciones) |
+| «También plan, apodo y contadores de prueba» | Respaldo: también plan, apodo y contadores | OK (3 comprobaciones) |
+| Archivo inválido rechazado | Respaldo: archivos inválidos | OK (1 comprobaciones) |
+| Usuario sin cuenta actual no restaurable | Respaldo: usuario sin cuenta actual | OK (3 comprobaciones) |
+| Validaciones del servidor (22023, límite efectivo 500/50, P0002) | Respaldo: validaciones del servidor | OK (3 comprobaciones) |
+| Diagnóstico: «Respaldo y restauración» en verde | Respaldo: diagnóstico | OK (2 comprobaciones) |
+| No admin no ve la pestaña; las 5 RPC → 403 | Respaldo: no admin | OK (4 comprobaciones) |
+| Sin errores de consola | Respaldo: consola | OK (1 comprobaciones) |
+
 ## Esquema SQL en PostgreSQL 16 local
 
-`backend/pruebas_schema.sql` instala `backend/schema.sql` tres veces (idempotencia) sobre un clúster temporal con roles anon/authenticated/service_role/supabase_auth_admin y un esquema `auth` mínimo, y simula sesiones con `request.jwt.claims`. Resultado (`backend/pruebas_schema.out`): **213 comprobaciones OK, 0 fallidas** — todas superadas.
+`backend/pruebas_schema.sql` instala `backend/schema.sql` tres veces (idempotencia) sobre un clúster temporal con roles anon/authenticated/service_role/supabase_auth_admin y un esquema `auth` mínimo, y simula sesiones con `request.jwt.claims`. Resultado (`backend/pruebas_schema.out`): **302 comprobaciones OK, 0 fallidas** — todas superadas.
 
-`backend/auditoria_schema.sql` (instalación sobre base vacía con Storage simulado, ataques concretos): **178 OK, 0 fallas** de 178 (`backend/auditoria_schema.out`).
+`backend/auditoria_schema.sql` (instalación sobre base vacía con Storage simulado, ataques concretos): **238 OK, 0 fallas** de 238 (`backend/auditoria_schema.out`).
 
 ## Estáticas
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | node --check de 56 archivos JS |  |
+| OK | node --check de 58 archivos JS |  |
 | OK | manifest.webmanifest es JSON válido |  |
 | OK | manifest: name y short_name |  |
 | OK | manifest: display standalone y orientación portrait |  |
@@ -100,9 +121,9 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | OK | manifest: iconos 192, 512 y maskable |  |
 | OK | manifest: theme/background navy |  |
 | OK | iconos PNG con el tamaño declarado | iconos/icon-192.png=192x192, iconos/icon-512.png=512x512, iconos/icon-maskable-192.png=192x192, iconos/icon-maskable-512.png=512x512, iconos/apple-touch-icon.png=180x180 |
-| OK | el service worker precachea todos los archivos de la app | 75 entradas |
+| OK | el service worker precachea todos los archivos de la app | 77 entradas |
 | OK | las capturas no están en el precache |  |
-| OK | APP_VERSION coincide en sw.js y js/version.js | 1.3.0 / 1.3.0 |
+| OK | APP_VERSION coincide en sw.js y js/version.js | 1.4.0 / 1.4.0 |
 | OK | sin alert/confirm/prompt nativos |  |
 | OK | sin recursos externos (http/https) en HTML, CSS y JS (salvo la API de Supabase) |  |
 
@@ -115,9 +136,9 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | OK | config-supabase.js coincide con backend/supabase.config.json |  |
 | OK | ninguna secret key en app/ ni backend/ |  |
 | OK | SW: precachea el vendor y deja supabase.co en network-only |  |
-| OK | APP_VERSION 1.3.0 (encargo 04; 1.1.0 fue la del encargo 02 y 1.2.0 la del 03) |  |
+| OK | APP_VERSION 1.4.0 (encargo 05; 1.1.0 fue la del encargo 02, 1.2.0 la del 03 y 1.3.0 la del 04) |  |
 | OK | schema.sql: tablas con RLS, trigger de alta y todas las funciones | 10 funciones |
-| OK | schema.sql probado en PostgreSQL 16 local (backend/pruebas_schema.out) | 213 comprobaciones OK |
+| OK | schema.sql probado en PostgreSQL 16 local (backend/pruebas_schema.out) | 302 comprobaciones OK |
 | OK | rutas JSON del estado documentadas en README y schema.sql, coherentes con estado.js |  |
 | OK | README: secciones «Cuenta y sincronización» y «Administración» |  |
 | OK | backend/INSTRUCCIONES_SUPABASE.md con los pasos del dashboard |  |
@@ -126,12 +147,40 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | versión 1.3.0 en sw.js y version.js; acceso.js y vista-bloqueo.js en el precache | ./js/acceso.js, ./js/ui/vista-bloqueo.js |
-| OK | la app y el mock esperan el esquema 1.2.0 |  |
+| OK | versión ≥ 1.3.0 en sw.js y version.js (1.4.0 desde el encargo 05); acceso.js y vista-bloqueo.js en el precache | ./js/acceso.js, ./js/ui/vista-bloqueo.js |
+| OK | la app y el mock esperan el esquema ≥ 1.2.0 (1.3.0 desde el encargo 05) |  |
 | OK | sin QR: librería eliminada, fuera del precache, sin generación en el bloqueo ni CSS huérfano |  |
 | OK | formulario: voucher image/*, compresión por canvas (1280 px, JPEG ≤ 1 MB) y operación numérica |  |
 | OK | acceso.js: lotes de 10, sondeo de 60 s en pendiente, primer plano y reconexión |  |
 | OK | README: sección «Prueba gratis y pago» |  |
+
+## Respaldo (estáticas)
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | versión 1.4.0 en sw.js y version.js; respaldo.js y admin-respaldo.js en el precache | ./js/respaldo.js, ./js/ui/admin-respaldo.js |
+| OK | la app y el mock esperan el esquema 1.3.0 |  |
+| OK | nube.js y el mock: las 5 RPC de respaldo y el paso «Respaldo» del diagnóstico |  |
+| OK | backend/schema.sql (1.3.0) define las 5 funciones que usa la app |  |
+| OK | README §10 «Respaldo y restauración» (adopción del progreso restaurado, Deshacer exacto/intermedio, sin estado previo) |  |
+
+## Respaldo: lógica (unitarias)
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | descargarTabla: pagina 0/200/400 hasta el total | 0,200,400 |
+| OK | descargarTabla: deduplica por clave primaria las páginas que se solapan |  |
+| OK | descargarTabla: avanza con el límite efectivo que devuelve el servidor (50) | 9 páginas |
+| OK | descargarTabla: reintenta la página ante errores de red |  |
+| OK | descargarTabla: tras agotar los reintentos propaga el error |  |
+| OK | descargarTabla: un error de permiso no se reintenta |  |
+| OK | armarRespaldo: formato, versiones y las 6 tablas | 6 filas |
+| OK | armarRespaldo: vouchers = rutas distintas de pagos | ["u/a.jpg","u/b.jpg"] |
+| OK | armarRespaldo: si filas ≠ total vuelve a pedir la tabla una vez y anota la diferencia | [{"tabla":"ingresos","filas":2,"total":3}] |
+| OK | nombre del archivo: ascenso2026-respaldo-AAAA-MM-DD-HHMM.json | ascenso2026-respaldo-2026-03-05-0907.json |
+| OK | validarRespaldo: acepta el formato 1 y rechaza archivos ajenos, versiones futuras y tablas mal formadas |  |
+| OK | perfilesDelRespaldo: XP y preguntas del estado; sin cuenta actual si el id no existe hoy |  |
+| OK | perfilARestaurar: el plan «pendiente» no se envía (null deja el dato igual) |  |
 
 ## Composición (script)
 
@@ -192,9 +241,9 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 546 ms |
+| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 537 ms |
 | OK | service worker registrado y activo con scope ./ | http://localhost:8123/ |
-| OK | precache del app shell y del banco | ascenso2026-1.3.0: 69 recursos |
+| OK | precache del app shell y del banco | ascenso2026-1.4.0: 71 recursos |
 | OK | manifest enlazado, iconos accesibles y meta tags iOS | Ascenso 2026 — Simulador de examen; content-type application/manifest+json |
 | OK | sin errores de consola en la carga inicial |  |
 
@@ -203,14 +252,14 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | resumen con 9 de 10 aciertos | Práctica completada: 9 |
-| OK | XP ganado en el resumen | +122 XP |
+| OK | XP ganado en el resumen | +142 XP |
 | OK | botón «Repetir las falladas» presente |  |
-| OK | XP guardado en localStorage | 122 (esperado 122) |
+| OK | XP guardado en localStorage | 142 (esperado 142) |
 | OK | respuestas y actividad del día guardadas | respondidas 10 |
-| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1792008304124,"s":[0,"2026-10-14"]} |
+| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1792014096257,"s":[0,"2026-10-14"]} |
 | OK | logro «Primer paso» desbloqueado |  |
 | OK | el resumen sigue disponible tras recargar | 9 |
-| OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 122 |
+| OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 142 |
 
 ## Simulacro
 
@@ -226,7 +275,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | OK | confirmación al entregar con preguntas sin responder | Te quedan 5 preguntas sin responder; contarán como incorrectas. |
 | OK | nota vigesimal 15.0 (30/40) y aprobado | 15.0; Aprobado (nota mínima 14) |
 | OK | simulacro guardado en el historial | {"nota":15,"ac":30,"respondidas":35} |
-| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 932 (esperado 932) |
+| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 952 (esperado 952) |
 | OK | meta diaria cumplida y logros «Primer simulacro» y «Aprobado» |  |
 | OK | la sesión del simulacro se cierra al entregar |  |
 | OK | revisión: 40 preguntas y filtro «Solo erradas» (10) | 40 / 10 |
@@ -238,7 +287,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | OK | MAPLO «como el examen»: 60 % oficial-maplo | 6 de 10 |
 | OK | tarjeta «Continuar sesión» con el tiempo restante | Simulacro en curso MAPLO: 2 de 10 respondidas Quedan 14:57 Continuar Descartar |
 | OK | al retomar se conservan las respuestas | 2 respondidas |
-| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 14 oct, 15:05. Entregado al agotarse el tiempo. |
+| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 14 oct, 16:42. Entregado al agotarse el tiempo. |
 
 ## Repaso
 
@@ -289,9 +338,9 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-14.json (8856 bytes) |
+| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-14.json (8748 bytes) |
 | OK | reiniciar (doble confirmación) borra el progreso |  |
-| OK | importar restaura el progreso | XP 991, 2 simulacros, 72 preguntas |
+| OK | importar restaura el progreso | XP 1026, 2 simulacros, 70 preguntas |
 | OK | el progreso importado persiste tras recargar |  |
 
 ## Tema claro
@@ -312,8 +361,8 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | aviso «Nueva versión disponible» cuando se instala una versión nueva |  |
-| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.3.0-prueba |
-| OK | el progreso se conserva tras actualizar | XP 1001 |
+| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.4.0-prueba |
+| OK | el progreso se conserva tras actualizar | XP 1041 |
 
 ## Subdirectorio
 
@@ -351,7 +400,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | OK | cambiar_apodo: el servidor rechaza un apodo duplicado con mensaje legible |  |
 | OK | apodo guardado con cambiar_apodo |  |
 | OK | «Conservar»: el progreso local sube como estado inicial | XP 500 |
-| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 665; evento n=10, aciertos=10 |
+| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 645; evento n=10, aciertos=10 |
 | OK | evento de práctica con n, aciertos, examen e id_cliente |  |
 | OK | las 10 respuestas están en el estado remoto |  |
 | OK | Inicio: indicador «Sincronizado» |  |
@@ -361,8 +410,8 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 665, 13 preguntas |
-| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 305 de 360 XP |
+| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 645, 13 preguntas |
+| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 285 de 360 XP |
 
 ## Nube: sin conexión y fusión
 
@@ -371,7 +420,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | OK | sin conexión: se puede estudiar; el estado queda pendiente y el evento en cola | pendiente true, cola 1 |
 | OK | el otro dispositivo sube sus cambios mientras B está sin conexión |  |
 | OK | al volver la red se sube lo encolado y se fusiona: respuestas de ambos dispositivos | 33 preguntas |
-| OK | fusión: XP = máximo de ambos | 815 (B 805, C 815) |
+| OK | fusión: XP = máximo de ambos | 780 (B 780, C 780) |
 | OK | fusión: conserva el progreso anterior y la fecha más antigua de los logros |  |
 | OK | eventos: los 3 registrados una sola vez (cola + idempotencia) | 3 eventos |
 | OK | B queda sincronizado (sin pendientes ni cola) |  |
@@ -382,10 +431,10 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 815 XP |
+| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 780 XP |
 | OK | ranking: sin cuentas bloqueadas y sin correos |  |
 | OK | ranking: pestaña «Nota promedio» |  |
-| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 815 XP 3.º |
+| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 780 XP 3.º |
 
 ## Nube: usuario normal
 
@@ -425,7 +474,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | diagnóstico (admin): Auth, REST, versión del esquema y RLS en orden | 9 pasos |
+| OK | diagnóstico (admin): Auth, REST, versión del esquema y RLS en orden | 10 pasos |
 
 ## Nube: confirmación de correo
 
@@ -467,7 +516,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 |---|---|---|
 | OK | manifest con criterios de instalación (id, name, short_name, start_url relativa, standalone, iconos 192/512 any y maskable, colores) | id=./ |
 | OK | index.html con meta iOS y apple-touch-icon |  |
-| OK | SW con handler fetch, archivos nuevos en el precache y versión ≥ 1.2.0 (1.3.0 desde el encargo 04) |  |
+| OK | SW con handler fetch, archivos nuevos en el precache y versión ≥ 1.2.0 (1.4.0 desde el encargo 05) |  |
 
 ## Instalación: modo instalado
 
@@ -516,7 +565,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | «Seguir en el navegador» cierra la pantalla y libera el fondo |  |
-| OK | la elección se recuerda 7 días (localStorage) | 2026-10-21T20:08:02.543Z |
+| OK | la elección se recuerda 7 días (localStorage) | 2026-10-21T21:44:33.883Z |
 | OK | al recargar dentro de los 7 días no vuelve a aparecer |  |
 | OK | vencidos los 7 días vuelve a aparecer |  |
 | OK | Escape cierra la pantalla (igual que «Seguir en el navegador») |  |
@@ -584,7 +633,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | con voucher y operación: «Enviar comprobante» habilitado |  |
-| OK | sube el voucher a comprobantes/<uid>/<timestamp>.jpg y registra el pago (pendiente) | a70e11b0-1d88-4e33-a1e0-583c7c686a9e/1792008507088.jpg |
+| OK | sube el voucher a comprobantes/<uid>/<timestamp>.jpg y registra el pago (pendiente) | fc439e76-9e7a-42a3-878e-691d34fd2e3d/1792014299046.jpg |
 | OK | el voucher se envía comprimido como JPEG ≤ 1 MB | 1413 bytes |
 | OK | plan → pendiente |  |
 | OK | «Pago en revisión» con la operación y la miniatura del voucher |  |
@@ -604,7 +653,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | Más → Administración: contador de pagos pendientes (1) |  |
-| OK | Pagos: apodo, correo, medio, operación, monto y fecha | Ana_Pago pago.ana@prueba.pe Pendiente Medio Yape Operación 20261015 Monto S/ 20 Fecha 14 oct, 15:08 Verificar y desbloqu |
+| OK | Pagos: apodo, correo, medio, operación, monto y fecha | Ana_Pago pago.ana@prueba.pe Pendiente Medio Yape Operación 20261015 Monto S/ 20 Fecha 14 oct, 16:44 Verificar y desbloqu |
 | OK | el voucher se ve con una URL firmada del almacenamiento privado | 160 px |
 | OK | el voucher se amplía en un modal |  |
 | OK | rechazar exige motivo |  |
@@ -673,7 +722,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | eventos de pago con examen «—» (no «Mixto») | 5 eventos de pago |
-| OK | eventos de pago con su detalle (operación / motivo) desde admin_eventos().detalle | Pago verificado yape · operación 20261016 · pago 76dd6fa7-ce76-4936-892a-0a186f3f213d \| Pago rechazado yape · operación 20261015 · motivo: El número de operación no coincide con  |
+| OK | eventos de pago con su detalle (operación / motivo) desde admin_eventos().detalle | Pago verificado yape · operación 20261016 · pago d1b1bf1f-922a-4a87-aa0c-a53ba6d84e61 \| Pago rechazado yape · operación 20261015 · motivo: El número de operación no coincide con  |
 
 ## Pago: Explorar consume la prueba
 
@@ -708,6 +757,132 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | sin errores de consola ni excepciones en los escenarios de pago |  |
+
+## Respaldo: aviso de 7 días
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | nunca se descargó: Más → Administración muestra el aviso «Respaldo» |  |
+| OK | pestaña Respaldo con badge y «Última descarga: nunca» |  |
+| OK | última descarga hace 8 días: badge en la pestaña y «Hace más de 7 días» |  |
+| OK | última descarga hace 2 días: sin badge («Al día») |  |
+| OK | hace 2 días: Más → Administración sin aviso de respaldo |  |
+
+## Respaldo: resumen
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | resumen: totales por tabla de admin_respaldo_resumen() | {"perfiles":61,"estado_progreso":58,"eventos_sesion":233,"ingresos":1,"pagos":4,"configuracion_pago":1} |
+| OK | datos sembrados para paginar: > 200 eventos y > 50 estados | {"eventos":233,"estados":58,"perfiles":61,"pagos":4} |
+| OK | resumen: vouchers (rutas distintas) y tamaño estimado |  |
+| OK | aviso fijo «Respalda antes de cambiar el esquema y una vez por semana» |  |
+
+## Respaldo: descarga completa
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | nombre ascenso2026-respaldo-AAAA-MM-DD-HHMM.json | ascenso2026-respaldo-2026-10-14-1645.json |
+| OK | archivo: formato, version 1, version_esquema, version_app, generado_en y resumen |  |
+| OK | cada tabla trae tantas filas como su total | perfiles 61/61, estado_progreso 58/58, eventos_sesion 233/233, ingresos 1/1, pagos 4/4, configuracion_pago 1/1 |
+| OK | sin filas repetidas pese a las páginas solapadas (deduplicación por clave primaria) |  |
+| OK | paginación real: > 200 eventos (páginas de 200) y > 50 estados (páginas de 50) | 233 eventos, 58 estados |
+| OK | admin_respaldo se llamó por páginas (más los 2 reintentos) | 11 llamadas (mínimo 10) |
+| OK | reintento por página tras 2 cortes de conexión (se informa) | Se reintentaron 2 páginas por fallos de conexión. · cortes en el mock: 2 |
+| OK | filas completas (rol, bloqueado, plan, contadores, pagado_en, aprobado_por; configuración de cobro) |  |
+| OK | vouchers: rutas distintas de pagos.captura_path | 6343dfd4-36f4-4b64-a008-9c294087f4e2/semilla-1.jpg, e2e28a7d-7315-4c88-ba1b-58702f4dd9e1/semilla-0.jpg, ff74338e-049b-43e6-be80-32a1c4605acf/semilla-2.jpg |
+| OK | muestra el total de filas descargadas | 358 |
+| OK | guarda la fecha de la descarga en localStorage (ascenso2026:admin:ultimo-respaldo) | 2026-10-14T21:45:35.867Z |
+| OK | tras descargar desaparece el badge de la pestaña |  |
+| OK | tras descargar desaparece el aviso en Más → Administración |  |
+
+## Respaldo: filas que no cuadran
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | una tabla incompleta se vuelve a pedir y, si sigue igual, se descarga igual | {"filas":60,"total":61,"ok":false} |
+| OK | aviso con la tabla y la diferencia de filas |  |
+
+## Respaldo: restauración y deshacer
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | lista los perfiles del respaldo con apodo, correo, XP y fecha | 61 cuentas |
+| OK | vista previa: XP y preguntas del respaldo frente a los actuales | 5400 vs 100 · 380 vs 7 |
+| OK | nota de la vista previa: el celular adoptará el progreso restaurado (lo de más queda en el servidor; «Deshacer») |  |
+| OK | actual (100 XP) < respaldo (5400 XP): sin advertencia ámbar |  |
+| OK | al cancelar la confirmación no se restaura nada |  |
+| OK | admin_restaurar_estado: el estado del servidor es el del respaldo | xp 5400 |
+| OK | se guardó una copia del estado anterior en el historial |  |
+| OK | evento «restauracion» registrado |  |
+| OK | la vista previa se actualiza con el estado actual tras restaurar |  |
+| OK | «Deshacer» pide confirmación; sin actividad posterior, sin aviso | timonel@prueba.pe volverá exactamente al progreso que tenía antes de restaurar (antes se guarda una copia del actual en  |
+| OK | la cuenta tenía progreso antes: sin el aviso «no tenía progreso guardado» |  |
+| OK | «Deshacer» vuelve al estado anterior (y guarda el restaurado con motivo «deshacer») |  |
+| OK | «Deshacer» deja de estar disponible al cambiar de pestaña (la restauración se mantiene) |  |
+
+## Respaldo: también plan, apodo y contadores
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | vista previa: plan del respaldo frente al actual | Prueba vs Cortesía |
+| OK | la confirmación detalla lo que se restaurará del perfil | Para vigia@prueba.pe: reemplazará su progreso en la nube por el del respaldo (260 XP, 25 preguntas, 14 oct, 16:45); antes se guarda una copi |
+| OK | admin_restaurar_perfil: plan, apodo y contadores del respaldo (sin tocar rol ni bloqueo) | {"plan":"prueba","pp":0,"sp":0} |
+
+## Respaldo: progreso actual mayor, actividad posterior y cuenta sin progreso
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | actual > respaldo: advertencia ámbar destacada en la vista previa con las cifras | Atención: hoy la cuenta tiene más progreso que el respaldo (9,000 XP y 500 preguntas frente a 5,400 XP y 380 preguntas). Si restauras, su celular adop · borde rgb(240, 164, 58) |
+| OK | la advertencia se repite en el modal de confirmación | Atención: hoy la cuenta tiene más progreso que el respaldo (9,000 XP y 500 preguntas frente a 5,400 XP y 380 preguntas). |
+| OK | restaurado pese a la advertencia (5400 XP) |  |
+| OK | «Deshacer» con actividad posterior: la confirmación lo advierte | La cuenta tiene actividad posterior a la restauración (última: 14 oct, 16:45). Lo estudiado desde entonces no se conserva en el progreso: qu |
+| OK | «Deshacer» devuelve EXACTAMENTE el estado previo (9000 XP); lo estudiado después (5600) queda solo en el historial |  |
+| OK | cuenta sin progreso actual: sin advertencia |  |
+| OK | deshacer con sin_estado: la cuenta queda sin progreso y el resultado lo explica | La cuenta no tenía progreso guardado antes; el celular volverá a subir el suyo al sincronizar. |
+
+## Respaldo: archivos inválidos
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | archivo inválido rechazado (no JSON, progreso exportado, versión futura, sin perfiles), sin lista de cuentas | ok \| ok \| ok \| ok |
+
+## Respaldo: usuario sin cuenta actual
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | cuenta del respaldo que ya no existe: «Sin cuenta actual» y no se puede elegir |  |
+| OK | sin vista previa ni restauración para una cuenta inexistente |  |
+| OK | el servidor también lo rechaza (P0002) | [400,"P0002"] |
+
+## Respaldo: validaciones del servidor
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | tabla no permitida, inicio negativo o límite 0 → 22023 | [{"st":400,"code":"22023"},{"st":400,"code":"22023"},{"st":400,"code":"22023"}] |
+| OK | límite efectivo: 500 por llamada y 50 en estado_progreso | 500 / 50 |
+| OK | deshacer sin restauraciones previas → P0002 |  |
+
+## Respaldo: diagnóstico
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | diagnóstico: paso «Respaldo y restauración» en verde (respaldo_ok) |  |
+| OK | diagnóstico: esquema 1.3.0 y ningún paso en rojo |  |
+
+## Respaldo: no admin
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | usuario normal: «Más» sin Administración ni aviso de respaldo |  |
+| OK | usuario normal: #/admin?tab=respaldo muestra «Acceso restringido» (sin pestaña Respaldo) |  |
+| OK | las 5 RPC de respaldo → 403 (42501) para un usuario normal | [[403,"42501"],[403,"42501"],[403,"42501"],[403,"42501"],[403,"42501"]] |
+| OK | el usuario normal no pudo cambiarse el plan |  |
+
+## Respaldo: consola
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin errores de consola ni excepciones en los escenarios de respaldo |  |
 
 ## Detalle de la verificación de composición
 
@@ -779,6 +954,8 @@ No se incluyen en el precache del service worker.
 - `56_pago_verificado.png`: Pago verificado: agradecimiento antes de volver a Inicio
 - `57_inicio_prueba.png`: Inicio durante la prueba gratis: indicador discreto de preguntas y simulacros
 - `58_bloqueo_sin_conexion.png`: Bloqueo sin conexión: se ven los datos de pago; enviar requiere internet
+- `60_admin_respaldo.png`: Administración → Respaldo: aviso, totales por tabla, última descarga, «Descargar respaldo» y «Restaurar progreso de un usuario»
+- `61_restaurar_previa.png`: Restaurar progreso: vista previa del respaldo frente al actual, casilla «También plan, apodo y contadores» y nota «El celular del usuario adoptará el progreso restaurado…»
 
 ## Limitaciones de estas pruebas
 

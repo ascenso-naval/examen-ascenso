@@ -5,6 +5,8 @@
 // · Pagos (#/admin?tab=pagos): comprobantes pendientes / verificados / rechazados con el voucher
 //   (URL firmada, ampliable), «Verificar y desbloquear» y «Rechazar» con motivo.
 // · Cobro (#/admin?tab=cobro): configuración de pago (Yape, Plin, monto, límites, ayuda).
+// · Respaldo (#/admin?tab=respaldo, v1.4.0): descargar el respaldo completo y restaurar el
+//   progreso de un usuario desde un archivo (js/ui/admin-respaldo.js).
 // El servidor también lo impide: las funciones admin_* responden 403 a quien no es admin.
 
 import * as nube from '../nube.js';
@@ -17,6 +19,8 @@ import { confirmar, abrirHoja } from './modal.js';
 import { toast } from './toast.js';
 import { mapaCalor } from './heatmap.js';
 import { aCsv, descargarCsv } from './csv.js';
+import { crearRespaldo } from './admin-respaldo.js';
+import { respaldoVencido } from '../respaldo.js';
 
 const COLUMNAS = [
   { clave: 'correo', titulo: 'Correo' },
@@ -35,10 +39,10 @@ const COLUMNAS = [
 const fechaCorta = (v) => (v ? fmtFechaHora(v) : '—');
 const nota = (v) => (v === null || v === undefined ? '—' : fmtNota(Number(v)));
 /** [Auditoría H6] Eventos que escribe el servidor (pagos y cambios de plan): sin examen, con detalle. */
-const esEventoCuenta = (t) => typeof t === 'string' && (t.startsWith('pago_') || t === 'plan_cambiado');
+const esEventoCuenta = (t) => typeof t === 'string' && (t.startsWith('pago_') || t === 'plan_cambiado' || t === 'restauracion');
 const nombreTipo = (t) => ({
   practica: 'Práctica', simulacro: 'Simulacro', repaso: 'Repaso',
-  pago_registrado: 'Comprobante enviado', pago_aprobado: 'Pago verificado', pago_rechazado: 'Pago rechazado', plan_cambiado: 'Cambio de plan',
+  pago_registrado: 'Comprobante enviado', pago_aprobado: 'Pago verificado', pago_rechazado: 'Pago rechazado', plan_cambiado: 'Cambio de plan', restauracion: 'Restauración',
 }[t] || t);
 
 /** ¿Puede ver el panel? Usa la caché del rol y lo confirma con el servidor si hay red. */
@@ -80,12 +84,13 @@ function resumenPanel(usuarios, actividad) {
 }
 
 // ---------------------------------------------------------------------------
-// Panel (pestañas: Usuarios · Pagos · Cobro)
+// Panel (pestañas: Usuarios · Pagos · Cobro · Respaldo)
 // ---------------------------------------------------------------------------
 const PESTANAS = [
   { valor: 'usuarios', texto: 'Usuarios' },
   { valor: 'pagos', texto: 'Pagos' },
   { valor: 'cobro', texto: 'Cobro' },
+  { valor: 'respaldo', texto: 'Respaldo' },
 ];
 const FILTROS_PAGO = [
   { valor: 'pendiente', texto: 'Pendientes' },
@@ -114,6 +119,12 @@ export function montarPanel(raiz, params = {}) {
   let errorConfig = null;
   const urls = new Map();      // ruta del voucher → URL firmada
   const yo = nube.sesionLocal()?.id;
+  const respaldo = crearRespaldo({
+    raiz,
+    pintar: () => pintarCuerpo(),
+    activa: () => pestana === 'respaldo',
+    alCambiarAviso: () => actualizarAvisoRespaldo(),
+  });
 
   function filasVisibles() {
     const f = normalizar(filtro.trim());
@@ -174,8 +185,15 @@ export function montarPanel(raiz, params = {}) {
     <p class="mini">${fmtNum(filas.length)} de ${fmtNum(usuarios.length)} usuarios${filtro ? ' (filtrados)' : ''}. Toca un encabezado para ordenar.</p>`;
   }
 
+  const htmlAvisoRespaldo = () => (respaldoVencido() ? ' <span class="etiqueta etiqueta-ambar" id="tab-respaldo-aviso" role="img" aria-label="Respaldo pendiente (más de 7 días)"></span>' : '');
+
   function htmlPestanas() {
-    return `<div class="segmentos pestanas-admin" role="tablist" aria-label="Secciones de administración">${PESTANAS.map((t) => `<button type="button" role="tab" id="tab-${t.valor}" aria-controls="panel-admin" aria-selected="${t.valor === pestana}" aria-pressed="${t.valor === pestana}" data-accion="tab" data-valor="${t.valor}">${esc(t.texto)}${t.valor === 'pagos' && nPendientes ? ` <span class="etiqueta etiqueta-oro" id="tab-pagos-conteo">${nPendientes}</span>` : ''}</button>`).join('')}</div>`;
+    return `<div class="segmentos pestanas-admin" role="tablist" aria-label="Secciones de administración">${PESTANAS.map((t) => `<button type="button" role="tab" id="tab-${t.valor}" aria-controls="panel-admin" aria-selected="${t.valor === pestana}" aria-pressed="${t.valor === pestana}" data-accion="tab" data-valor="${t.valor}">${esc(t.texto)}${t.valor === 'pagos' && nPendientes ? ` <span class="etiqueta etiqueta-oro" id="tab-pagos-conteo">${nPendientes}</span>` : ''}${t.valor === 'respaldo' ? htmlAvisoRespaldo() : ''}</button>`).join('')}</div>`;
+  }
+
+  function actualizarAvisoRespaldo() {
+    const t = raiz.querySelector('#tab-respaldo');
+    if (t && vivo) t.innerHTML = `Respaldo${htmlAvisoRespaldo()}`;
   }
 
   function htmlUsuarios() {
@@ -477,6 +495,7 @@ export function montarPanel(raiz, params = {}) {
   function htmlCuerpo() {
     if (pestana === 'pagos') return htmlPagos();
     if (pestana === 'cobro') return htmlCobro();
+    if (pestana === 'respaldo') return respaldo.html();
     if (error) return vacio({ icono: 'alerta', titulo: 'No se pudieron cargar los datos', texto: error, accion: '<button type="button" class="btn btn-secundario" data-accion="recargar">Reintentar</button>' });
     if (!usuarios) return '<p class="peq atenuado" role="status">Cargando usuarios…</p>';
     return htmlUsuarios();
@@ -511,6 +530,7 @@ export function montarPanel(raiz, params = {}) {
 
   function cambiarPestana(t) {
     if (t === pestana) return;
+    if (pestana === 'respaldo') respaldo.alSalir();
     pestana = t;
     try { history.replaceState(history.state, '', `#/admin${t === 'usuarios' ? '' : `?tab=${t}`}`); } catch { /* sin historial */ }
     pintar();
@@ -568,12 +588,14 @@ export function montarPanel(raiz, params = {}) {
     const b = e.target.closest('[data-accion]');
     if (!b) return;
     const a = b.dataset.accion;
+    if (respaldo.alClic(a, b)) return;
     if (a === 'ordenar') {
       const col = b.dataset.col;
       orden = orden.col === col ? { col, dir: -orden.dir } : { col, dir: COLUMNAS.find((c) => c.clave === col)?.num || col === 'ultimo_ingreso' ? -1 : 1 };
       raiz.querySelector('#tabla-usuarios').innerHTML = htmlTabla();
     } else if (a === 'recargar') {
       if (pestana === 'pagos') cargarPagos();
+      else if (pestana === 'respaldo') respaldo.recargar();
       else if (pestana === 'cobro') { config = null; pintarCuerpo(); cargarConfig(); } else { usuarios = null; pintarCuerpo(); cargar(); }
     } else if (a === 'tab') cambiarPestana(b.dataset.valor);
     else if (a === 'filtro-pago') {
@@ -602,6 +624,9 @@ export function montarPanel(raiz, params = {}) {
     filtro = e.target.value;
     raiz.querySelector('#tabla-usuarios').innerHTML = htmlTabla();
   }
+  function alCambiar(e) {
+    respaldo.alCambiar(e);
+  }
   function alEnviar(e) {
     if (!e.target.matches('.form-cobro')) return;
     e.preventDefault();
@@ -627,8 +652,11 @@ export function montarPanel(raiz, params = {}) {
   raiz.addEventListener('click', alClic);
   raiz.addEventListener('input', alEscribir);
   raiz.addEventListener('submit', alEnviar);
+  raiz.addEventListener('change', alCambiar);
   return () => {
     vivo = false;
+    respaldo.destruir();
+    raiz.removeEventListener('change', alCambiar);
     raiz.removeEventListener('click', alClic);
     raiz.removeEventListener('input', alEscribir);
     raiz.removeEventListener('submit', alEnviar);

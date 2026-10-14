@@ -97,10 +97,11 @@ export function abrirHoja(op = {}) {
 }
 
 /** Confirmación propia. Devuelve true si se acepta. */
-export async function confirmar({ titulo, texto, aceptar = 'Aceptar', cancelar = 'Cancelar', peligro = false }) {
+export async function confirmar({ titulo, texto, aviso = '', aceptar = 'Aceptar', cancelar = 'Cancelar', peligro = false }) {
   const v = await abrirHoja({
     titulo,
-    html: `<p>${esc(texto)}</p>`,
+    // aviso: advertencia destacada (ámbar) bajo el texto, p. ej. al restaurar un respaldo.
+    html: `<p>${esc(texto)}</p>${aviso ? `<p class="aviso-almacen aviso-modal" data-aviso role="alert">${esc(aviso)}</p>` : ''}`,
     acciones: [
       { texto: aceptar, clase: peligro ? 'btn-peligro' : 'btn-primario', valor: true },
       { texto: cancelar, clase: 'btn-secundario', valor: false },
