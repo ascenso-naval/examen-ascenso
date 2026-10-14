@@ -17,6 +17,8 @@ import { sonar } from './sonido.js';
 import * as sync from '../sincronizacion.js';
 import * as nube from '../nube.js';
 import { cerrarSesionUsuario, APODO_RE, AYUDA_APODO } from '../cuenta.js';
+import { estaInstalada } from '../instalacion.js';
+import { abrirInstalacion } from './instalar.js';
 
 const TEXTO_SITUACION = {
   ok: 'Al día', pendiente: 'Cambios pendientes de subir', sincronizando: 'Sincronizando…',
@@ -25,6 +27,15 @@ const TEXTO_SITUACION = {
 
 function htmlSituacion(s = sync.situacionSync()) {
   return `<strong>Sincronización</strong><span>${esc(TEXTO_SITUACION[s.tipo] || '')}${s.ultimaSync ? ` · última: ${esc(fmtFechaHora(s.ultimaSync))}` : ''}${s.cola ? ` · ${s.cola} sesión(es) en cola` : ''}${s.tipo === 'error' && s.error ? ` · ${esc(s.error)}` : ''}</span>`;
+}
+
+function htmlInstalar() {
+  if (estaInstalada()) {
+    return `<div class="lista" id="instalar-ajuste"><div class="ajuste"><span class="ajuste-texto"><strong>App instalada</strong><span>La estás usando desde la pantalla de inicio.</span></span>${icono('check', { tam: 22 })}</div></div>`;
+  }
+  return `<div class="lista" id="instalar-ajuste">
+        <button type="button" class="fila" data-accion="instalar"><span class="fila-icono">${icono('descargar')}</span><span class="fila-cuerpo"><span class="fila-titulo">Instalar en el celular</span><span class="fila-sub">Ábrela con un toque desde tu pantalla de inicio y sin conexión</span></span>${icono('chev-der', { clase: 'chev', tam: 20 })}</button>
+      </div>`;
 }
 
 function htmlCuenta() {
@@ -125,6 +136,9 @@ export function montar(raiz, params) {
       ${!almacen.disponible ? `<p class="aviso-almacen">${icono('alerta', { tam: 20 })}<span>Este navegador no permite guardar datos. Exporta tu progreso antes de cerrar la app.</span></p>` : ''}
 
       ${htmlCuenta()}
+
+      <h2>Aplicación</h2>
+      ${htmlInstalar()}
 
       <h2>Perfil</h2>
       <div class="lista">
@@ -284,6 +298,7 @@ export function montar(raiz, params) {
         return;
       }
       case 'cerrar-sesion': await cerrarSesionUsuario(); return;
+      case 'instalar': abrirInstalacion(); return;
       default: return;
     }
     guardar();

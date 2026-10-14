@@ -1085,3 +1085,145 @@ body.sin-sesion #vista { padding-bottom: calc(var(--inf) + 28px); }
 .lista-diag .diag-mal .fila-icono { color: var(--rojo-texto); background: var(--rojo-suave); }
 .lista-diag .diag-aviso .fila-icono { color: var(--ambar-texto); background: var(--ambar-suave); }
 .form-apodo .rotulo, .form-clave .rotulo, .form-recuperar .rotulo { display: block; }
+
+/* =========================================================================
+   Encargo 03 — «Instalar con un toque» (pantalla de instalación)
+   ========================================================================= */
+body.con-instalar { overflow: hidden; }
+.instalar {
+  position: fixed; inset: 0; z-index: 110;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  background: var(--fondo); color: var(--texto);
+  animation: aparecer 0.2s ease-out;
+}
+.instalar-panel {
+  max-width: 480px; margin: 0 auto;
+  padding: 0 16px calc(var(--inf) + 28px);
+}
+.instalar-ios .instalar-panel { padding-bottom: calc(var(--inf) + 112px); }
+.inst-cabeza {
+  margin: 0 -16px 18px;
+  padding: calc(var(--sup) + 30px) 20px 26px;
+  background: var(--portada); color: var(--portada-texto);
+  border-radius: 0 0 28px 28px; text-align: center;
+}
+.inst-icono {
+  width: 84px; height: 84px; margin: 0 auto 14px; border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(212, 175, 55, 0.35);
+  animation: pop 0.24s ease-out;
+}
+.inst-cabeza h1 { margin: 0 0 6px; color: var(--portada-texto); }
+.inst-sub { margin: 0 auto; max-width: 30ch; color: var(--portada-texto-2); font-size: 0.97rem; }
+.inst-ventajas { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; }
+.inst-ventajas li { display: flex; gap: 10px; align-items: center; color: var(--texto-2); font-size: 0.93rem; }
+.inst-ventajas svg { flex: none; color: var(--oro-texto); }
+.inst-cuerpo { min-height: 96px; }
+.inst-boton { min-height: 58px; font-size: 1.08rem; border-radius: var(--radio); box-shadow: var(--sombra); }
+.inst-boton:not([disabled]) { animation: resplandor 2.4s ease-in-out 0.4s infinite; }
+@keyframes resplandor {
+  0%, 100% { box-shadow: var(--sombra), 0 0 0 0 rgba(212, 175, 55, 0.45); }
+  50% { box-shadow: var(--sombra), 0 0 0 8px rgba(212, 175, 55, 0); }
+}
+.inst-ayuda { margin: 10px 0 0; }
+.inst-girador {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2.5px solid currentColor; border-right-color: transparent;
+  animation: girar 0.9s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+.inst-guia-titulo { font-weight: 700; margin: 0 0 10px; }
+.inst-aviso {
+  margin: 0 0 12px; padding: 12px 14px; border-radius: 14px;
+  background: var(--ambar-suave); color: var(--ambar-texto); font-size: 0.93rem;
+}
+.inst-pasos { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+.inst-paso {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--casco); border-radius: var(--radio); box-shadow: var(--sombra);
+  padding: 14px; line-height: 1.4;
+  opacity: 0; animation: subir 0.32s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 0.22s + 0.1s);
+}
+.inst-paso-num {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 800; font-size: 0.85rem;
+  background: var(--oro-suave); color: var(--oro-texto);
+}
+.inst-paso-ico {
+  flex: none; width: 48px; height: 48px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--casco-2); color: var(--oro-texto);
+}
+.inst-paso:first-child .inst-paso-ico { animation: latido 1.8s ease-in-out 1s infinite; }
+.inst-paso-texto { flex: 1; min-width: 0; font-size: 0.95rem; }
+.inst-paso-texto strong { color: var(--texto); }
+.inst-nota { display: block; margin-top: 4px; font-size: 0.84rem; color: var(--texto-3); }
+.inst-pastilla {
+  display: inline-block; padding: 3px 5px; border-radius: 7px;
+  background: var(--oro); color: #0B1F3A; font-size: 0.68rem; font-weight: 800; line-height: 1.3;
+}
+.inst-exito {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  padding: 18px 16px; border-radius: var(--radio);
+  background: var(--verde-suave); color: var(--verde-texto);
+  animation: pop 0.22s ease-out;
+}
+.inst-exito strong { font-size: 1.08rem; color: var(--texto); }
+.inst-exito span:last-child { color: var(--texto-2); font-size: 0.92rem; }
+.inst-exito-ico {
+  width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--verde-marca); color: #fff;
+}
+.inst-pie { margin-top: 18px; }
+.inst-pie .mini { margin: 10px 0 0; }
+.inst-copiado:empty { display: none; }
+.inst-copiado { margin: 8px 0 0; color: var(--verde-texto); }
+
+/* Flecha que señala el botón Compartir de Safari (abajo en iPhone, arriba en iPad). */
+.inst-flecha {
+  position: fixed; left: 50%; bottom: calc(var(--inf) + 10px); z-index: 111;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transform: translateX(-50%);
+  padding: 6px 12px 2px; border-radius: 14px;
+  background: #0B1F3A; color: #E3C35E; border: 1px solid rgba(212, 175, 55, 0.5);
+  box-shadow: var(--sombra-fuerte);
+  font-size: 0.82rem; font-weight: 700; white-space: nowrap; pointer-events: none;
+}
+.inst-flecha svg { animation: senalar-abajo 1.2s ease-in-out infinite; }
+.inst-flecha-arriba { top: calc(var(--sup) + 10px); bottom: auto; left: auto; right: 16px; transform: none; padding: 4px 14px 8px; }
+.inst-flecha-arriba svg { animation-name: senalar-arriba; }
+@keyframes senalar-abajo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@keyframes senalar-arriba { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+/* Escritorio: tarjeta breve sobre un velo. */
+.instalar-escritorio {
+  display: grid; place-items: center; padding: 24px 16px;
+  background: var(--velo);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.inst-tarjeta {
+  width: 100%; max-width: 440px;
+  background: var(--casco); border-radius: 22px; box-shadow: var(--sombra-fuerte);
+  padding: 26px 22px 22px; text-align: center;
+  animation: subir 0.2s ease-out;
+}
+.inst-tarjeta h1 { font-size: 1.35rem; margin: 10px 0 8px; }
+.inst-tarjeta-ico {
+  display: inline-grid; place-items: center; width: 60px; height: 60px; border-radius: 18px;
+  background: #0B1F3A; color: #D4AF37;
+}
+.inst-enlace {
+  display: flex; align-items: center; gap: 8px; margin-top: 12px;
+  padding: 6px 6px 6px 12px; border-radius: var(--radio-m);
+  background: var(--casco-2); text-align: left;
+}
+.inst-enlace-url {
+  flex: 1; min-width: 0; overflow-wrap: anywhere;
+  color: var(--oro-texto); font-weight: 650; font-size: 0.92rem; text-decoration: none;
+}
+.inst-tarjeta .botones { margin-top: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .inst-paso { opacity: 1; animation: none; }
+  .inst-flecha svg, .inst-boton, .inst-paso-ico, .inst-icono, .inst-girador { animation: none !important; }
+}

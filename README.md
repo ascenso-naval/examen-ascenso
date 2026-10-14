@@ -9,6 +9,7 @@ Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 pre
 - **Progreso**: dominio, evolución de notas, actividad de 12 semanas y puntos débiles.
 - **Gamificación**: XP, niveles con rangos navales, meta diaria, racha y 20 logros.
 - **Cuenta** con correo y contraseña (v1.1.0): el progreso se **sincroniza** entre dispositivos (offline-first), **ranking** por apodo y **panel de administración** (ver secciones 7 y 8).
+- **Instalar con un toque** (v1.2.0): quien abre el enlace en el celular sin la app instalada ve primero una pantalla que lo guía (botón nativo en Android, guía de 3 pasos en iPhone; ver sección 1).
 - Sitio estático: HTML, CSS y JavaScript (módulos ES). Única dependencia: copia local de `@supabase/supabase-js` en `vendor/` (sin CDN). El backend es Supabase (`backend/schema.sql`).
 
 ---
@@ -17,16 +18,26 @@ Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 pre
 
 La primera vez se necesita internet para descargar el banco (unos 2 MB). Después funciona sin conexión.
 
+**Desde la v1.2.0 la app guía la instalación («Instalar con un toque»).** Basta compartir el enlace (`https://marconavy2510-prog.github.io/examen-ascenso/`): quien lo abre en el celular sin tener la app instalada ve primero una pantalla de instalación con la paleta de la app:
+
+- **Android (Chrome, Edge, Samsung Internet):** botón grande **«Instalar la app»** que abre el aviso nativo del navegador (evento `beforeinstallprompt`). Mientras el navegador lo prepara el botón dice «Preparando instalación…»; si a los 4 s no está disponible, se muestra la guía manual del menú (⋮ → «Instalar app» / «Añadir a pantalla de inicio»; en Samsung Internet, ≡ → «Añadir página a»). Al aceptar: «Lista: ábrela desde tu pantalla de inicio».
+- **iPhone/iPad:** guía animada de 3 pasos con iconos propios: **Compartir** (cuadrado con flecha; abajo en iPhone, arriba en iPad, con una flecha que lo señala) → **Añadir a pantalla de inicio** → **Añadir**. En Chrome, Firefox o Edge para iOS el texto se adapta a su menú; dentro del navegador de otra app (Instagram, Facebook…) sugiere abrir el enlace en Safari.
+- **Computadora:** tarjeta breve «Esta app está pensada para el celular: abre este enlace en tu teléfono», con el enlace y «Copiar»; se puede continuar en el navegador.
+- **«Seguir en el navegador»** (o Escape) cierra la pantalla y no vuelve a mostrarse durante **7 días** (clave `ascenso2026:instalar` en localStorage). **Ajustes → Aplicación → Instalar en el celular** la vuelve a abrir cuando se quiera.
+- Si la app ya se abre instalada (`display-mode: standalone` o `navigator.standalone` en iOS), no se muestra nada de esto. Código: `js/instalacion.js` (detección, evento y preferencia) y `js/ui/instalar.js` (pantalla).
+
+Pasos manuales, por si se necesitan:
+
 **iPhone (Safari)**
-1. Abre la dirección de la app en **Safari** (por ejemplo `https://usuario.github.io/examen-ascenso/`).
-2. Toca **Compartir** (el cuadrado con la flecha) → **Añadir a pantalla de inicio** → **Añadir**.
+1. Abre la dirección de la app en **Safari**.
+2. Toca **Compartir** (el cuadrado con la flecha; si no lo ves, toca **⋯** y luego Compartir) → **Añadir a pantalla de inicio** → **Añadir**.
 3. Abre la app desde el icono del timón. A partir de ahí úsala siempre desde ese icono.
 
 > En iPhone, la app instalada y Safari guardan el progreso por separado. Si ya estudiaste en Safari, usa **Ajustes → Exportar progreso** allí y **Importar progreso** en la app instalada.
 
 **Android (Chrome)**
 1. Abre la dirección en **Chrome**.
-2. Toca el menú **⋮** → **Instalar app** (o «Añadir a la pantalla principal»), o acepta el aviso de instalación.
+2. Toca **Instalar la app** en la pantalla de instalación, o el menú **⋮** → **Instalar app** (o «Añadir a pantalla de inicio»).
 3. Abre la app desde el icono.
 
 **Cuenta y copias de seguridad.** La primera vez se ingresa (o se crea la cuenta) con internet; desde entonces la app funciona sin conexión y sincroniza el progreso con la cuenta cuando hay red. Para usarla en otro celular basta ingresar con la misma cuenta. Exportar/importar (Ajustes) sigue disponible como respaldo manual.
@@ -193,6 +204,8 @@ js/estadisticas.js      dominio y resúmenes
 js/consultas.js         consultas combinadas para las vistas
 js/sesion.js            sesiones en curso (práctica/repaso y simulacro)
 js/sw-registro.js       registro del SW y aviso de nueva versión
+js/instalacion.js       ¿instalada?, plataforma, beforeinstallprompt y «Seguir en el navegador» (7 días)
+js/ui/instalar.js       pantalla «Instalar con un toque» (Android, iPhone/iPad, escritorio)
 js/version.js           APP_VERSION visible
 js/util.js              fechas locales, azar con semilla, formato
 js/ui/vista-*.js        una vista por pantalla (acceso, ranking, admin y diagnóstico incluidas)

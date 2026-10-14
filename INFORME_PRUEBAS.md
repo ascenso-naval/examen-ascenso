@@ -1,10 +1,10 @@
 # Informe de pruebas — Ascenso 2026 (PWA)
 
-Fecha: 7/10/2026, 7:15:55 p. m. (hora de Lima). Duración: 166 s.
+Fecha: 14/10/2026, 9:50:13 a. m. (hora de Lima). Duración: 186 s.
 
 Entorno: Chromium (Playwright 1.56.0), viewport 390×844, `isMobile: true`, `hasTouch`, escala 2, locale es-PE, zona America/Lima. App servida con `python3 -m http.server 8123 --directory app`.
 
-**Resultado: 207 de 207 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
+**Resultado: 241 de 241 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
 
 Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `node verificar_composicion.mjs`, `node unitarias.mjs`).
 
@@ -19,17 +19,17 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | Exportar → borrar → importar restaura | Exportar e importar | OK (4 comprobaciones) |
 | El modo ampliado cambia el conteo disponible | Modo ampliado | OK (3 comprobaciones) |
 | Segunda carga con la red cortada funciona (también bajo un subdirectorio) | Sin conexión, Subdirectorio | OK (5 comprobaciones) |
-| Capturas de cada pantalla principal en `app/_capturas/` | — | 44 capturas |
+| Capturas de cada pantalla principal en `app/_capturas/` | — | 47 capturas |
 | `node --check` de todos los módulos y JSON del manifest | Estáticas | OK (13 comprobaciones) |
 | Extra: lógica (niveles, racha, SRS, XP, nota, migración), interacciones, tema claro, nueva versión del SW | Lógica (unitarias), Interacciones, Pantallas, Tema claro, Nueva versión | OK (58 comprobaciones) |
 
 ## Cobertura del encargo 02 (sección 5)
 
-Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
+Comprobaciones del encargo 01 (sin los grupos «Nube»): 163 de 163 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
 
 | Requisito | Grupos de pruebas | Resultado |
 |---|---|---|
-| Vendor local, SW network-only para supabase.co, versión 1.1.0, documentación y esquema | Nube (estáticas) | OK (11 comprobaciones) |
+| Vendor local, SW network-only para supabase.co, versión (1.2.0 desde el encargo 03), documentación y esquema | Nube (estáticas) | OK (11 comprobaciones) |
 | Pantalla de acceso sin red muestra el mensaje correcto | Nube: acceso sin red | OK (5 comprobaciones) |
 | Registro → apodo → práctica → sincroniza (verificado en el mock) → cerrar sesión | Nube: registro y sincronización | OK (13 comprobaciones) |
 | Ingresar en «otro dispositivo» (contexto nuevo) → el progreso llega | Nube: otro dispositivo | OK (2 comprobaciones) |
@@ -40,6 +40,20 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | Usuario bloqueado → expulsado | Nube: bloqueo | OK (6 comprobaciones) |
 | Diagnóstico, confirmación de correo, recuperar contraseña | Nube: diagnóstico, Nube: confirmación de correo, Nube: recuperar contraseña | OK (8 comprobaciones) |
 
+## Cobertura del encargo 03 («Instalar con un toque»)
+
+Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir en el navegador» ya elegido, sembrado por `usarMock`). Nuevas del encargo 03: 34 de 34.
+
+| Requisito | Grupos de pruebas | Resultado |
+|---|---|---|
+| Manifest instalable (id, iconos any/maskable), meta iOS, SW con fetch, precache y versión 1.2.0 | Instalación: estáticas | OK (3 comprobaciones) |
+| (a) Instalada (`navigator.standalone` o `display-mode: standalone`): no aparece | Instalación: modo instalado | OK (2 comprobaciones) |
+| (b) Android: «Preparando…», `beforeinstallprompt` sintético → «Instalar la app» → `prompt()` → éxito; rechazo; guía manual a los 4 s | Instalación: Android | OK (11 comprobaciones) |
+| (c) iPhone Safari: guía de 3 pasos con flecha animada; reduced motion; Chrome en iOS; iPad | Instalación: iPhone | OK (6 comprobaciones) |
+| (d) «Seguir en el navegador»: 7 días, reaparece al vencer, Escape, Ajustes → «Instalar en el celular» | Instalación: seguir en el navegador | OK (8 comprobaciones) |
+| (e) Escritorio: tarjeta breve con el enlace y continuar | Instalación: escritorio | OK (3 comprobaciones) |
+| (f) Sin errores de consola; las comprobaciones anteriores siguen en verde | Instalación: consola | OK (1 comprobaciones) · anteriores: 207/207 |
+
 ## Esquema SQL en PostgreSQL 16 local
 
 `backend/pruebas_schema.sql` instala `backend/schema.sql` tres veces (idempotencia) sobre un clúster temporal con roles anon/authenticated/service_role/supabase_auth_admin y un esquema `auth` mínimo, y simula sesiones con `request.jwt.claims`. Resultado (`backend/pruebas_schema.out`): **80 comprobaciones OK, 0 fallidas** — todas superadas.
@@ -48,7 +62,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | node --check de 52 archivos JS |  |
+| OK | node --check de 54 archivos JS |  |
 | OK | manifest.webmanifest es JSON válido |  |
 | OK | manifest: name y short_name |  |
 | OK | manifest: display standalone y orientación portrait |  |
@@ -56,9 +70,9 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | OK | manifest: iconos 192, 512 y maskable |  |
 | OK | manifest: theme/background navy |  |
 | OK | iconos PNG con el tamaño declarado | iconos/icon-192.png=192x192, iconos/icon-512.png=512x512, iconos/icon-maskable-192.png=192x192, iconos/icon-maskable-512.png=512x512, iconos/apple-touch-icon.png=180x180 |
-| OK | el service worker precachea todos los archivos de la app | 71 entradas |
+| OK | el service worker precachea todos los archivos de la app | 73 entradas |
 | OK | las capturas no están en el precache |  |
-| OK | APP_VERSION coincide en sw.js y js/version.js | 1.1.0 / 1.1.0 |
+| OK | APP_VERSION coincide en sw.js y js/version.js | 1.2.0 / 1.2.0 |
 | OK | sin alert/confirm/prompt nativos |  |
 | OK | sin recursos externos (http/https) en HTML, CSS y JS (salvo la API de Supabase) |  |
 
@@ -71,7 +85,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | OK | config-supabase.js coincide con backend/supabase.config.json |  |
 | OK | ninguna secret key en app/ ni backend/ |  |
 | OK | SW: precachea el vendor y deja supabase.co en network-only |  |
-| OK | APP_VERSION 1.1.0 |  |
+| OK | APP_VERSION 1.2.0 (encargo 03; la 1.1.0 fue la del encargo 02) |  |
 | OK | schema.sql: 4 tablas con RLS, trigger de alta y todas las funciones | 10 funciones |
 | OK | schema.sql probado en PostgreSQL 16 local (backend/pruebas_schema.out) | 80 comprobaciones OK |
 | OK | rutas JSON del estado documentadas en README y schema.sql, coherentes con estado.js |  |
@@ -137,9 +151,9 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 548 ms |
+| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 606 ms |
 | OK | service worker registrado y activo con scope ./ | http://localhost:8123/ |
-| OK | precache del app shell y del banco | ascenso2026-1.1.0: 65 recursos |
+| OK | precache del app shell y del banco | ascenso2026-1.2.0: 67 recursos |
 | OK | manifest enlazado, iconos accesibles y meta tags iOS | Ascenso 2026 — Simulador de examen; content-type application/manifest+json |
 | OK | sin errores de consola en la carga inicial |  |
 
@@ -148,14 +162,14 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | resumen con 9 de 10 aciertos | Práctica completada: 9 |
-| OK | XP ganado en el resumen | +142 XP |
+| OK | XP ganado en el resumen | +137 XP |
 | OK | botón «Repetir las falladas» presente |  |
-| OK | XP guardado en localStorage | 142 (esperado 142) |
+| OK | XP guardado en localStorage | 137 (esperado 137) |
 | OK | respuestas y actividad del día guardadas | respondidas 10 |
-| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1791418393935,"s":[0,"2026-10-07"]} |
+| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1791989232397,"s":[0,"2026-10-14"]} |
 | OK | logro «Primer paso» desbloqueado |  |
 | OK | el resumen sigue disponible tras recargar | 9 |
-| OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 142 |
+| OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 137 |
 
 ## Simulacro
 
@@ -171,7 +185,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | OK | confirmación al entregar con preguntas sin responder | Te quedan 5 preguntas sin responder; contarán como incorrectas. |
 | OK | nota vigesimal 15.0 (30/40) y aprobado | 15.0; Aprobado (nota mínima 14) |
 | OK | simulacro guardado en el historial | {"nota":15,"ac":30,"respondidas":35} |
-| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 952 (esperado 952) |
+| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 940 (esperado 940) |
 | OK | meta diaria cumplida y logros «Primer simulacro» y «Aprobado» |  |
 | OK | la sesión del simulacro se cierra al entregar |  |
 | OK | revisión: 40 preguntas y filtro «Solo erradas» (10) | 40 / 10 |
@@ -183,7 +197,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | OK | MAPLO «como el examen»: 60 % oficial-maplo | 6 de 10 |
 | OK | tarjeta «Continuar sesión» con el tiempo restante | Simulacro en curso MAPLO: 2 de 10 respondidas Quedan 14:57 Continuar Descartar |
 | OK | al retomar se conservan las respuestas | 2 respondidas |
-| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 7 oct, 19:13. Entregado al agotarse el tiempo. |
+| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 14 oct, 09:47. Entregado al agotarse el tiempo. |
 
 ## Repaso
 
@@ -191,8 +205,8 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 |---|---|---|
 | OK | las falladas aparecen pendientes hoy | 19 en pantalla; 19 en el estado |
 | OK | la fallada de la práctica está pendiente |  |
-| OK | acierto en repaso: caja 0 → 1, próxima = mañana | [1,"2026-10-08"] |
-| OK | fallo en repaso: caja 0, próxima = hoy | [0,"2026-10-07"] |
+| OK | acierto en repaso: caja 0 → 1, próxima = mañana | [1,"2026-10-15"] |
+| OK | fallo en repaso: caja 0, próxima = hoy | [0,"2026-10-14"] |
 | OK | resumen del repaso | Repaso completado |
 | OK | contador de repasos acertados | 1 |
 
@@ -214,7 +228,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 |---|---|---|
 | OK | nombre y cuenta regresiva en Inicio | Hola, Marco / Faltan 70 días |
 | OK | elegir artículos actualiza el conteo disponible | 12 preguntas disponibles La sesión tendrá hasta 12 |
-| OK | la sesión solo usa preguntas de los artículos elegidos | 9 preguntas, ítems 1.01, 1.02 |
+| OK | la sesión solo usa preguntas de los artículos elegidos | 9 preguntas, ítems 1.02, 1.01 |
 | OK | al salir con «atrás» la práctica queda como sesión en curso |  |
 | OK | descartar la sesión en curso (con confirmación) |  |
 | OK | «Marcar todo para repaso» marca las preguntas del artículo | 12 de 12 |
@@ -234,9 +248,9 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-07.json (8846 bytes) |
+| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-14.json (8766 bytes) |
 | OK | reiniciar (doble confirmación) borra el progreso |  |
-| OK | importar restaura el progreso | XP 1004, 2 simulacros, 72 preguntas |
+| OK | importar restaura el progreso | XP 984, 2 simulacros, 71 preguntas |
 | OK | el progreso importado persiste tras recargar |  |
 
 ## Tema claro
@@ -257,8 +271,8 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | aviso «Nueva versión disponible» cuando se instala una versión nueva |  |
-| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.1.0-prueba |
-| OK | el progreso se conserva tras actualizar | XP 1019 |
+| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.2.0-prueba |
+| OK | el progreso se conserva tras actualizar | XP 994 |
 
 ## Subdirectorio
 
@@ -296,7 +310,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | OK | cambiar_apodo: el servidor rechaza un apodo duplicado con mensaje legible |  |
 | OK | apodo guardado con cambiar_apodo |  |
 | OK | «Conservar»: el progreso local sube como estado inicial | XP 500 |
-| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 675; evento n=10, aciertos=10 |
+| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 620; evento n=10, aciertos=10 |
 | OK | evento de práctica con n, aciertos, examen e id_cliente |  |
 | OK | las 10 respuestas están en el estado remoto |  |
 | OK | Inicio: indicador «Sincronizado» |  |
@@ -306,8 +320,8 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 675, 13 preguntas |
-| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 315 de 360 XP |
+| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 620, 13 preguntas |
+| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 260 de 360 XP |
 
 ## Nube: sin conexión y fusión
 
@@ -316,7 +330,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | OK | sin conexión: se puede estudiar; el estado queda pendiente y el evento en cola | pendiente true, cola 1 |
 | OK | el otro dispositivo sube sus cambios mientras B está sin conexión |  |
 | OK | al volver la red se sube lo encolado y se fusiona: respuestas de ambos dispositivos | 33 preguntas |
-| OK | fusión: XP = máximo de ambos | 815 (B 815, C 815) |
+| OK | fusión: XP = máximo de ambos | 770 (B 770, C 760) |
 | OK | fusión: conserva el progreso anterior y la fecha más antigua de los logros |  |
 | OK | eventos: los 3 registrados una sola vez (cola + idempotencia) | 3 eventos |
 | OK | B queda sincronizado (sin pendientes ni cola) |  |
@@ -327,10 +341,10 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 815 XP |
+| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 770 XP |
 | OK | ranking: sin cuentas bloqueadas y sin correos |  |
 | OK | ranking: pestaña «Nota promedio» |  |
-| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 815 XP 3.º |
+| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 770 XP 3.º |
 
 ## Nube: usuario normal
 
@@ -351,7 +365,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | OK | la tabla muestra correo y apodo |  |
 | OK | tabla ordenable (XP descendente) | pirata@prueba.pe |
 | OK | buscador por correo/apodo |  |
-| OK | exporta CSV de usuarios | ascenso2026-usuarios-2026-10-07.csv: 7 filas |
+| OK | exporta CSV de usuarios | ascenso2026-usuarios-2026-10-14.csv: 7 filas |
 | OK | exporta CSV de eventos | 10 eventos |
 | OK | detalle: eventos recientes y mapa de calor de actividad | 3 sesiones |
 
@@ -405,6 +419,75 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (l
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | sin excepciones de JavaScript en los escenarios de la nube |  |
+
+## Instalación: estáticas
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | manifest con criterios de instalación (id, name, short_name, start_url relativa, standalone, iconos 192/512 any y maskable, colores) | id=./ |
+| OK | index.html con meta iOS y apple-touch-icon |  |
+| OK | SW con handler fetch, archivos nuevos en el precache y versión 1.2.0 |  |
+
+## Instalación: modo instalado
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | iPhone con navigator.standalone=true: no aparece la pantalla de instalación (va directo al acceso) |  |
+| OK | Android con (display-mode: standalone): no aparece la pantalla de instalación |  |
+
+## Instalación: Android
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | es la primera pantalla: diálogo modal accesible (aria-modal, título, foco en el título, fondo inerte) | {"rol":"dialog","modal":"true","titulo":"Instala Ascenso 2026","foco":"inst-titulo","inerte":true} |
+| OK | sin evento todavía: botón deshabilitado «Preparando instalación…» |  |
+| OK | beforeinstallprompt capturado con preventDefault() |  |
+| OK | al llegar el evento aparece el botón grande «Instalar la app» |  |
+| OK | al tocarlo se llama a prompt() del evento (una vez) |  |
+| OK | userChoice aceptado → «Lista: ábrela desde tu pantalla de inicio» |  |
+| OK | appinstalled escuchado: mantiene el éxito y no vuelve a insistir en el navegador |  |
+| OK | userChoice rechazado → aviso y guía manual del menú |  |
+| OK | a los 2,5 s sin evento sigue «Preparando instalación…» |  |
+| OK | pasados 4 s sin evento: guía manual de Chrome (menú ⋮ → «Instalar app» / «Añadir a pantalla de inicio») |  |
+| OK | si el evento llega tarde, vuelve el botón «Instalar la app» |  |
+
+## Instalación: iPhone
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | Safari en iPhone: guía de 3 pasos (Compartir → Añadir a pantalla de inicio → Añadir) | 1 Toca el botón Compartir (el cuadrado c / 2 Desplázate hacia abajo y toca Añadir a / 3 Añadir Toca Añadir (arriba a la derech |
+| OK | pasos con iconos SVG propios y sin botón de instalación (iOS no lo permite) |  |
+| OK | flecha animada que señala el botón Compartir en la barra inferior | {"abajo":10,"anim":"senalar-abajo"} |
+| OK | con prefers-reduced-motion: sin animaciones y pasos visibles | {"flecha":"none","paso":"1"} |
+| OK | Chrome en iPhone: texto adaptado (menú ⋯ / Compartir → Añadir a pantalla de inicio), sin la flecha de Safari |  |
+| OK | iPad: Compartir en la barra superior y flecha hacia arriba |  |
+
+## Instalación: escritorio
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | escritorio: tarjeta breve «Esta app está pensada para el celular» con el enlace | http://localhost:8123/ |
+| OK | escritorio: sin guía de pasos ni botón de instalar (no hubo beforeinstallprompt) |  |
+| OK | escritorio: «Seguir en el navegador» permite continuar al acceso |  |
+
+## Instalación: seguir en el navegador
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | «Seguir en el navegador» cierra la pantalla y libera el fondo |  |
+| OK | la elección se recuerda 7 días (localStorage) | 2026-10-21T14:50:12.016Z |
+| OK | al recargar dentro de los 7 días no vuelve a aparecer |  |
+| OK | vencidos los 7 días vuelve a aparecer |  |
+| OK | Escape cierra la pantalla (igual que «Seguir en el navegador») |  |
+| OK | Ajustes tiene la entrada «Instalar en el celular» |  |
+| OK | la entrada de Ajustes vuelve a abrir la pantalla (aunque esté pospuesta) con el foco en el título |  |
+| OK | al cerrarla se vuelve a Ajustes |  |
+
+## Instalación: consola
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin errores de consola ni excepciones en los escenarios de instalación |  |
 
 ## Detalle de la verificación de composición
 
@@ -464,9 +547,13 @@ No se incluyen en el precache del service worker.
 - `42_cuenta_bloqueada.png`: Usuario bloqueado: expulsado a la pantalla de acceso
 - `43_diagnostico.png`: Diagnóstico de conexión: Auth, REST, versión del esquema, RLS y permisos (página completa, sin la barra inferior)
 - `44_revisa_correo.png`: Registro con confirmación de correo activada: «Revisa tu correo»
+- `45_instalar_android.png`: Instalar con un toque (Android/Chrome): botón «Instalar la app» con el diálogo nativo
+- `46_instalar_iphone.png`: Instalar con un toque (iPhone/Safari): guía animada de 3 pasos y flecha hacia Compartir
+- `47_instalar_escritorio.png`: Instalar con un toque (escritorio): tarjeta «abre este enlace en tu teléfono»
 
 ## Limitaciones de estas pruebas
 
 - Se ejecutan en Chromium. Safari iOS no está disponible en este entorno: la instalación en iPhone y el comportamiento de `black-translucent` y las zonas seguras deben verificarse en un dispositivo real.
 - Los sonidos (Web Audio) y la vibración no se verifican de forma automática.
+- Pantalla de instalación: iOS y Android se emulan en Chromium con su *user agent*; `beforeinstallprompt` y `appinstalled` se simulan (los eventos reales de Chromium se bloquean en esas pruebas). El diálogo nativo de Chrome y el menú Compartir de Safari deben verificarse en dispositivos reales.
 - Supabase real no es accesible desde el entorno de desarrollo: Auth/REST se prueban con `pruebas/mock-supabase.mjs` y el SQL con PostgreSQL 16 local. Tras publicar, verificar con Ajustes → Diagnóstico de conexión.

@@ -10,7 +10,7 @@
  *
  * PARA PUBLICAR CAMBIOS: sube APP_VERSION (y la de js/version.js) — ver README.
  */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const PREFIJO = 'ascenso2026-';
 const CACHE = `${PREFIJO}${APP_VERSION}`;
 
@@ -39,6 +39,7 @@ const ARCHIVOS = [
   './js/consultas.js',
   './js/router.js',
   './js/sw-registro.js',
+  './js/instalacion.js',
   './js/ui/anillo.js',
   './js/ui/apariencia.js',
   './js/ui/arranque.js',
@@ -71,6 +72,7 @@ const ARCHIVOS = [
   './js/ui/vista-admin.js',
   './js/ui/vista-diagnostico.js',
   './js/ui/csv.js',
+  './js/ui/instalar.js',
   './iconos/favicon.svg',
   './iconos/favicon-32.png',
   './iconos/icon-192.png',

@@ -1,7 +1,10 @@
 // main.js — Arranque de la app: estado, apariencia, carga del banco (pantalla breve),
 // sesión (pantalla de acceso si no hay), rutas por hash, navegación inferior,
 // sincronización con la nube, guardado al ocultar la app y service worker.
+// Si la app no se abre instalada, antes que nada se muestra la pantalla «Instalar con un toque».
 
+// Primero: escucha temprana de `beforeinstallprompt` (no perder el evento).
+import { montarInstalacion } from './ui/instalar.js';
 import { cargarEstado, guardarYa, almacen } from './estado.js';
 import { cargarDatos } from './datos.js';
 import { definirRutas, iniciarRouter, refrescar } from './router.js';
@@ -171,6 +174,8 @@ async function arrancar() {
   aplicarApariencia();
   vigilarTemaSistema();
   pintarNav();
+  // Pantalla de instalación (si no está instalada ni pospuesta): el banco sigue cargando debajo.
+  montarInstalacion();
   almacen.alFallar = () => {
     if (almacen.avisado) return;
     almacen.avisado = true;
