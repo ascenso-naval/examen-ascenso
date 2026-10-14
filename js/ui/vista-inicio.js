@@ -16,6 +16,22 @@ import { exportarProgreso } from './exportar.js';
 import { toast } from './toast.js';
 import * as sync from '../sincronizacion.js';
 import { obtenerRanking } from './vista-ranking.js';
+import * as acceso from '../acceso.js';
+import { escuchar } from '../bus.js';
+
+/** Texto del indicador de la prueba gratis, o '' si no aplica (pagado, cortesía, admin, sin datos). */
+export function textoPrueba(st = acceso.estadoAcceso()) {
+  if (!st.conocido || st.exento || st.plan === 'pendiente') return '';
+  const c = st.consumo;
+  const p = Math.min(c.preguntas, c.limitePreguntas);
+  const s = Math.min(c.simulacros, c.limiteSimulacros);
+  return `Prueba gratis: ${fmtNum(p)} de ${fmtNum(c.limitePreguntas)} preguntas · ${fmtNum(s)} de ${fmtNum(c.limiteSimulacros)} ${c.limiteSimulacros === 1 ? 'simulacro' : 'simulacros'}`;
+}
+
+function htmlPrueba() {
+  const t = textoPrueba();
+  return `<p class="indicador-prueba" id="indicador-prueba" ${t ? '' : 'hidden'}>${icono('reloj', { tam: 16 })}<span>${esc(t)}</span></p>`;
+}
 
 const TEXTO_SYNC = {
   ok: ['nube-ok', 'Sincronizado'],
@@ -141,6 +157,8 @@ export function montar(raiz) {
       </div>
     </section>
 
+    ${htmlPrueba()}
+
     ${!almacen.disponible ? `<p class="aviso-almacen">${icono('alerta', { tam: 20 })}<span>Este navegador no permite guardar datos (¿modo privado?). Tu progreso vive solo en memoria: expórtalo antes de cerrar.</span></p>` : ''}
 
     ${htmlContinuar()}
@@ -219,8 +237,16 @@ export function montar(raiz) {
     const t = raiz.querySelector('#tarjeta-ranking');
     if (t) t.innerHTML = htmlTarjetaRanking(r);
   });
+  const quitarAcceso = escuchar('acceso-cambio', () => {
+    const el = raiz.querySelector('#indicador-prueba');
+    if (!el) return;
+    const t = textoPrueba();
+    el.hidden = !t;
+    el.querySelector('span').textContent = t;
+  });
   return () => {
     vivo = false;
+    quitarAcceso();
     quitarSync();
     raiz.removeEventListener('click', alClic);
   };

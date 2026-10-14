@@ -5,6 +5,7 @@
 import { estado } from './estado.js';
 import * as nube from './nube.js';
 import * as sync from './sincronizacion.js';
+import * as acceso from './acceso.js';
 import { tieneProgreso, resumenProgreso } from './fusion.js';
 import { esc, fmtNum } from './util.js';
 import { abrirHoja, confirmar } from './ui/modal.js';
@@ -142,6 +143,8 @@ export async function revisarAlAbrir(usuario, expulsar) {
 
 /** Cierra la sesión: intenta subir lo pendiente, borra el progreso local y recarga. */
 export async function cerrarSesionUsuario() {
+  // [1.3.0] El consumo de la prueba gratis aún no enviado se envía antes de salir.
+  try { await acceso.enviarConsumo(); } catch { /* sin red: queda en ascenso2026:acceso:pend:<uid> y se envía al volver a ingresar (H2) */ }
   let s = sync.situacionSync();
   if ((s.pendiente || s.cola) && nube.enLinea()) {
     await sync.sincronizar();
@@ -161,6 +164,7 @@ export async function cerrarSesionUsuario() {
   }
   saliendo = true;
   sync.limpiarDispositivo();
+  acceso.limpiar();
   await nube.cerrarSesion();
   try { history.replaceState(null, '', `${window.location.pathname}#/inicio`); } catch { /* sin historial */ }
   window.location.reload();
@@ -172,9 +176,10 @@ export async function expulsar(motivo) {
   if (saliendo) return;
   saliendo = true;
   sync.detener();
+  acceso.detener();
   // Con la cuenta bloqueada se borra el progreso local; si solo expiró la sesión se conserva
   // (al volver a ingresar con la misma cuenta se sube lo pendiente).
-  if (motivo === 'bloqueada') sync.limpiarDispositivo();
+  if (motivo === 'bloqueada') { sync.limpiarDispositivo(); acceso.limpiar(); }
   await nube.cerrarSesion();
   try { window.sessionStorage.setItem(CLAVE_MENSAJE, MENSAJES[motivo] || MENSAJES.sesion); } catch { /* sin almacenamiento */ }
   window.location.reload();

@@ -10,6 +10,8 @@ Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 pre
 - **Gamificación**: XP, niveles con rangos navales, meta diaria, racha y 20 logros.
 - **Cuenta** con correo y contraseña (v1.1.0): el progreso se **sincroniza** entre dispositivos (offline-first), **ranking** por apodo y **panel de administración** (ver secciones 7 y 8).
 - **Instalar con un toque** (v1.2.0): quien abre el enlace en el celular sin la app instalada ve primero una pantalla que lo guía (botón nativo en Android, guía de 3 pasos en iPhone; ver sección 1).
+- **Prueba gratis y pago único** (v1.3.0): cada cuenta nueva estudia gratis hasta un límite (por defecto 50 preguntas y 1 simulacro); luego la app pide un pago único de S/ 20 por Yape o Plin con voucher y número de operación, que el administrador verifica desde el panel (ver sección 9).
+- Desde la v1.3.0 **se necesita una cuenta para estudiar**: sin sesión solo se ve la pantalla de acceso.
 - Sitio estático: HTML, CSS y JavaScript (módulos ES). Única dependencia: copia local de `@supabase/supabase-js` en `vendor/` (sin CDN). El backend es Supabase (`backend/schema.sql`).
 
 ---
@@ -171,15 +173,39 @@ Solo para la cuenta con `rol = 'admin'` (el correo del dueño, `marconavy2510@gm
 - **Resumen**: usuarios registrados, activos hoy y en 7 días (con preguntas o sesiones), sesiones hoy, simulacros totales y bloqueados.
 - **Tabla de usuarios** (deslizable, ordenable tocando el encabezado, con buscador por correo/apodo): correo, apodo, último ingreso, XP, nivel, racha, preguntas, simulacros, nota promedio y estado; acciones **Bloquear/Desbloquear** (no puedes bloquearte a ti mismo) y **Detalle** (`#/admin/usuario/<id>`: cifras, mapa de calor de 12 semanas y sesiones recientes).
 - **Exportar CSV** de usuarios y de eventos (UTF-8 con BOM, separador coma; se abre en Excel).
+- Desde la v1.3.0 el panel tiene tres pestañas: **Usuarios** (lo anterior, más la columna *Plan* y «Marcar plan»), **Pagos** y **Cobro** (ver sección 9). El CSV de usuarios añade `plan`, `preguntas_prueba`, `simulacros_prueba` y `pagado_en`.
 - **Diagnóstico** (`#/diagnostico`, también para cualquier usuario desde Ajustes → Cuenta): configuración, red, Auth (`/auth/v1/health`), sesión, REST y versión del esquema (`version_esquema()`), RLS activado en las 4 tablas (`diagnostico_esquema()`), aislamiento (solo se ve el perfil propio) y permisos de las funciones de administración.
 
 Pasos en el dashboard de Supabase: `backend/INSTRUCCIONES_SUPABASE.md`.
 
-## 9. Datos y privacidad
+## 9. Prueba gratis y pago
 
-El progreso se guarda en el navegador (`localStorage['ascenso2026:estado']`, con escritura diferida y guardado inmediato al ocultar la app) y se sincroniza con la cuenta en Supabase. En el servidor se guardan: correo, apodo, el estado de estudio, las sesiones terminadas y la fecha de los ingresos (como mucho uno cada 6 h). Cada usuario solo puede leer y escribir lo suyo (RLS); el administrador lo consulta mediante funciones del servidor; en el ranking solo se ve el apodo, XP, nota promedio y racha. La clave de la app (`publishable key`) es pública por diseño; la seguridad está en las políticas RLS. Si el navegador no permite guardar (modo privado), la app sigue funcionando en memoria y lo avisa.
+Requiere el esquema **1.2.0** en Supabase (`backend/schema.sql`: funciones `estado_acceso`, `registrar_consumo`, `registrar_pago`, `admin_pagos`, `admin_resolver_pago`, `admin_marcar_plan`, `admin_configurar_pago` y el bucket privado `comprobantes`). La app lo comprueba en **Ajustes → Diagnóstico de conexión** («Prueba gratis y pagos»).
 
-## 10. Estructura
+**Cómo funciona (para el usuario)**
+- Toda cuenta empieza en **prueba**: Inicio muestra un indicador discreto «Prueba gratis: 32 de 50 preguntas · 0 de 1 simulacro». Cuentan las respuestas de práctica y repaso, cada ficha revelada en **Explorar** (una vez por pregunta mientras se esté en Explorar; allí se avisa «Cada respuesta que reveles cuenta para tu prueba gratis») y los simulacros entregados.
+- Al llegar a cualquiera de los dos límites aparece una **pantalla completa que no se puede cerrar**: monto (S/ 20, pago único y de por vida), los números de Yape y/o Plin con su titular, el número en grande con **«Copiar número»** (el botón confirma «¡Copiado!»), y el formulario: **1) captura del voucher** (se reduce en el celular a JPEG de máx. 1280 px y ≤ 1 MB) y **2) número de operación** (6 a 12 dígitos). «Enviar comprobante» se habilita cuando están ambos. Si la prueba se agota en medio de una práctica, primero se ve la explicación de la última respuesta; los resultados de un simulacro recién entregado también se pueden ver.
+- Al enviar, la captura sube a `comprobantes/<id de la cuenta>/<marca de tiempo>.jpg` (almacenamiento privado) y la cuenta queda **«Pago en revisión»** (operación, fecha y miniatura) con **«Corregir»** (el nuevo comprobante reemplaza al anterior, no se duplica). Si el administrador lo **rechaza**, se muestra el motivo y el formulario para reintentar. Cuando lo **verifica**, la app se desbloquea sola (consulta cada 60 s mientras está abierta y al volver a abrirla) con una pantalla breve de agradecimiento.
+- Desde el bloqueo solo se puede **«Cerrar sesión»** o ir a **«Mi cuenta»** (Ajustes → Cuenta, que muestra el plan). Sin conexión el bloqueo se mantiene (se usa el último estado conocido más lo respondido en el dispositivo) y avisa que enviar el comprobante requiere internet.
+- El administrador y las cuentas en **cortesía** o **pagadas** no tienen límites. Un mismo número de operación no puede usarse en dos cuentas.
+
+**Configurar los números de pago (administrador).** Más → Administración → pestaña **Cobro**: número y titular de Yape, número y titular de Plin (9 dígitos; vacío desactiva ese medio), monto, límite de preguntas, límite de simulacros y texto de ayuda (se muestra debajo de los números; p. ej. un WhatsApp de contacto). «Guardar configuración» envía solo los campos cambiados (`admin_configurar_pago`). Los números nunca están en el código.
+
+**Verificar un pago (administrador).** Más → Administración muestra un contador dorado con los pagos pendientes. Pestaña **Pagos** → filtro *Pendientes / Verificados / Rechazados*. Cada tarjeta trae apodo, correo, medio, número de operación, monto, fecha y la miniatura del voucher (toca para ampliarla; URL firmada de 10 min). Compara el voucher y el número de operación con el historial de tu Yape o Plin y toca **«Verificar y desbloquear»** (pide confirmación) o **«Rechazar»** (motivo obligatorio, hasta 300 caracteres, que el usuario verá). En la pestaña **Usuarios** la columna *Plan* muestra el plan y el consumo de la prueba, y **«Marcar plan»** permite pasar una cuenta a **cortesía**, **pagado** o **prueba** (con confirmación).
+
+**Detalles técnicos** (`js/acceso.js`, `js/ui/vista-bloqueo.js`):
+- Fuente de verdad: Supabase (`estado_acceso()`). El dispositivo guarda el último estado conocido y el consumo aún no enviado en `localStorage['ascenso2026:acceso']`.
+- El consumo se envía con `registrar_consumo` en lotes: al juntar 10 preguntas, al entregar un simulacro, al agotarse la prueba, al ocultar la app, al reconectar y al cerrar sesión. `estado_acceso` se consulta al ingresar/abrir, al reconectar, al volver al primer plano y tras cada simulacro; con el plan «pendiente», además cada 60 s.
+- Enganches del consumo: `registrarRespuesta()` de `js/gamificacion.js` emite `respuesta-registrada` (práctica y repaso), `js/ui/vista-explorar.js` lo emite con `modo: 'explorar'` al revelar por primera vez una ficha, y `entregarSimulacro()` emite `sesion-terminada` con `tipo: 'simulacro'` (ambos por `js/bus.js`).
+- Mientras la prueba está agotada, el enrutador desvía a Inicio las rutas de estudio (Práctica, Simulacro, Repaso, Explorar) y la pantalla de bloqueo cubre todo salvo Ajustes, Diagnóstico y los resultados ya obtenidos.
+
+**Mejora futura:** subir la imagen del QR oficial de Yape/Plin desde el panel (hoy la pantalla de pago muestra solo el número, el titular y «Copiar número»).
+
+## 10. Datos y privacidad
+
+El progreso se guarda en el navegador (`localStorage['ascenso2026:estado']`, con escritura diferida y guardado inmediato al ocultar la app) y se sincroniza con la cuenta en Supabase. En el servidor se guardan: correo, apodo, el estado de estudio, las sesiones terminadas, la fecha de los ingresos (como mucho uno cada 6 h) y, desde la v1.3.0, el plan de acceso con el consumo de la prueba y los comprobantes de pago (medio, número de operación y la captura del voucher en un almacenamiento privado que solo ven el dueño y el administrador). Cada usuario solo puede leer y escribir lo suyo (RLS); el administrador lo consulta mediante funciones del servidor; en el ranking solo se ve el apodo, XP, nota promedio y racha. La clave de la app (`publishable key`) es pública por diseño; la seguridad está en las políticas RLS. Si el navegador no permite guardar (modo privado), la app sigue funcionando en memoria y lo avisa.
+
+## 11. Estructura
 
 ```
 index.html              página única: carga js/main.js
@@ -193,6 +219,8 @@ js/nube.js              envoltorio de Supabase: cuenta, estado, eventos, ranking
 js/sincronizacion.js    sincronización offline-first (pendiente, cola, reintentos)
 js/fusion.js            fusión por secciones del estado local y remoto
 js/cuenta.js            flujo de la cuenta: tras ingresar, cerrar sesión, expulsar, apodo
+js/acceso.js            prueba gratis: estado de acceso, consumo en lotes, sondeo del pago (v1.3.0)
+js/ui/vista-bloqueo.js  pantalla de bloqueo y pago (Yape/Plin, voucher, revisión, agradecimiento)
 js/bus.js               avisos internos (fin de sesión de estudio)
 js/router.js            enrutador por hash (#/inicio, #/practica, …)
 js/datos.js             carga del banco, índices, grupos, filtro base, barajado y búsqueda
@@ -219,20 +247,20 @@ INFORME_PRUEBAS.md      resultado de las pruebas automáticas
 
 Iconos: `python3 scripts/generar_iconos.py` los vuelve a generar con Pillow (timón dorado sobre azul marino; diseño propio, sin emblemas oficiales).
 
-## 11. Pruebas
+## 12. Pruebas
 
 ```bash
 cd pruebas
 npm install          # instala Playwright 1.56 (usa el Chromium ya instalado)
-node pruebas.mjs     # escenarios de las especificaciones (01 y 02), capturas e INFORME_PRUEBAS.md
+node pruebas.mjs     # escenarios de las especificaciones (01 a 04), capturas e INFORME_PRUEBAS.md
 node mock-supabase.mjs           # solo el servidor simulado de Supabase (puerto 54321)
 node verificar_composicion.mjs   # solo la verificación de la composición del simulacro
 node unitarias.mjs               # solo la lógica: niveles, racha, SRS, XP, nota y migración
 ```
 
-`pruebas.mjs` levanta `pruebas/mock-supabase.mjs` (emula GoTrue y PostgREST con las mismas reglas que el esquema: 401/403 al violarlas) y apunta la app a él con `localStorage['ascenso2026:supabase'] = {"url": …, "key": …}`. Los escenarios de la nube están en `pruebas/escenarios_nube.mjs`. El esquema SQL se prueba en un PostgreSQL 16 local con `backend/pruebas_schema.sql` (salida en `backend/pruebas_schema.out`).
+`pruebas.mjs` levanta `pruebas/mock-supabase.mjs` (emula GoTrue y PostgREST con las mismas reglas que el esquema: 401/403 al violarlas) y apunta la app a él con `localStorage['ascenso2026:supabase'] = {"url": …, "key": …}`. Los escenarios de la nube están en `pruebas/escenarios_nube.mjs`; los de la prueba gratis y el pago, en `pruebas/escenarios_pago.mjs` (el mock emula también Storage: subida multipart a `comprobantes/<uid>/…` y URL firmada; la cuenta `estudiante@prueba.pe` está en cortesía para que los escenarios del encargo 01 no choquen con el límite). El esquema SQL se prueba en un PostgreSQL 16 local con `backend/pruebas_schema.sql` (salida en `backend/pruebas_schema.out`).
 
-## 12. Limitaciones conocidas
+## 13. Limitaciones conocidas
 
 - Las pruebas automáticas usan Chromium; la instalación en iPhone (Safari) debe verificarse en un dispositivo real.
 - La conexión con el Supabase real solo se verificó con el servidor simulado y con PostgreSQL local; tras publicar, usa **Ajustes → Diagnóstico de conexión**.

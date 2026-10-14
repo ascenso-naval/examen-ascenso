@@ -1,5 +1,10 @@
 // vista-explorar.js — Estudiar por artículo: árbol examen → fuente → ítem (artículo/tema),
 // fichas (tocar para revelar la respuesta y la explicación) y buscador de texto.
+//
+// [1.3.0] Prueba gratis: revelar una ficha consume la prueba como una respuesta (evento
+// 'respuesta-registrada' con modo 'explorar'), una sola vez por pregunta por sesión de
+// exploración (mientras no se salga de Explorar). Durante la prueba se muestra un aviso
+// discreto; con la prueba agotada el enrutador desvía /explorar (ver main.js → definirGuardia).
 
 import { estado, statDe, guardar } from '../estado.js';
 import { D, disponiblesFuente, disponiblesGrupo, fuentesDe, etiquetaGrupos, examenNombre, buscar, referenciaUtil } from '../datos.js';
@@ -12,10 +17,20 @@ import { icono } from './iconos.js';
 import { cabecera, segmentosExamen, medidor, vacio, chipFuente, codigoGrupo } from './comun.js';
 import { arrancarPractica } from './arranque.js';
 import { toast } from './toast.js';
+import { emitir } from '../bus.js';
+import * as acceso from '../acceso.js';
 
 let examenActual = 'reglamentos';
 let textoBusqueda = '';
 let limiteResultados = 40;
+/** Preguntas ya reveladas (y contadas) en esta sesión de exploración. */
+const reveladas = new Set();
+
+/** Aviso discreto mientras dura la prueba gratis (no se muestra a pagado/cortesía/admin). */
+function htmlAvisoPrueba() {
+  if (!acceso.enPrueba() || acceso.agotado()) return '';
+  return `<p class="indicador-prueba aviso-explorar" id="aviso-explorar">${icono('info', { tam: 16 })}<span>Cada respuesta que reveles cuenta para tu prueba gratis</span></p>`;
+}
 
 const ruta = (...partes) => `/explorar/${partes.map((p) => encodeURIComponent(p)).join('/')}`;
 
@@ -96,6 +111,7 @@ function pintarRaiz(raiz, examen) {
   raiz.innerHTML = `
     <h1>Explorar</h1>
     <p class="sub">Estudia por artículo con fichas y practica lo que acabas de leer.</p>
+    ${htmlAvisoPrueba()}
     <div class="caja-buscar">${icono('buscar', { tam: 20 })}
       <input class="entrada entrada-buscar" type="search" id="buscar" placeholder="Buscar en preguntas, explicaciones y referencias"
         aria-label="Buscar" value="${esc(textoBusqueda)}" autocomplete="off" enterkeyhint="search"></div>
@@ -109,6 +125,7 @@ function pintarFuente(raiz, examen, f) {
     ${cabecera({ volver: ruta(examen) })}
     <h1>${esc(siglaCorta(f.sigla))}</h1>
     <p class="sub">${esc(f.nombre)}</p>
+    ${htmlAvisoPrueba()}
     <section class="tarjeta">
       <div class="fila-flex entre"><span>${fmtNum(r.vistas)} de ${fmtNum(qs.length)} preguntas vistas</span><span class="atenuado">${plural(f.grupos.length, etiquetaGrupos(f, false), etiquetaGrupos(f))}</span></div>
       <div class="mt-s">${medidor(r.dominio)}</div>
@@ -128,6 +145,7 @@ function pintarGrupo(raiz, examen, f, g) {
     <div class="pregunta-meta">${chipFuente(f.sigla)}${codigo ? `<span class="etiqueta etiqueta-oro">${esc(codigo)}</span>` : ''}</div>
     <h1 style="font-size:1.4rem;margin-top:10px">${esc(g.titulo)}</h1>
     ${referenciaUtil(g) ? `<p class="sub">${esc(referenciaUtil(g))}</p>` : ''}
+    ${htmlAvisoPrueba()}
     <section class="tarjeta">
       <div class="fila-flex entre"><span>${fmtNum(r.vistas)} de ${plural(qs.length, 'pregunta vista', 'preguntas vistas')}</span></div>
       <div class="mt-s">${medidor(r.dominio)}</div>
@@ -177,7 +195,16 @@ export function montar(raiz, params) {
       b.setAttribute('aria-expanded', String(!abierta));
       const resp = ficha.querySelector('.ficha-respuesta');
       resp.hidden = abierta;
-      if (!abierta) { resp.classList.remove('recien'); void resp.offsetWidth; resp.classList.add('recien'); }
+      if (!abierta) {
+        resp.classList.remove('recien'); void resp.offsetWidth; resp.classList.add('recien');
+        // Primera vez que se revela esta pregunta en la sesión: cuenta para la prueba gratis
+        // (acceso.js ignora el evento en planes exentos: pagado, cortesía y admin).
+        const id = ficha.dataset.id;
+        if (!reveladas.has(id)) {
+          reveladas.add(id);
+          emitir('respuesta-registrada', { modo: 'explorar', id });
+        }
+      }
       return;
     }
     if (a === 'bandera') {
@@ -225,6 +252,8 @@ export function montar(raiz, params) {
   raiz.addEventListener('input', alEscribir);
   return () => {
     repintarBusqueda.cancel();
+    // Al salir de Explorar (no al moverse dentro) termina la sesión de exploración.
+    setTimeout(() => { if (!/^#\/explorar(\/|$|\?)/.test(window.location.hash)) reveladas.clear(); }, 0);
     raiz.removeEventListener('click', alClic);
     raiz.removeEventListener('input', alEscribir);
   };

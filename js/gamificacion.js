@@ -289,6 +289,8 @@ export function registrarRespuesta(q, correcta, modo = 'practica') {
   revisarConteos(eventos);
   revisarFuente(q.fuente, eventos);
   guardar();
+  // [1.3.0] Consumo de la prueba gratis (acceso.js lo acumula y lo envía en lotes).
+  emitir('respuesta-registrada', { modo, id: q.id });
   return { xp, eventos };
 }
 

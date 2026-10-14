@@ -1066,7 +1066,7 @@ body.sin-sesion #vista { padding-bottom: calc(var(--inf) + 28px); }
   background: var(--casco); box-shadow: var(--sombra); margin: 0 0 8px;
 }
 .tabla-desliza:focus-visible { outline: 2px solid var(--sel-borde); outline-offset: 2px; }
-.tabla-admin { min-width: 980px; font-size: 0.86rem; }
+.tabla-admin { min-width: 1180px; font-size: 0.86rem; }
 .tabla-admin th, .tabla-admin td { padding: 9px 10px; white-space: nowrap; vertical-align: middle; }
 .tabla-admin thead th { border-top: 0; color: var(--texto-3); font-weight: 650; }
 .tabla-admin tbody tr:nth-child(odd) { background: rgba(127, 127, 127, 0.04); }
@@ -1227,3 +1227,110 @@ body.con-instalar { overflow: hidden; }
   .inst-paso { opacity: 1; animation: none; }
   .inst-flecha svg, .inst-boton, .inst-paso-ico, .inst-icono, .inst-girador { animation: none !important; }
 }
+
+/* =========================================================================
+   Encargo 04 — Prueba gratis y pago único (Yape/Plin)
+   ========================================================================= */
+
+/* ---------- Indicador de la prueba (Inicio) ---------- */
+.indicador-prueba {
+  display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 8px 12px;
+  border-radius: 12px; background: var(--casco); box-shadow: var(--sombra);
+  color: var(--texto-2); font-size: 0.86rem; font-weight: 620; font-variant-numeric: tabular-nums;
+}
+.indicador-prueba svg { flex: none; color: var(--oro-texto); }
+.aviso-explorar { margin: 10px 0 0; }
+.aviso-prueba .enlace { display: inline-block; margin-left: 4px; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Pantalla de bloqueo (no cerrable) ---------- */
+body.con-bloqueo { overflow: hidden; }
+.bloqueo {
+  position: fixed; inset: 0; z-index: 85;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  background: var(--fondo); color: var(--texto);
+  animation: aparecer 0.2s ease-out;
+}
+.bloqueo-panel { max-width: 520px; margin: 0 auto; padding: 0 16px calc(var(--inf) + 28px); }
+.bloqueo-cabeza {
+  margin: 0 -16px 18px; padding: calc(var(--sup) + 28px) 20px 24px;
+  background: var(--portada); color: var(--portada-texto);
+  border-radius: 0 0 28px 28px; text-align: center;
+}
+.bloqueo-marca { color: #D4AF37; margin: 0 auto 8px; }
+.bloqueo-cabeza h1 { margin: 0 0 6px; color: var(--portada-texto); }
+.bloqueo-sub { margin: 0 auto; max-width: 34ch; color: var(--portada-texto-2); font-size: 0.95rem; }
+.bloqueo-monto { display: flex; align-items: center; gap: 14px; }
+.bloqueo-monto-valor { flex: none; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; color: var(--oro-texto); }
+.bloqueo-monto-texto { display: grid; gap: 2px; font-size: 0.9rem; color: var(--texto-2); }
+.bloqueo-monto-texto strong { color: var(--texto); font-size: 1rem; }
+.bloqueo-paso { display: flex; align-items: center; gap: 10px; font-size: 1.05rem; margin: 24px 0 10px; }
+.bloqueo-num {
+  flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--oro-suave); color: var(--oro-texto); font-size: 0.9rem; font-weight: 800;
+}
+.bloqueo-medio { display: block; }
+.bloqueo-medio-datos { flex: 1; min-width: 0; }
+.bloqueo-medio-rotulo { margin: 0; color: var(--texto-3); font-size: 0.86rem; font-weight: 650; }
+.bloqueo-numero { margin: 2px 0 2px; font-size: clamp(1.7rem, 9vw, 2.2rem); font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
+.bloqueo-titular { margin: 0 0 10px; color: var(--texto-2); font-size: 0.9rem; }
+.bloqueo-medio [data-accion="copiar"] { white-space: nowrap; padding: 8px 12px; }
+.bloqueo-medio [data-accion="copiar"].copiado { background: var(--verde-suave); color: var(--verde-texto); }
+.bloqueo-ayuda { white-space: pre-line; margin: 10px 2px 0; font-size: 0.92rem; }
+.bloqueo-voucher { display: flex; gap: 14px; align-items: center; }
+.bloqueo-voucher-texto { flex: 1; min-width: 0; display: grid; gap: 4px; justify-items: start; }
+.bloqueo-elegir { cursor: pointer; }
+.bloqueo-voucher input[type="file"]:focus-visible + * { outline: 3px solid var(--oro); }
+.bloqueo-elegir:focus-within, .bloqueo-voucher:focus-within .bloqueo-elegir { outline: 3px solid var(--oro); outline-offset: 2px; }
+.bloqueo-mini {
+  flex: none; width: 76px; height: 100px; border-radius: 12px; object-fit: cover;
+  background: var(--casco-2); box-shadow: 0 0 0 1px var(--borde); cursor: zoom-in;
+}
+.bloqueo-mini-vacia { display: grid; place-items: center; color: var(--texto-3); cursor: default; }
+.bloqueo-form .rotulo { display: block; font-weight: 680; margin-bottom: 8px; }
+.bloqueo-form .entrada { font-size: 1.15rem; letter-spacing: 0.06em; }
+.bloqueo-revision { display: flex; gap: 14px; align-items: flex-start; }
+.bloqueo-datos { flex: 1; min-width: 0; margin: 0; display: grid; gap: 8px; }
+.bloqueo-datos div { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--borde); padding-top: 6px; }
+.bloqueo-datos div:first-child { border-top: 0; padding-top: 0; }
+.bloqueo-datos dt { color: var(--texto-3); font-size: 0.86rem; }
+.bloqueo-datos dd { margin: 0; font-weight: 700; text-align: right; }
+.bloqueo-pie { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 26px 0 0; padding-top: 16px; border-top: 1px solid var(--borde); }
+.bloqueo-gracias { min-height: 100vh; min-height: 100dvh; display: grid; align-content: center; justify-items: center; gap: 10px; text-align: center; padding: calc(var(--sup) + 24px) 8px calc(var(--inf) + 24px); }
+.bloqueo-gracias h1 { margin: 6px 0 0; }
+.bloqueo-gracias p { max-width: 34ch; }
+.bloqueo-gracias-icono {
+  width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--verde-suave); color: var(--verde-texto); animation: pop 0.24s ease-out;
+}
+.voucher-grande { width: 100%; max-height: 70vh; object-fit: contain; border-radius: 12px; background: var(--casco-2); }
+svg.en-linea { display: inline-block; vertical-align: -3px; }
+
+/* ---------- Administración: pestañas, pagos y cobro ---------- */
+.pestanas-admin { margin: 4px 0 0; }
+.pestanas-admin .etiqueta { padding: 1px 7px; margin-left: 2px; }
+.lista-pagos { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.pago-cabeza { display: flex; align-items: flex-start; gap: 10px; }
+.pago-correo { word-break: break-all; }
+.pago-cuerpo { display: flex; gap: 14px; margin-top: 12px; align-items: flex-start; }
+.pago-voucher {
+  flex: none; width: 84px; height: 112px; padding: 0; border: 0; border-radius: 12px; overflow: hidden;
+  background: var(--casco-2); color: var(--texto-3); cursor: zoom-in; box-shadow: 0 0 0 1px var(--borde);
+}
+.pago-voucher img { width: 100%; height: 100%; object-fit: cover; }
+.pago-voucher-vacio { display: grid; place-items: center; gap: 2px; height: 100%; }
+.pago-datos { flex: 1; min-width: 0; margin: 0; display: grid; gap: 6px; font-size: 0.92rem; }
+.pago-datos div { display: flex; justify-content: space-between; gap: 10px; }
+.pago-datos dt { color: var(--texto-3); }
+.pago-datos dd { margin: 0; font-weight: 680; text-align: right; }
+.pago-motivo { flex-direction: column; }
+.pago-motivo dd { text-align: left; font-weight: 600; color: var(--rojo-texto); }
+.pago-acciones { margin-top: 12px; }
+.celda-plan .etiqueta { margin-right: 6px; }
+.celda-consumo { color: var(--texto-3); }
+.form-cobro .grupo-cobro { border: 0; margin: 0 0 14px; }
+.form-cobro legend { float: left; width: 100%; padding: 0; margin: 0 0 10px; font-weight: 750; font-size: 1.05rem; }
+.form-cobro legend + * { clear: both; }
+.form-cobro .campo { margin-bottom: 14px; }
+.form-cobro .campo:last-child { margin-bottom: 0; }
+.form-cobro textarea.entrada, .form-motivo textarea.entrada { min-height: 96px; resize: vertical; line-height: 1.45; }
+.form-motivo .rotulo { display: block; }

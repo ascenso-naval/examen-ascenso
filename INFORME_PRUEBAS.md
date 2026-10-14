@@ -1,10 +1,10 @@
 # Informe de pruebas — Ascenso 2026 (PWA)
 
-Fecha: 14/10/2026, 9:50:13 a. m. (hora de Lima). Duración: 186 s.
+Fecha: 14/10/2026, 3:09:01 p. m. (hora de Lima). Duración: 242 s.
 
 Entorno: Chromium (Playwright 1.56.0), viewport 390×844, `isMobile: true`, `hasTouch`, escala 2, locale es-PE, zona America/Lima. App servida con `python3 -m http.server 8123 --directory app`.
 
-**Resultado: 241 de 241 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
+**Resultado: 336 de 336 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
 
 Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `node verificar_composicion.mjs`, `node unitarias.mjs`).
 
@@ -19,13 +19,13 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | Exportar → borrar → importar restaura | Exportar e importar | OK (4 comprobaciones) |
 | El modo ampliado cambia el conteo disponible | Modo ampliado | OK (3 comprobaciones) |
 | Segunda carga con la red cortada funciona (también bajo un subdirectorio) | Sin conexión, Subdirectorio | OK (5 comprobaciones) |
-| Capturas de cada pantalla principal en `app/_capturas/` | — | 47 capturas |
+| Capturas de cada pantalla principal en `app/_capturas/` | — | 56 capturas |
 | `node --check` de todos los módulos y JSON del manifest | Estáticas | OK (13 comprobaciones) |
 | Extra: lógica (niveles, racha, SRS, XP, nota, migración), interacciones, tema claro, nueva versión del SW | Lógica (unitarias), Interacciones, Pantallas, Tema claro, Nueva versión | OK (58 comprobaciones) |
 
 ## Cobertura del encargo 02 (sección 5)
 
-Comprobaciones del encargo 01 (sin los grupos «Nube»): 163 de 163 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
+Comprobaciones del encargo 01 (sin los grupos «Nube»): 258 de 258 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
 
 | Requisito | Grupos de pruebas | Resultado |
 |---|---|---|
@@ -54,15 +54,45 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | (e) Escritorio: tarjeta breve con el enlace y continuar | Instalación: escritorio | OK (3 comprobaciones) |
 | (f) Sin errores de consola; las comprobaciones anteriores siguen en verde | Instalación: consola | OK (1 comprobaciones) · anteriores: 207/207 |
 
+## Cobertura del encargo 04 (prueba gratis y pago único, v1.3.0)
+
+Comprobaciones de los encargos 01 a 03: 241 de 241 superadas. Nuevas del encargo 04: 95 de 95. La cuenta precargada `estudiante@prueba.pe` (escenarios del encargo 01) está en **cortesía** en el mock para que el límite de la prueba no la afecte; las demás cuentas empiezan en prueba.
+
+| Escenario (§6 de la especificación) | Grupos de pruebas | Resultado |
+|---|---|---|
+| Versión 1.3.0, precache, sin QR, esquema 1.2.0, README | Pago (estáticas) | OK (6 comprobaciones) |
+| Configuración del cobro desde el panel | Pago: configuración (admin) | OK (6 comprobaciones) |
+| App sin cuenta exige ingreso (conserva datos locales y «Conservar y subir») | Pago: app sin sesión exige ingreso | OK (3 comprobaciones) |
+| Prueba contando (indicador en Inicio, lotes de 10) | Pago: prueba contando | OK (4 comprobaciones) |
+| Agotado por preguntas; sin voucher → botón deshabilitado; sin operación; operación inválida | Pago: agotado por preguntas | OK (16 comprobaciones) |
+| Comprobante válido; corrección | Pago: comprobante y corrección | OK (7 comprobaciones) |
+| Operación duplicada en otra cuenta | Pago: operación duplicada | OK (3 comprobaciones) |
+| Panel de pagos con voucher; rechazo con motivo | Pago: panel de pagos | OK (7 comprobaciones) |
+| Rechazo y reintento (sondeo de 60 s simulado con el reloj de Playwright) | Pago: rechazo y reintento | OK (2 comprobaciones) |
+| Verificación y desbloqueo automático | Pago: verificación y desbloqueo | OK (5 comprobaciones) |
+| Cortesía | Pago: cortesía | OK (4 comprobaciones) |
+| Agotado por simulacro | Pago: agotado por simulacro | OK (6 comprobaciones) |
+| Bloqueo sin conexión | Pago: bloqueo sin conexión | OK (5 comprobaciones) |
+| Auditoría H2: cerrar sesión sin conexión conserva el consumo pendiente y lo envía al reingresar (otra cuenta no lo recibe) | Pago: cerrar sesión sin conexión conserva el consumo | OK (5 comprobaciones) |
+| Auditoría H6: detalle de usuario del admin, eventos de pago sin examen y con su detalle (operación / motivo) | Pago: detalle de usuario (admin) | OK (2 comprobaciones) |
+| Decisión E04: Explorar consume la prueba (1 vez por ficha y sesión, aviso en prueba, envío al ocultar, bloqueo al agotar; cortesía sin consumo) | Pago: Explorar consume la prueba | OK (7 comprobaciones) |
+| Admin nunca bloqueado | Pago: admin nunca bloqueado | OK (2 comprobaciones) |
+| No admin no ve la pestaña Pagos (y el servidor lo impide) | Pago: no admin | OK (4 comprobaciones) |
+| Sin errores de consola | Pago: consola | OK (1 comprobaciones) |
+
+Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la prueba gratis; (2) la pantalla de pago ya no muestra QR (número grande, titular y «Copiar número» con confirmación «¡Copiado!»; librería de QR eliminada).
+
 ## Esquema SQL en PostgreSQL 16 local
 
-`backend/pruebas_schema.sql` instala `backend/schema.sql` tres veces (idempotencia) sobre un clúster temporal con roles anon/authenticated/service_role/supabase_auth_admin y un esquema `auth` mínimo, y simula sesiones con `request.jwt.claims`. Resultado (`backend/pruebas_schema.out`): **80 comprobaciones OK, 0 fallidas** — todas superadas.
+`backend/pruebas_schema.sql` instala `backend/schema.sql` tres veces (idempotencia) sobre un clúster temporal con roles anon/authenticated/service_role/supabase_auth_admin y un esquema `auth` mínimo, y simula sesiones con `request.jwt.claims`. Resultado (`backend/pruebas_schema.out`): **213 comprobaciones OK, 0 fallidas** — todas superadas.
+
+`backend/auditoria_schema.sql` (instalación sobre base vacía con Storage simulado, ataques concretos): **178 OK, 0 fallas** de 178 (`backend/auditoria_schema.out`).
 
 ## Estáticas
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | node --check de 54 archivos JS |  |
+| OK | node --check de 56 archivos JS |  |
 | OK | manifest.webmanifest es JSON válido |  |
 | OK | manifest: name y short_name |  |
 | OK | manifest: display standalone y orientación portrait |  |
@@ -70,9 +100,9 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | OK | manifest: iconos 192, 512 y maskable |  |
 | OK | manifest: theme/background navy |  |
 | OK | iconos PNG con el tamaño declarado | iconos/icon-192.png=192x192, iconos/icon-512.png=512x512, iconos/icon-maskable-192.png=192x192, iconos/icon-maskable-512.png=512x512, iconos/apple-touch-icon.png=180x180 |
-| OK | el service worker precachea todos los archivos de la app | 73 entradas |
+| OK | el service worker precachea todos los archivos de la app | 75 entradas |
 | OK | las capturas no están en el precache |  |
-| OK | APP_VERSION coincide en sw.js y js/version.js | 1.2.0 / 1.2.0 |
+| OK | APP_VERSION coincide en sw.js y js/version.js | 1.3.0 / 1.3.0 |
 | OK | sin alert/confirm/prompt nativos |  |
 | OK | sin recursos externos (http/https) en HTML, CSS y JS (salvo la API de Supabase) |  |
 
@@ -85,12 +115,23 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | OK | config-supabase.js coincide con backend/supabase.config.json |  |
 | OK | ninguna secret key en app/ ni backend/ |  |
 | OK | SW: precachea el vendor y deja supabase.co en network-only |  |
-| OK | APP_VERSION 1.2.0 (encargo 03; la 1.1.0 fue la del encargo 02) |  |
-| OK | schema.sql: 4 tablas con RLS, trigger de alta y todas las funciones | 10 funciones |
-| OK | schema.sql probado en PostgreSQL 16 local (backend/pruebas_schema.out) | 80 comprobaciones OK |
+| OK | APP_VERSION 1.3.0 (encargo 04; 1.1.0 fue la del encargo 02 y 1.2.0 la del 03) |  |
+| OK | schema.sql: tablas con RLS, trigger de alta y todas las funciones | 10 funciones |
+| OK | schema.sql probado en PostgreSQL 16 local (backend/pruebas_schema.out) | 213 comprobaciones OK |
 | OK | rutas JSON del estado documentadas en README y schema.sql, coherentes con estado.js |  |
 | OK | README: secciones «Cuenta y sincronización» y «Administración» |  |
 | OK | backend/INSTRUCCIONES_SUPABASE.md con los pasos del dashboard |  |
+
+## Pago (estáticas)
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | versión 1.3.0 en sw.js y version.js; acceso.js y vista-bloqueo.js en el precache | ./js/acceso.js, ./js/ui/vista-bloqueo.js |
+| OK | la app y el mock esperan el esquema 1.2.0 |  |
+| OK | sin QR: librería eliminada, fuera del precache, sin generación en el bloqueo ni CSS huérfano |  |
+| OK | formulario: voucher image/*, compresión por canvas (1280 px, JPEG ≤ 1 MB) y operación numérica |  |
+| OK | acceso.js: lotes de 10, sondeo de 60 s en pendiente, primer plano y reconexión |  |
+| OK | README: sección «Prueba gratis y pago» |  |
 
 ## Composición (script)
 
@@ -151,9 +192,9 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 606 ms |
+| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 546 ms |
 | OK | service worker registrado y activo con scope ./ | http://localhost:8123/ |
-| OK | precache del app shell y del banco | ascenso2026-1.2.0: 67 recursos |
+| OK | precache del app shell y del banco | ascenso2026-1.3.0: 69 recursos |
 | OK | manifest enlazado, iconos accesibles y meta tags iOS | Ascenso 2026 — Simulador de examen; content-type application/manifest+json |
 | OK | sin errores de consola en la carga inicial |  |
 
@@ -162,14 +203,14 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | resumen con 9 de 10 aciertos | Práctica completada: 9 |
-| OK | XP ganado en el resumen | +137 XP |
+| OK | XP ganado en el resumen | +122 XP |
 | OK | botón «Repetir las falladas» presente |  |
-| OK | XP guardado en localStorage | 137 (esperado 137) |
+| OK | XP guardado en localStorage | 122 (esperado 122) |
 | OK | respuestas y actividad del día guardadas | respondidas 10 |
-| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1791989232397,"s":[0,"2026-10-14"]} |
+| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1792008304124,"s":[0,"2026-10-14"]} |
 | OK | logro «Primer paso» desbloqueado |  |
 | OK | el resumen sigue disponible tras recargar | 9 |
-| OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 137 |
+| OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 122 |
 
 ## Simulacro
 
@@ -185,7 +226,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | OK | confirmación al entregar con preguntas sin responder | Te quedan 5 preguntas sin responder; contarán como incorrectas. |
 | OK | nota vigesimal 15.0 (30/40) y aprobado | 15.0; Aprobado (nota mínima 14) |
 | OK | simulacro guardado en el historial | {"nota":15,"ac":30,"respondidas":35} |
-| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 940 (esperado 940) |
+| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 932 (esperado 932) |
 | OK | meta diaria cumplida y logros «Primer simulacro» y «Aprobado» |  |
 | OK | la sesión del simulacro se cierra al entregar |  |
 | OK | revisión: 40 preguntas y filtro «Solo erradas» (10) | 40 / 10 |
@@ -197,7 +238,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | OK | MAPLO «como el examen»: 60 % oficial-maplo | 6 de 10 |
 | OK | tarjeta «Continuar sesión» con el tiempo restante | Simulacro en curso MAPLO: 2 de 10 respondidas Quedan 14:57 Continuar Descartar |
 | OK | al retomar se conservan las respuestas | 2 respondidas |
-| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 14 oct, 09:47. Entregado al agotarse el tiempo. |
+| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 14 oct, 15:05. Entregado al agotarse el tiempo. |
 
 ## Repaso
 
@@ -248,9 +289,9 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-14.json (8766 bytes) |
+| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-14.json (8856 bytes) |
 | OK | reiniciar (doble confirmación) borra el progreso |  |
-| OK | importar restaura el progreso | XP 984, 2 simulacros, 71 preguntas |
+| OK | importar restaura el progreso | XP 991, 2 simulacros, 72 preguntas |
 | OK | el progreso importado persiste tras recargar |  |
 
 ## Tema claro
@@ -271,8 +312,8 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | aviso «Nueva versión disponible» cuando se instala una versión nueva |  |
-| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.2.0-prueba |
-| OK | el progreso se conserva tras actualizar | XP 994 |
+| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.3.0-prueba |
+| OK | el progreso se conserva tras actualizar | XP 1001 |
 
 ## Subdirectorio
 
@@ -310,7 +351,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | OK | cambiar_apodo: el servidor rechaza un apodo duplicado con mensaje legible |  |
 | OK | apodo guardado con cambiar_apodo |  |
 | OK | «Conservar»: el progreso local sube como estado inicial | XP 500 |
-| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 620; evento n=10, aciertos=10 |
+| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 665; evento n=10, aciertos=10 |
 | OK | evento de práctica con n, aciertos, examen e id_cliente |  |
 | OK | las 10 respuestas están en el estado remoto |  |
 | OK | Inicio: indicador «Sincronizado» |  |
@@ -320,8 +361,8 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 620, 13 preguntas |
-| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 260 de 360 XP |
+| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 665, 13 preguntas |
+| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 305 de 360 XP |
 
 ## Nube: sin conexión y fusión
 
@@ -330,7 +371,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | OK | sin conexión: se puede estudiar; el estado queda pendiente y el evento en cola | pendiente true, cola 1 |
 | OK | el otro dispositivo sube sus cambios mientras B está sin conexión |  |
 | OK | al volver la red se sube lo encolado y se fusiona: respuestas de ambos dispositivos | 33 preguntas |
-| OK | fusión: XP = máximo de ambos | 770 (B 770, C 760) |
+| OK | fusión: XP = máximo de ambos | 815 (B 805, C 815) |
 | OK | fusión: conserva el progreso anterior y la fecha más antigua de los logros |  |
 | OK | eventos: los 3 registrados una sola vez (cola + idempotencia) | 3 eventos |
 | OK | B queda sincronizado (sin pendientes ni cola) |  |
@@ -341,10 +382,10 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 770 XP |
+| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 815 XP |
 | OK | ranking: sin cuentas bloqueadas y sin correos |  |
 | OK | ranking: pestaña «Nota promedio» |  |
-| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 770 XP 3.º |
+| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 815 XP 3.º |
 
 ## Nube: usuario normal
 
@@ -384,7 +425,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | diagnóstico (admin): Auth, REST, versión del esquema y RLS en orden | 8 pasos |
+| OK | diagnóstico (admin): Auth, REST, versión del esquema y RLS en orden | 9 pasos |
 
 ## Nube: confirmación de correo
 
@@ -426,7 +467,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 |---|---|---|
 | OK | manifest con criterios de instalación (id, name, short_name, start_url relativa, standalone, iconos 192/512 any y maskable, colores) | id=./ |
 | OK | index.html con meta iOS y apple-touch-icon |  |
-| OK | SW con handler fetch, archivos nuevos en el precache y versión 1.2.0 |  |
+| OK | SW con handler fetch, archivos nuevos en el precache y versión ≥ 1.2.0 (1.3.0 desde el encargo 04) |  |
 
 ## Instalación: modo instalado
 
@@ -475,7 +516,7 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | «Seguir en el navegador» cierra la pantalla y libera el fondo |  |
-| OK | la elección se recuerda 7 días (localStorage) | 2026-10-21T14:50:12.016Z |
+| OK | la elección se recuerda 7 días (localStorage) | 2026-10-21T20:08:02.543Z |
 | OK | al recargar dentro de los 7 días no vuelve a aparecer |  |
 | OK | vencidos los 7 días vuelve a aparecer |  |
 | OK | Escape cierra la pantalla (igual que «Seguir en el navegador») |  |
@@ -488,6 +529,185 @@ Comprobaciones de los encargos 01 y 02: 207 de 207 superadas (parten de «Seguir
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | sin errores de consola ni excepciones en los escenarios de instalación |  |
+
+## Pago: configuración (admin)
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | admin: Inicio sin indicador de prueba gratis |  |
+| OK | Cobro: carga la configuración actual con admin_configurar_pago({}) |  / 20 / 50 / 1 |
+| OK | Cobro: valida que el número tenga 9 dígitos |  |
+| OK | Cobro: el error de validación se oculta al editar el formulario (auditoría H5) |  |
+| OK | Cobro: guarda solo los cambios (jsonb parcial) en el servidor | {"y":"987654321","p":"912345678","lp":15} |
+| OK | el monto no cambia si no se toca |  |
+
+## Pago: app sin sesión exige ingreso
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin sesión: aunque se abra #/practica, solo se ve la pantalla de acceso (no hay forma de estudiar) |  |
+| OK | los datos locales previos se conservan en el dispositivo |  |
+| OK | al registrarse: «Conservar y subir» sube el progreso local a la cuenta nueva |  |
+
+## Pago: prueba contando
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | Inicio: «Prueba gratis: 0 de 15 preguntas · 0 de 1 simulacro» | Prueba gratis: 0 de 15 preguntas · 0 de 1 simulacro |
+| OK | cada 10 respuestas se envía el lote con registrar_consumo (servidor: 10) | 10 preguntas |
+| OK | por debajo del límite la app no se bloquea |  |
+| OK | el indicador se actualiza: 10 de 15 preguntas |  |
+
+## Pago: agotado por preguntas
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | la pregunta 15 agota la prueba y aparece la pantalla de bloqueo (tras ver la explicación) | 5 respondidas en la 2.ª práctica |
+| OK | al agotarse se envía el consumo pendiente (servidor: 15) |  |
+| OK | bloqueo: monto, número de Yape con su titular y texto de ayuda |  |
+| OK | sin QR: solo número grande, titular y «Copiar número» |  |
+| OK | pantalla completa no cerrable: la app debajo queda inerte y la práctica vuelve a Inicio (sesión guardada) |  |
+| OK | Escape no cierra el bloqueo |  |
+| OK | el enrutador impide abrir Práctica mientras está agotada |  |
+| OK | el enrutador impide abrir Simulacro mientras está agotada |  |
+| OK | «Copiar número» copia el número de Yape | Número copiado: 987 654 321 |
+| OK | confirmación visual en el botón («¡Copiado!») y el número queda en el portapapeles | ¡Copiado! / 987654321 |
+| OK | Plin: muestra su número y «Plinea S/ 20» |  |
+| OK | sin voucher: «Enviar comprobante» deshabilitado (aunque haya operación) |  |
+| OK | un archivo que no es imagen se rechaza con un mensaje claro |  |
+| OK | con voucher y sin operación: el botón sigue deshabilitado |  |
+| OK | el número de operación admite solo dígitos |  |
+| OK | operación inválida (5 dígitos): mensaje claro y no se envía nada |  |
+
+## Pago: comprobante y corrección
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | con voucher y operación: «Enviar comprobante» habilitado |  |
+| OK | sube el voucher a comprobantes/<uid>/<timestamp>.jpg y registra el pago (pendiente) | a70e11b0-1d88-4e33-a1e0-583c7c686a9e/1792008507088.jpg |
+| OK | el voucher se envía comprimido como JPEG ≤ 1 MB | 1413 bytes |
+| OK | plan → pendiente |  |
+| OK | «Pago en revisión» con la operación y la miniatura del voucher |  |
+| OK | Corregir: formulario con la operación anterior y la captura ya enviada |  |
+| OK | la corrección reemplaza el pago pendiente (no duplica) con la nueva captura y operación |  |
+
+## Pago: operación duplicada
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | con el contador del servidor en el límite, al volver al primer plano se bloquea |  |
+| OK | operación ya usada en otra cuenta: mensaje claro y no se registra | Ese número de operación de Yape ya fue registrado por otra cuenta. Revisa el número o comunícate con el administrador. |
+| OK | tras el error se conservan los datos para corregir |  |
+
+## Pago: panel de pagos
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | Más → Administración: contador de pagos pendientes (1) |  |
+| OK | Pagos: apodo, correo, medio, operación, monto y fecha | Ana_Pago pago.ana@prueba.pe Pendiente Medio Yape Operación 20261015 Monto S/ 20 Fecha 14 oct, 15:08 Verificar y desbloqu |
+| OK | el voucher se ve con una URL firmada del almacenamiento privado | 160 px |
+| OK | el voucher se amplía en un modal |  |
+| OK | rechazar exige motivo |  |
+| OK | rechazo con motivo: pago rechazado y la cuenta vuelve a prueba |  |
+| OK | filtro «Rechazados» muestra el pago con su motivo |  |
+
+## Pago: rechazo y reintento
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | en «pendiente» la app consulta cada 60 s: muestra el rechazo con su motivo | Tu comprobante fue rechazado. Motivo: «El número de operación no coincide con el voucher.». Revisa los datos y vuelve a enviarlo. |
+| OK | reintento: se crea un pago nuevo pendiente (el rechazado se conserva) |  |
+
+## Pago: verificación y desbloqueo
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | «Verificar y desbloquear»: pago aprobado y plan pagado |  |
+| OK | la app del usuario se desbloquea sola (sondeo) con la pantalla de agradecimiento |  |
+| OK | tras el agradecimiento: Inicio sin bloqueo ni indicador de prueba |  |
+| OK | con el plan pagado se puede volver a practicar |  |
+| OK | Ajustes → Cuenta muestra «Acceso completo» |  |
+
+## Pago: cortesía
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | Usuarios: columna Plan con el consumo de la prueba | Prueba15/15 preg. · 0/1 sim. |
+| OK | «Marcar plan» → Cortesía con confirmación |  |
+| OK | la cuenta en cortesía se desbloquea al volver al primer plano |  |
+| OK | cortesía: sin bloqueo |  |
+
+## Pago: agotado por simulacro
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | al terminar el simulacro se registra en el servidor (simulacros_prueba = 1) |  |
+| OK | el resultado del simulacro se puede ver (no se tapa con el bloqueo) |  |
+| OK | agotado por simulacro: al salir del resultado aparece el bloqueo («1 de 1 simulacro») |  |
+| OK | el bloqueo ofrece «Cerrar sesión» y «Mi cuenta» |  |
+| OK | «Mi cuenta» abre Ajustes → Cuenta con el aviso de la prueba terminada |  |
+| OK | «Ver cómo desbloquear» vuelve a la pantalla de pago |  |
+
+## Pago: bloqueo sin conexión
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin conexión: con el contador local (12 + 3) en el límite se bloquea igual | 3 respondidas, pendientes 3 |
+| OK | aviso: enviar el comprobante requiere conexión |  |
+| OK | sin conexión el botón «Enviar comprobante» queda deshabilitado |  |
+| OK | sin conexión, al reabrir la app sigue bloqueada (estado guardado en el dispositivo) |  |
+| OK | al reconectar se envía el consumo pendiente (servidor: 15) |  |
+
+## Pago: cerrar sesión sin conexión conserva el consumo
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin conexión: el consumo pendiente (3) se guarda también en ascenso2026:acceso:pend:<uid> | {"p":3,"s":0} |
+| OK | al cerrar sesión sin conexión se borra el estado de acceso, pero el consumo pendiente de la cuenta se conserva | {"acceso":null,"pend":{"p":3,"s":0}} |
+| OK | otra cuenta en el mismo dispositivo: no recibe ese consumo y el de la cuenta anterior sigue guardado aparte | pago.dani@prueba.pe: 0; pendiente de usuario@prueba.pe: 3 |
+| OK | al volver a ingresar con la misma cuenta se envía el consumo con registrar_consumo (servidor: 12 → 15) y se borra la copia |  |
+| OK | la prueba no se reinicia: sigue agotada (15 de 15) y bloqueada |  |
+
+## Pago: detalle de usuario (admin)
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | eventos de pago con examen «—» (no «Mixto») | 5 eventos de pago |
+| OK | eventos de pago con su detalle (operación / motivo) desde admin_eventos().detalle | Pago verificado yape · operación 20261016 · pago 76dd6fa7-ce76-4936-892a-0a186f3f213d \| Pago rechazado yape · operación 20261015 · motivo: El número de operación no coincide con  |
+
+## Pago: Explorar consume la prueba
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | Explorar en prueba: aviso discreto «Cada respuesta que reveles cuenta para tu prueba gratis» | Cada respuesta que reveles cuenta para tu prueba gratis |
+| OK | revelar 3 fichas (una dos veces) suma 3 al consumo local, una vez por pregunta | pendiente 3, abiertas 3 |
+| OK | al ocultar la app se envía el consumo de Explorar con registrar_consumo (servidor: 3) | 3 |
+| OK | una ficha ya contada en esta sesión no vuelve a contar |  |
+| OK | agotar la prueba revelando fichas en Explorar muestra el bloqueo (servidor: 15) y saca de Explorar | #/inicio |
+| OK | con la prueba agotada el enrutador sigue desviando #/explorar a Inicio |  |
+| OK | cortesía: Explorar sin aviso y revelar fichas no consume | plan cortesia |
+
+## Pago: admin nunca bloqueado
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | admin: aunque sus contadores superen el límite, nunca ve el bloqueo ni acumula consumo |  |
+| OK | admin: Explorar sin aviso de prueba y revelar fichas no consume |  |
+
+## Pago: no admin
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | usuario normal: «Más» no muestra Administración ni el contador de pagos |  |
+| OK | usuario normal: #/admin?tab=pagos muestra «Acceso restringido» (sin pestaña Pagos) |  |
+| OK | RPC admin_pagos / resolver / configurar / marcar plan → 403 (42501) para un usuario normal | {"pagos":[403,"42501"],"resolver":[403,"42501"],"config":[403,"42501"],"plan":[403,"42501"],"consumo":[400,"22023"],"ajeno":400,"ajenoMsg":"new row violates row-level security policy"} |
+| OK | registrar_consumo > 200 → 22023; subir a la carpeta de otro usuario → rechazado |  |
+
+## Pago: consola
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin errores de consola ni excepciones en los escenarios de pago |  |
 
 ## Detalle de la verificación de composición
 
@@ -550,6 +770,15 @@ No se incluyen en el precache del service worker.
 - `45_instalar_android.png`: Instalar con un toque (Android/Chrome): botón «Instalar la app» con el diálogo nativo
 - `46_instalar_iphone.png`: Instalar con un toque (iPhone/Safari): guía animada de 3 pasos y flecha hacia Compartir
 - `47_instalar_escritorio.png`: Instalar con un toque (escritorio): tarjeta «abre este enlace en tu teléfono»
+- `50_bloqueo_pago.png`: Bloqueo (390×844): prueba agotada, monto, Yape con número, titular y «Copiar número» (sin QR)
+- `51_bloqueo_formulario.png`: Bloqueo: voucher con miniatura y número de operación listos para enviar
+- `52_pago_en_revision.png`: Pago en revisión: operación, medio, fecha, miniatura y «Corregir»
+- `53_admin_pagos.png`: Administración → Pagos: pendientes con voucher, «Verificar y desbloquear» y «Rechazar» (página completa, sin la barra inferior)
+- `54_admin_cobro.png`: Administración → Cobro: números de Yape y Plin, titulares, monto, límites de la prueba y texto de ayuda (página completa, sin la barra inferior)
+- `55_pago_rechazado.png`: Comprobante rechazado: motivo y formulario para reintentar
+- `56_pago_verificado.png`: Pago verificado: agradecimiento antes de volver a Inicio
+- `57_inicio_prueba.png`: Inicio durante la prueba gratis: indicador discreto de preguntas y simulacros
+- `58_bloqueo_sin_conexion.png`: Bloqueo sin conexión: se ven los datos de pago; enviar requiere internet
 
 ## Limitaciones de estas pruebas
 

@@ -300,6 +300,70 @@ export const adminEventos = (usuario = null, limite = 200) => rpc('admin_eventos
 export const adminBloquear = (usuario, bloqueado) => rpc('admin_bloquear', { p_usuario: usuario, p_bloqueado: bloqueado });
 
 // ---------------------------------------------------------------------------
+// [1.3.0] Prueba gratis y pago (esquema 1.2.0, ver backend/schema.sql §6.b y §7.b)
+// ---------------------------------------------------------------------------
+
+/** Estado de acceso de la cuenta: {plan, preguntas_prueba, …, agotado, pago_pendiente, config}. */
+export const estadoAcceso = () => rpc('estado_acceso');
+/** Suma consumo de la prueba (≤ 200 preguntas y ≤ 5 simulacros por llamada); devuelve el estado. */
+export const registrarConsumo = (preguntas, simulacros) => rpc('registrar_consumo', { p_preguntas: preguntas, p_simulacros: simulacros });
+/** Registra (o corrige) el comprobante ya subido a Storage; devuelve el estado de acceso. */
+export const registrarPago = (medio, operacion, capturaPath) => rpc('registrar_pago', { p_medio: medio, p_operacion: operacion, p_captura_path: capturaPath });
+export const adminPagos = (estadoPago = null) => rpc('admin_pagos', { p_estado: estadoPago });
+export const adminResolverPago = (id, aprobar, motivo = null) => rpc('admin_resolver_pago', { p_pago_id: id, p_aprobar: aprobar, p_motivo: motivo });
+export const adminMarcarPlan = (usuario, plan) => rpc('admin_marcar_plan', { p_usuario_id: usuario, p_plan: plan });
+/** Con {} devuelve la configuración actual sin cambiarla; con claves, la actualiza (parcial). */
+export const adminConfigurarPago = (config = {}) => rpc('admin_configurar_pago', { p_config: config });
+
+export const BUCKET_COMPROBANTES = 'comprobantes';
+
+function traducirStorage(e) {
+  if (e instanceof ErrorNube) return e;
+  const status = Number(e?.statusCode || e?.status || 0) || null;
+  const m = String(e?.message || '');
+  if (e?.name === 'StorageUnknownError' || esFalloDeRed(e)) return new ErrorNube(MSJ_RED, 'red', { status: 0 });
+  const con = (msg, tipo) => new ErrorNube(msg, tipo, { status, codigo: String(e?.code || e?.error || '') });
+  if (status === 413 || /maximum allowed size|too large|payload/i.test(m)) return con('La imagen supera 1 MB. Elige otra captura o recórtala.', 'validacion');
+  if (/mime|content type|invalid_mime/i.test(m)) return con('El voucher debe ser una imagen (JPG, PNG o WEBP).', 'validacion');
+  if (/bloquead/i.test(m)) return con('Cuenta bloqueada; contacta al administrador.', 'bloqueado');
+  if (status === 401 || /jwt|token/i.test(m)) return con('Tu sesión expiró. Vuelve a ingresar.', 'sesion');
+  if (status === 403 || /row-level security|unauthorized/i.test(m)) return con('El servidor no permitió subir la imagen (permisos).', 'permiso');
+  if (/bucket not found/i.test(m)) return con('Falta crear el almacenamiento de comprobantes en el servidor (bucket «comprobantes»).', 'config');
+  return con(`No se pudo subir la imagen${m ? `: ${m}` : '.'}`, 'servidor');
+}
+
+/**
+ * Sube la captura del voucher a Storage en «<uid>/<marca de tiempo>.jpg» (bucket privado).
+ * @param {Blob} imagen JPEG ya comprimida (≤ 1 MB)
+ * @returns {Promise<string>} ruta del objeto dentro del bucket
+ */
+export async function subirComprobante(imagen) {
+  exigirRed();
+  const ruta = `${uid()}/${Date.now()}.jpg`;
+  let r;
+  try {
+    r = await cliente().storage.from(BUCKET_COMPROBANTES).upload(ruta, imagen, { contentType: 'image/jpeg', upsert: true, cacheControl: '3600' });
+  } catch (e) {
+    throw traducirStorage(e);
+  }
+  if (r.error) throw traducirStorage(r.error);
+  return (r.data && r.data.path) || ruta;
+}
+
+/** URL firmada (10 min) para ver un voucher: la política deja al dueño y al administrador. */
+export async function urlComprobante(ruta, segundos = 600) {
+  exigirRed();
+  let r;
+  try {
+    r = await cliente().storage.from(BUCKET_COMPROBANTES).createSignedUrl(ruta, segundos);
+  } catch (e) {
+    throw traducirStorage(e);
+  }
+  if (r.error) throw traducirStorage(r.error);
+  return r.data.signedUrl;
+}
+
+// ---------------------------------------------------------------------------
 // Diagnóstico de conexión
 // ---------------------------------------------------------------------------
 
@@ -351,6 +415,12 @@ export async function diagnostico() {
     const tablas = ['perfiles', 'estado_progreso', 'eventos_sesion', 'ingresos'];
     const faltan = tablas.filter((t) => rls[t] !== true);
     return { ok: !faltan.length, detalle: faltan.length ? `RLS desactivado en: ${faltan.join(', ')}` : 'RLS activado en las 4 tablas.' };
+  });
+  await paso('Prueba gratis y pagos (esquema 1.2.0)', async () => {
+    if (!diag || !('pagos_ok' in diag)) return { ok: false, detalle: 'El esquema no tiene la parte de pagos: ejecuta de nuevo backend/schema.sql.' };
+    const b = diag.pagos && diag.pagos.bucket_comprobantes;
+    if (diag.pagos_ok) return { ok: true, detalle: 'Tablas, funciones y almacenamiento privado de comprobantes en orden.' };
+    return { ok: false, detalle: b && b.existe === false ? 'Falta el bucket privado «comprobantes» en Storage.' : 'Revisa diagnostico_esquema() → pagos en el SQL Editor.' };
   });
   await paso('Aislamiento de datos', async () => {
     const filas = await rest(cliente().from('perfiles').select('id'));

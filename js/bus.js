@@ -2,6 +2,9 @@
 // Uso: emitir('sesion-terminada', datos) · const quitar = escuchar('sesion-terminada', fn)
 // Eventos:
 //   'sesion-terminada' → { tipo: 'practica'|'repaso'|'simulacro', examen, inicio, fin, n, aciertos, nota, duracion_s, id_cliente }
+//   'respuesta-registrada' → { modo: 'practica'|'repaso'|'explorar', id }   (una respuesta de práctica/repaso o una ficha revelada en Explorar; consumo de la prueba)
+//   'acceso-cambio' → estadoAcceso() de acceso.js (plan, consumo, agotado, pago, config…)
+//   'acceso-desbloqueado' → { plan: 'pagado'|'cortesia' } (la cuenta pasó de bloqueada a acceso completo)
 
 const oyentes = new Map();
 

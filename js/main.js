@@ -2,15 +2,18 @@
 // sesión (pantalla de acceso si no hay), rutas por hash, navegación inferior,
 // sincronización con la nube, guardado al ocultar la app y service worker.
 // Si la app no se abre instalada, antes que nada se muestra la pantalla «Instalar con un toque».
+// Sin sesión no se puede estudiar: solo se ve la pantalla de acceso (el enrutador no arranca).
+// Con sesión, la prueba gratis (acceso.js) puede bloquear la app hasta verificar el pago.
 
 // Primero: escucha temprana de `beforeinstallprompt` (no perder el evento).
 import { montarInstalacion } from './ui/instalar.js';
 import { cargarEstado, guardarYa, almacen } from './estado.js';
 import { cargarDatos } from './datos.js';
-import { definirRutas, iniciarRouter, refrescar } from './router.js';
+import { definirRutas, definirGuardia, iniciarRouter, refrescar } from './router.js';
 import * as nube from './nube.js';
 import * as sync from './sincronizacion.js';
 import * as cuenta from './cuenta.js';
+import * as acceso from './acceso.js';
 import { registrarSW } from './sw-registro.js';
 import { pendientesHoy } from './consultas.js';
 import { esc } from './util.js';
@@ -34,6 +37,7 @@ import * as vRanking from './ui/vista-ranking.js';
 import * as vAdmin from './ui/vista-admin.js';
 import * as vDiagnostico from './ui/vista-diagnostico.js';
 import { montarAcceso } from './ui/vista-acceso.js';
+import { montarBloqueo, esRutaEstudio } from './ui/vista-bloqueo.js';
 
 const RUTAS = [
   { patron: '/inicio', montar: vInicio.montar, nav: 'inicio' },
@@ -116,6 +120,9 @@ function entrar(usuario) {
       if (!document.body.classList.contains('en-sesion') && !document.querySelector('.modal')) refrescar();
     },
   });
+  // [1.3.0] Prueba gratis: estado de acceso (consulta al servidor) y pantalla de bloqueo.
+  acceso.iniciar(usuario, { alExpulsar: (motivo) => cuenta.expulsar(motivo) });
+  montarBloqueo();
   if (!routerIniciado) {
     routerIniciado = true;
     iniciarRouter(document.getElementById('vista'));
@@ -190,6 +197,8 @@ async function arrancar() {
   }
 
   definirRutas(RUTAS);
+  // Con la prueba gratis agotada (o el pago en revisión) no se abren las rutas de estudio.
+  definirGuardia((camino) => (acceso.agotado() && esRutaEstudio(camino) ? '/inicio' : null));
   const usuario = await sesionInicial();
   quitarCarga();
   if (!usuario) {

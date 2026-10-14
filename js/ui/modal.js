@@ -54,7 +54,8 @@ export function abrirHoja(op = {}) {
       abiertos -= 1;
       if (abiertos <= 0) {
         abiertos = 0;
-        if (app) app.inert = false;
+        // Con la pantalla de bloqueo (prueba agotada) la app sigue inerte debajo.
+        if (app) app.inert = document.body.classList.contains('con-bloqueo');
         document.body.classList.remove('con-modal');
       }
       setTimeout(() => cont.remove(), 220);

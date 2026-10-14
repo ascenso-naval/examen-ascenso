@@ -6,6 +6,7 @@ import { cerrarTodas } from './ui/modal.js';
 
 const rutas = [];
 let raiz = null;
+let guardia = null;
 let actual = { limpiar: null, ruta: null, camino: '' };
 
 /**
@@ -33,6 +34,12 @@ function coincidir(camino) {
   }
   return null;
 }
+
+/**
+ * Guardia de navegación: fn(camino, ruta) devuelve otro camino para desviar (p. ej. '/inicio'
+ * cuando la prueba gratis está agotada y la ruta es de estudio) o null para seguir.
+ */
+export function definirGuardia(fn) { guardia = typeof fn === 'function' ? fn : null; }
 
 /** Camino actual sin «#», p. ej. «/practica/sesion». */
 export const caminoActual = () => (location.hash.replace(/^#/, '') || '/inicio').split('?')[0];
@@ -64,6 +71,11 @@ function resolver() {
   const [camino, consulta] = completo.split('?');
   const m = coincidir(camino);
   if (!m) { navegar('/inicio', { reemplazar: true }); return; }
+  if (guardia) {
+    let desvio = null;
+    try { desvio = guardia(camino, m.ruta); } catch (e) { console.error(e); }
+    if (desvio && desvio !== camino) { navegar(desvio, { reemplazar: true }); return; }
+  }
   cerrarTodas();
   if (actual.limpiar) {
     try { actual.limpiar(); } catch (e) { console.error(e); }

@@ -5,12 +5,12 @@
  * · Estrategia: primero caché y actualización en segundo plano (stale-while-revalidate).
  * · Una versión nueva queda «en espera»; la página muestra «Nueva versión disponible ·
  *   Actualizar», que envía SKIP_WAITING y recarga.
- * · Las llamadas a Supabase (*.supabase.co: Auth y REST) NUNCA pasan por la caché:
+ * · Las llamadas a Supabase (*.supabase.co: Auth, REST y Storage —vouchers—) NUNCA pasan por la caché:
  *   van directo a la red (network-only), igual que cualquier petición que no sea GET.
  *
  * PARA PUBLICAR CAMBIOS: sube APP_VERSION (y la de js/version.js) — ver README.
  */
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 const PREFIJO = 'ascenso2026-';
 const CACHE = `${PREFIJO}${APP_VERSION}`;
 
@@ -26,6 +26,7 @@ const ARCHIVOS = [
   './js/fusion.js',
   './js/sincronizacion.js',
   './js/cuenta.js',
+  './js/acceso.js',
   './js/bus.js',
   './js/version.js',
   './js/util.js',
@@ -73,6 +74,7 @@ const ARCHIVOS = [
   './js/ui/vista-diagnostico.js',
   './js/ui/csv.js',
   './js/ui/instalar.js',
+  './js/ui/vista-bloqueo.js',
   './iconos/favicon.svg',
   './iconos/favicon-32.png',
   './iconos/icon-192.png',

@@ -16,9 +16,31 @@ import { exportarProgreso, compartirProgreso, puedeCompartir } from './exportar.
 import { sonar } from './sonido.js';
 import * as sync from '../sincronizacion.js';
 import * as nube from '../nube.js';
+import { escuchar } from '../bus.js';
 import { cerrarSesionUsuario, APODO_RE, AYUDA_APODO } from '../cuenta.js';
 import { estaInstalada } from '../instalacion.js';
 import { abrirInstalacion } from './instalar.js';
+import * as acceso from '../acceso.js';
+import { textoPrueba } from './vista-inicio.js';
+
+/** Plan de acceso de la cuenta (prueba gratis / pago en revisión / acceso completo). */
+function textoPlan(st = acceso.estadoAcceso()) {
+  if (st.admin) return 'Administrador: sin límites';
+  if (!st.conocido) return 'Se consultará al conectarte';
+  if (st.plan === 'pagado') return 'Acceso completo (pago verificado)';
+  if (st.plan === 'cortesia') return 'Acceso completo (cortesía)';
+  if (st.plan === 'pendiente') return 'Pago en revisión';
+  return textoPrueba(st) || 'Prueba gratis';
+}
+
+function htmlAvisoAgotado() {
+  if (!acceso.agotado()) return '';
+  const pendiente = acceso.enPendiente();
+  return `<div class="aviso-acceso aviso-prueba" id="aviso-prueba-agotada" role="status">${icono('candado', { tam: 20 })}<span>${pendiente
+    ? 'Tu pago está en revisión. La app se desbloqueará apenas el administrador lo verifique.'
+    : 'Tu prueba gratis terminó. Desbloquea la app de por vida con un único pago por Yape o Plin.'}
+    <a class="enlace" href="#/inicio" data-accion="ver-pago">${pendiente ? 'Ver mi comprobante' : 'Ver cómo desbloquear'}</a></span></div>`;
+}
 
 const TEXTO_SITUACION = {
   ok: 'Al día', pendiente: 'Cambios pendientes de subir', sincronizando: 'Sincronizando…',
@@ -44,6 +66,7 @@ function htmlCuenta() {
   return `<h2>Cuenta</h2>
       <div class="lista" id="cuenta">
         <div class="ajuste"><span class="ajuste-texto"><strong>Correo</strong><span id="correo-cuenta">${esc(correo)}</span></span>${icono('usuario', { tam: 22 })}</div>
+        <div class="ajuste"><span class="ajuste-texto"><strong>Plan</strong><span id="plan-cuenta">${esc(textoPlan())}</span></span>${icono('candado', { tam: 22 })}</div>
         <div class="ajuste-bloque">
           <label for="apodo-cuenta"><strong>Apodo</strong> <span class="peq atenuado">(así apareces en el ranking)</span></label>
           <div class="fila-flex mt-s">
@@ -133,6 +156,7 @@ export function montar(raiz, params) {
     raiz.innerHTML = `
       <h1>Ajustes</h1>
       <p class="sub">Los cambios se guardan al instante.</p>
+      ${htmlAvisoAgotado()}
       ${!almacen.disponible ? `<p class="aviso-almacen">${icono('alerta', { tam: 20 })}<span>Este navegador no permite guardar datos. Exporta tu progreso antes de cerrar la app.</span></p>` : ''}
 
       ${htmlCuenta()}
@@ -334,7 +358,12 @@ export function montar(raiz, params) {
     const el = raiz.querySelector('#situacion-sync');
     if (el) el.innerHTML = htmlSituacion(s);
   });
+  const quitarAcceso = escuchar('acceso-cambio', (st) => {
+    const el = raiz.querySelector('#plan-cuenta');
+    if (el) el.textContent = textoPlan(st);
+  });
   return () => {
+    quitarAcceso();
     quitarSync();
     raiz.removeEventListener('click', alClic);
     raiz.removeEventListener('input', alEntrada);
