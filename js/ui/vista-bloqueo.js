@@ -247,7 +247,7 @@ function htmlGracias() {
   return `<div class="bloqueo-gracias" role="status">
     <span class="bloqueo-gracias-icono" aria-hidden="true">${icono('check', { tam: 44 })}</span>
     <h1 id="bloqueo-titulo" tabindex="-1">${cortesia ? '¡Acceso completo activado!' : '¡Pago verificado, gracias!'}</h1>
-    <p class="texto-largo">${cortesia ? 'El administrador te dio acceso de cortesía.' : 'Tu cuenta ya tiene acceso completo.'} Disfruta Ascenso 2026 de por vida, sin límites. ¡Éxitos en tu examen!</p>
+    <p class="texto-largo">${cortesia ? 'El administrador te dio acceso de cortesía.' : 'Tu cuenta ya tiene acceso completo.'} Disfruta Ascensos 2027 de por vida, sin límites. ¡Éxitos en tu examen!</p>
     <button type="button" class="btn btn-primario btn-bloque" data-accion="entrar">Empezar a estudiar</button>
   </div>`;
 }

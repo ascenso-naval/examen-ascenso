@@ -1,4 +1,4 @@
-/* sw.js — Service worker de «Ascenso 2026».
+/* sw.js — Service worker de «Ascensos 2027».
  *
  * · Precarga el app shell (HTML, CSS, módulos JS, manifest, iconos) y el banco (data/*.json)
  *   en una caché con versión: «ascenso2026-<APP_VERSION>».
@@ -10,7 +10,7 @@
  *
  * PARA PUBLICAR CAMBIOS: sube APP_VERSION (y la de js/version.js) — ver README.
  */
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 const PREFIJO = 'ascenso2026-';
 const CACHE = `${PREFIJO}${APP_VERSION}`;
 

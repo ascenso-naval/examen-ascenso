@@ -175,7 +175,7 @@ export function crearRespaldo({ raiz, pintar, activa, alCambiarAviso }) {
   async function compartir() {
     if (!resultado) return;
     try {
-      await navigator.share({ files: [new File([resultado.blob], resultado.nombre, { type: 'application/json' })], title: 'Respaldo Ascenso 2026' });
+      await navigator.share({ files: [new File([resultado.blob], resultado.nombre, { type: 'application/json' })], title: 'Respaldo Ascensos 2027' });
     } catch (e) {
       if (e && e.name !== 'AbortError') toast('No se pudo compartir. Usa «Guardar otra vez».', { tipo: 'error' });
     }

@@ -1,10 +1,10 @@
-# Informe de pruebas — Ascenso 2026 (PWA)
+# Informe de pruebas — Ascensos 2027 (PWA)
 
-Fecha: 14/10/2026, 4:46:03 p. m. (hora de Lima). Duración: 272 s.
+Fecha: 14/10/2026, 5:42:09 p. m. (hora de Lima). Duración: 270 s.
 
 Entorno: Chromium (Playwright 1.56.0), viewport 390×844, `isMobile: true`, `hasTouch`, escala 2, locale es-PE, zona America/Lima. App servida con `python3 -m http.server 8123 --directory app`.
 
-**Resultado: 415 de 415 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
+**Resultado: 425 de 425 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
 
 Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `node verificar_composicion.mjs`, `node unitarias.mjs`).
 
@@ -12,20 +12,20 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 
 | Requisito | Grupos de pruebas | Resultado |
 |---|---|---|
-| Carga inicial sin errores de consola, SW registrado, manifest válido | Estáticas, Carga inicial | OK (18 comprobaciones) |
+| Carga inicial sin errores de consola, SW registrado, manifest válido | Estáticas, Carga inicial | OK (24 comprobaciones) |
 | Práctica de 10 preguntas con un fallo → resumen, XP y estado guardados; persistencia tras recargar | Práctica | OK (9 comprobaciones) |
 | Simulacro de 40 con tiempo: mínimos por fuente y exclusiones (script), entrega, nota y revisión | Simulacro, Composición (script), Simulacro con tiempo agotado | OK (25 comprobaciones) |
 | Repaso: las falladas aparecen hoy y un acierto las reprograma | Repaso | OK (6 comprobaciones) |
 | Exportar → borrar → importar restaura | Exportar e importar | OK (4 comprobaciones) |
 | El modo ampliado cambia el conteo disponible | Modo ampliado | OK (3 comprobaciones) |
 | Segunda carga con la red cortada funciona (también bajo un subdirectorio) | Sin conexión, Subdirectorio | OK (5 comprobaciones) |
-| Capturas de cada pantalla principal en `app/_capturas/` | — | 58 capturas |
-| `node --check` de todos los módulos y JSON del manifest | Estáticas | OK (13 comprobaciones) |
-| Extra: lógica (niveles, racha, SRS, XP, nota, migración), interacciones, tema claro, nueva versión del SW | Lógica (unitarias), Interacciones, Pantallas, Tema claro, Nueva versión | OK (58 comprobaciones) |
+| Capturas de cada pantalla principal en `app/_capturas/` | — | 59 capturas |
+| `node --check` de todos los módulos y JSON del manifest | Estáticas | OK (18 comprobaciones) |
+| Extra: lógica (niveles, racha, SRS, XP, nota, migración), interacciones, tema claro, nueva versión del SW | Lógica (unitarias), Interacciones, Pantallas, Tema claro, Nueva versión | OK (62 comprobaciones) |
 
 ## Cobertura del encargo 02 (sección 5)
 
-Comprobaciones del encargo 01 (sin los grupos «Nube»): 337 de 337 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
+Comprobaciones del encargo 01 (sin los grupos «Nube»): 347 de 347 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
 
 | Requisito | Grupos de pruebas | Resultado |
 |---|---|---|
@@ -42,7 +42,7 @@ Comprobaciones del encargo 01 (sin los grupos «Nube»): 337 de 337 superadas (l
 
 ## Cobertura del encargo 03 («Instalar con un toque»)
 
-Comprobaciones de los encargos 01 y 02: 286 de 286 superadas (parten de «Seguir en el navegador» ya elegido, sembrado por `usarMock`). Nuevas del encargo 03: 34 de 34.
+Comprobaciones de los encargos 01 y 02: 296 de 296 superadas (parten de «Seguir en el navegador» ya elegido, sembrado por `usarMock`). Nuevas del encargo 03: 34 de 34.
 
 | Requisito | Grupos de pruebas | Resultado |
 |---|---|---|
@@ -52,11 +52,11 @@ Comprobaciones de los encargos 01 y 02: 286 de 286 superadas (parten de «Seguir
 | (c) iPhone Safari: guía de 3 pasos con flecha animada; reduced motion; Chrome en iOS; iPad | Instalación: iPhone | OK (6 comprobaciones) |
 | (d) «Seguir en el navegador»: 7 días, reaparece al vencer, Escape, Ajustes → «Instalar en el celular» | Instalación: seguir en el navegador | OK (8 comprobaciones) |
 | (e) Escritorio: tarjeta breve con el enlace y continuar | Instalación: escritorio | OK (3 comprobaciones) |
-| (f) Sin errores de consola; las comprobaciones anteriores siguen en verde | Instalación: consola | OK (1 comprobaciones) · anteriores: 286/286 |
+| (f) Sin errores de consola; las comprobaciones anteriores siguen en verde | Instalación: consola | OK (1 comprobaciones) · anteriores: 296/296 |
 
 ## Cobertura del encargo 04 (prueba gratis y pago único, v1.3.0)
 
-Comprobaciones de los encargos 01 a 03: 241 de 241 superadas. Nuevas del encargo 04: 95 de 95. La cuenta precargada `estudiante@prueba.pe` (escenarios del encargo 01) está en **cortesía** en el mock para que el límite de la prueba no la afecte; las demás cuentas empiezan en prueba.
+Comprobaciones de los encargos 01 a 03: 251 de 251 superadas. Nuevas del encargo 04: 95 de 95. La cuenta precargada `estudiante@prueba.pe` (escenarios del encargo 01) está en **cortesía** en el mock para que el límite de la prueba no la afecte; las demás cuentas empiezan en prueba.
 
 | Escenario (§6 de la especificación) | Grupos de pruebas | Resultado |
 |---|---|---|
@@ -84,7 +84,7 @@ Decisiones finales del encargo 04: (1) revelar una ficha en Explorar consume la 
 
 ## Cobertura del encargo 05 (respaldo y restauración, v1.4.0 · esquema 1.3.0)
 
-Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo 05: 79 de 79. Los escenarios de respaldo reinician el mock y siembran 230 eventos, 55 cuentas con progreso y 4 pagos (3 vouchers distintos) para que la paginación sea real.
+Comprobaciones de los encargos 01 a 04: 346 de 346 superadas. Nuevas del encargo 05: 79 de 79. Los escenarios de respaldo reinician el mock y siembran 230 eventos, 55 cuentas con progreso y 4 pagos (3 vouchers distintos) para que la paginación sea real.
 
 | Escenario (§3 de la especificación) | Grupos de pruebas | Resultado |
 |---|---|---|
@@ -116,6 +116,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | node --check de 58 archivos JS |  |
 | OK | manifest.webmanifest es JSON válido |  |
 | OK | manifest: name y short_name |  |
+| OK | manifest: description con el nombre «Ascensos 2027» | Ascensos 2027: práctica, simulacros cronometrados y repaso inteligente para los exámenes de ascenso: Reglamentos, MAPLO e Inglés. Funciona sin conexión. |
 | OK | manifest: display standalone y orientación portrait |  |
 | OK | manifest: start_url y scope relativos |  |
 | OK | manifest: iconos 192, 512 y maskable |  |
@@ -123,7 +124,11 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | iconos PNG con el tamaño declarado | iconos/icon-192.png=192x192, iconos/icon-512.png=512x512, iconos/icon-maskable-192.png=192x192, iconos/icon-maskable-512.png=512x512, iconos/apple-touch-icon.png=180x180 |
 | OK | el service worker precachea todos los archivos de la app | 77 entradas |
 | OK | las capturas no están en el precache |  |
-| OK | APP_VERSION coincide en sw.js y js/version.js | 1.4.0 / 1.4.0 |
+| OK | APP_VERSION coincide en sw.js y js/version.js | 1.4.1 / 1.4.1 |
+| OK | index.html: <title>, meta apple-mobile-web-app-title/application-name y pantalla de carga «Ascensos 2027» |  |
+| OK | ningún texto visible dice «Ascenso 2026» |  |
+| OK | identificadores internos intactos (claves ascenso2026:*, app, esquema, prefijo de caché, formato de respaldo) | 13 identificadores verificados |
+| OK | sw-registro: busca versión nueva al volver a primer plano y al recuperar la red (cada 5 min como mucho) |  |
 | OK | sin alert/confirm/prompt nativos |  |
 | OK | sin recursos externos (http/https) en HTML, CSS y JS (salvo la API de Supabase) |  |
 
@@ -136,7 +141,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | config-supabase.js coincide con backend/supabase.config.json |  |
 | OK | ninguna secret key en app/ ni backend/ |  |
 | OK | SW: precachea el vendor y deja supabase.co en network-only |  |
-| OK | APP_VERSION 1.4.0 (encargo 05; 1.1.0 fue la del encargo 02, 1.2.0 la del 03 y 1.3.0 la del 04) |  |
+| OK | APP_VERSION 1.4.1 (parche 1.4.1; 1.4.0 fue la del encargo 05, 1.1.0 fue la del encargo 02, 1.2.0 la del 03 y 1.3.0 la del 04) |  |
 | OK | schema.sql: tablas con RLS, trigger de alta y todas las funciones | 10 funciones |
 | OK | schema.sql probado en PostgreSQL 16 local (backend/pruebas_schema.out) | 302 comprobaciones OK |
 | OK | rutas JSON del estado documentadas en README y schema.sql, coherentes con estado.js |  |
@@ -147,7 +152,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | versión ≥ 1.3.0 en sw.js y version.js (1.4.0 desde el encargo 05); acceso.js y vista-bloqueo.js en el precache | ./js/acceso.js, ./js/ui/vista-bloqueo.js |
+| OK | versión ≥ 1.3.0 en sw.js y version.js (1.4.0 desde el encargo 05; 1.4.1 desde el parche); acceso.js y vista-bloqueo.js en el precache | ./js/acceso.js, ./js/ui/vista-bloqueo.js |
 | OK | la app y el mock esperan el esquema ≥ 1.2.0 (1.3.0 desde el encargo 05) |  |
 | OK | sin QR: librería eliminada, fuera del precache, sin generación en el bloqueo ni CSS huérfano |  |
 | OK | formulario: voucher image/*, compresión por canvas (1280 px, JPEG ≤ 1 MB) y operación numérica |  |
@@ -158,7 +163,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | versión 1.4.0 en sw.js y version.js; respaldo.js y admin-respaldo.js en el precache | ./js/respaldo.js, ./js/ui/admin-respaldo.js |
+| OK | versión 1.4.1 en sw.js y version.js (1.4.0 del encargo 05 + parche 1.4.1); respaldo.js y admin-respaldo.js en el precache | ./js/respaldo.js, ./js/ui/admin-respaldo.js |
 | OK | la app y el mock esperan el esquema 1.3.0 |  |
 | OK | nube.js y el mock: las 5 RPC de respaldo y el paso «Respaldo» del diagnóstico |  |
 | OK | backend/schema.sql (1.3.0) define las 5 funciones que usa la app |  |
@@ -224,7 +229,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | logros de simulacro (Primer simulacro, Aprobado, Sobresaliente) |  |
 | OK | las no respondidas entran a repaso |  |
 | OK | exportar → leer conserva el progreso |  |
-| OK | importar rechaza archivos ajenos | El archivo no contiene un progreso de Ascenso 2026. |
+| OK | importar rechaza archivos ajenos | El archivo no contiene un progreso de Ascensos 2027. |
 | OK | migración completa los campos que faltan |  |
 | OK | fusión de una pregunta: gana el intento más reciente y se unen los historiales sin duplicar la parte común | {"n":6,"a":4,"h":"101011","u":3000,"s":[2,"2026-10-10"]} |
 | OK | fusión de registros idénticos no cambia nada |  |
@@ -241,10 +246,11 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 537 ms |
+| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 541 ms |
 | OK | service worker registrado y activo con scope ./ | http://localhost:8123/ |
-| OK | precache del app shell y del banco | ascenso2026-1.4.0: 71 recursos |
-| OK | manifest enlazado, iconos accesibles y meta tags iOS | Ascenso 2026 — Simulador de examen; content-type application/manifest+json |
+| OK | precache del app shell y del banco | ascenso2026-1.4.1: 71 recursos |
+| OK | manifest enlazado, iconos accesibles y meta tags iOS | Ascensos 2027 — Simulador de examen; content-type application/manifest+json |
+| OK | título del documento, meta iOS y manifest servido: «Ascensos 2027» | Ascensos 2027 · Ascensos 2027 · Ascensos 2027 — Simulador de examen |
 | OK | sin errores de consola en la carga inicial |  |
 
 ## Práctica
@@ -256,7 +262,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | botón «Repetir las falladas» presente |  |
 | OK | XP guardado en localStorage | 142 (esperado 142) |
 | OK | respuestas y actividad del día guardadas | respondidas 10 |
-| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1792014096257,"s":[0,"2026-10-14"]} |
+| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1792017464047,"s":[0,"2026-10-14"]} |
 | OK | logro «Primer paso» desbloqueado |  |
 | OK | el resumen sigue disponible tras recargar | 9 |
 | OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 142 |
@@ -275,7 +281,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | confirmación al entregar con preguntas sin responder | Te quedan 5 preguntas sin responder; contarán como incorrectas. |
 | OK | nota vigesimal 15.0 (30/40) y aprobado | 15.0; Aprobado (nota mínima 14) |
 | OK | simulacro guardado en el historial | {"nota":15,"ac":30,"respondidas":35} |
-| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 952 (esperado 952) |
+| OK | XP del simulacro (×1.5 + 100 por aprobar) y meta diaria (+50) | 945 (esperado 945) |
 | OK | meta diaria cumplida y logros «Primer simulacro» y «Aprobado» |  |
 | OK | la sesión del simulacro se cierra al entregar |  |
 | OK | revisión: 40 preguntas y filtro «Solo erradas» (10) | 40 / 10 |
@@ -287,7 +293,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | MAPLO «como el examen»: 60 % oficial-maplo | 6 de 10 |
 | OK | tarjeta «Continuar sesión» con el tiempo restante | Simulacro en curso MAPLO: 2 de 10 respondidas Quedan 14:57 Continuar Descartar |
 | OK | al retomar se conservan las respuestas | 2 respondidas |
-| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 14 oct, 16:42. Entregado al agotarse el tiempo. |
+| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 14 oct, 17:38. Entregado al agotarse el tiempo. |
 
 ## Repaso
 
@@ -338,9 +344,9 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-14.json (8748 bytes) |
+| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-14.json (8757 bytes) |
 | OK | reiniciar (doble confirmación) borra el progreso |  |
-| OK | importar restaura el progreso | XP 1026, 2 simulacros, 70 preguntas |
+| OK | importar restaura el progreso | XP 997, 2 simulacros, 71 preguntas |
 | OK | el progreso importado persiste tras recargar |  |
 
 ## Tema claro
@@ -360,9 +366,13 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
+| OK | Ajustes → Aplicación muestra la versión instalada junto a «Buscar actualización» | 1.4.1 |
+| OK | «Buscar actualización» sin versión nueva: toast «Ya tienes la última versión (1.4.1)» |  |
+| OK | «Buscar actualización» sin conexión: toast «Sin conexión» |  |
+| OK | «Buscar actualización» con versión nueva: aparece «Nueva versión disponible → Actualizar» (sin el toast de «al día») |  |
 | OK | aviso «Nueva versión disponible» cuando se instala una versión nueva |  |
-| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.4.0-prueba |
-| OK | el progreso se conserva tras actualizar | XP 1041 |
+| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.4.1-prueba |
+| OK | el progreso se conserva tras actualizar | XP 1007 |
 
 ## Subdirectorio
 
@@ -400,7 +410,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | cambiar_apodo: el servidor rechaza un apodo duplicado con mensaje legible |  |
 | OK | apodo guardado con cambiar_apodo |  |
 | OK | «Conservar»: el progreso local sube como estado inicial | XP 500 |
-| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 645; evento n=10, aciertos=10 |
+| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 650; evento n=10, aciertos=10 |
 | OK | evento de práctica con n, aciertos, examen e id_cliente |  |
 | OK | las 10 respuestas están en el estado remoto |  |
 | OK | Inicio: indicador «Sincronizado» |  |
@@ -410,8 +420,8 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 645, 13 preguntas |
-| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 285 de 360 XP |
+| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 650, 13 preguntas |
+| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 290 de 360 XP |
 
 ## Nube: sin conexión y fusión
 
@@ -420,7 +430,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | sin conexión: se puede estudiar; el estado queda pendiente y el evento en cola | pendiente true, cola 1 |
 | OK | el otro dispositivo sube sus cambios mientras B está sin conexión |  |
 | OK | al volver la red se sube lo encolado y se fusiona: respuestas de ambos dispositivos | 33 preguntas |
-| OK | fusión: XP = máximo de ambos | 780 (B 780, C 780) |
+| OK | fusión: XP = máximo de ambos | 795 (B 795, C 790) |
 | OK | fusión: conserva el progreso anterior y la fecha más antigua de los logros |  |
 | OK | eventos: los 3 registrados una sola vez (cola + idempotencia) | 3 eventos |
 | OK | B queda sincronizado (sin pendientes ni cola) |  |
@@ -431,10 +441,10 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 780 XP |
+| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 795 XP |
 | OK | ranking: sin cuentas bloqueadas y sin correos |  |
 | OK | ranking: pestaña «Nota promedio» |  |
-| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 780 XP 3.º |
+| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 795 XP 3.º |
 
 ## Nube: usuario normal
 
@@ -516,7 +526,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 |---|---|---|
 | OK | manifest con criterios de instalación (id, name, short_name, start_url relativa, standalone, iconos 192/512 any y maskable, colores) | id=./ |
 | OK | index.html con meta iOS y apple-touch-icon |  |
-| OK | SW con handler fetch, archivos nuevos en el precache y versión ≥ 1.2.0 (1.4.0 desde el encargo 05) |  |
+| OK | SW con handler fetch, archivos nuevos en el precache y versión ≥ 1.2.0 (1.4.0 desde el encargo 05; 1.4.1 desde el parche) |  |
 
 ## Instalación: modo instalado
 
@@ -529,7 +539,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | es la primera pantalla: diálogo modal accesible (aria-modal, título, foco en el título, fondo inerte) | {"rol":"dialog","modal":"true","titulo":"Instala Ascenso 2026","foco":"inst-titulo","inerte":true} |
+| OK | es la primera pantalla: diálogo modal accesible (aria-modal, título, foco en el título, fondo inerte) | {"rol":"dialog","modal":"true","titulo":"Instala Ascensos 2027","foco":"inst-titulo","inerte":true} |
 | OK | sin evento todavía: botón deshabilitado «Preparando instalación…» |  |
 | OK | beforeinstallprompt capturado con preventDefault() |  |
 | OK | al llegar el evento aparece el botón grande «Instalar la app» |  |
@@ -565,7 +575,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | «Seguir en el navegador» cierra la pantalla y libera el fondo |  |
-| OK | la elección se recuerda 7 días (localStorage) | 2026-10-21T21:44:33.883Z |
+| OK | la elección se recuerda 7 días (localStorage) | 2026-10-21T22:40:40.962Z |
 | OK | al recargar dentro de los 7 días no vuelve a aparecer |  |
 | OK | vencidos los 7 días vuelve a aparecer |  |
 | OK | Escape cierra la pantalla (igual que «Seguir en el navegador») |  |
@@ -633,7 +643,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | con voucher y operación: «Enviar comprobante» habilitado |  |
-| OK | sube el voucher a comprobantes/<uid>/<timestamp>.jpg y registra el pago (pendiente) | fc439e76-9e7a-42a3-878e-691d34fd2e3d/1792014299046.jpg |
+| OK | sube el voucher a comprobantes/<uid>/<timestamp>.jpg y registra el pago (pendiente) | 506cd58f-c1a7-4dde-87e9-ad34fb866a8f/1792017665531.jpg |
 | OK | el voucher se envía comprimido como JPEG ≤ 1 MB | 1413 bytes |
 | OK | plan → pendiente |  |
 | OK | «Pago en revisión» con la operación y la miniatura del voucher |  |
@@ -653,7 +663,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | Más → Administración: contador de pagos pendientes (1) |  |
-| OK | Pagos: apodo, correo, medio, operación, monto y fecha | Ana_Pago pago.ana@prueba.pe Pendiente Medio Yape Operación 20261015 Monto S/ 20 Fecha 14 oct, 16:44 Verificar y desbloqu |
+| OK | Pagos: apodo, correo, medio, operación, monto y fecha | Ana_Pago pago.ana@prueba.pe Pendiente Medio Yape Operación 20261015 Monto S/ 20 Fecha 14 oct, 17:41 Verificar y desbloqu |
 | OK | el voucher se ve con una URL firmada del almacenamiento privado | 160 px |
 | OK | el voucher se amplía en un modal |  |
 | OK | rechazar exige motivo |  |
@@ -722,7 +732,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | eventos de pago con examen «—» (no «Mixto») | 5 eventos de pago |
-| OK | eventos de pago con su detalle (operación / motivo) desde admin_eventos().detalle | Pago verificado yape · operación 20261016 · pago d1b1bf1f-922a-4a87-aa0c-a53ba6d84e61 \| Pago rechazado yape · operación 20261015 · motivo: El número de operación no coincide con  |
+| OK | eventos de pago con su detalle (operación / motivo) desde admin_eventos().detalle | Pago verificado yape · operación 20261016 · pago e115121a-189b-441b-8b3a-e87602241b9a \| Pago rechazado yape · operación 20261015 · motivo: El número de operación no coincide con  |
 
 ## Pago: Explorar consume la prueba
 
@@ -781,7 +791,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | nombre ascenso2026-respaldo-AAAA-MM-DD-HHMM.json | ascenso2026-respaldo-2026-10-14-1645.json |
+| OK | nombre ascenso2026-respaldo-AAAA-MM-DD-HHMM.json | ascenso2026-respaldo-2026-10-14-1741.json |
 | OK | archivo: formato, version 1, version_esquema, version_app, generado_en y resumen |  |
 | OK | cada tabla trae tantas filas como su total | perfiles 61/61, estado_progreso 58/58, eventos_sesion 233/233, ingresos 1/1, pagos 4/4, configuracion_pago 1/1 |
 | OK | sin filas repetidas pese a las páginas solapadas (deduplicación por clave primaria) |  |
@@ -789,9 +799,9 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | admin_respaldo se llamó por páginas (más los 2 reintentos) | 11 llamadas (mínimo 10) |
 | OK | reintento por página tras 2 cortes de conexión (se informa) | Se reintentaron 2 páginas por fallos de conexión. · cortes en el mock: 2 |
 | OK | filas completas (rol, bloqueado, plan, contadores, pagado_en, aprobado_por; configuración de cobro) |  |
-| OK | vouchers: rutas distintas de pagos.captura_path | 6343dfd4-36f4-4b64-a008-9c294087f4e2/semilla-1.jpg, e2e28a7d-7315-4c88-ba1b-58702f4dd9e1/semilla-0.jpg, ff74338e-049b-43e6-be80-32a1c4605acf/semilla-2.jpg |
+| OK | vouchers: rutas distintas de pagos.captura_path | 1504fb78-05c7-408b-aa26-9adae10dbdb7/semilla-1.jpg, 9856b233-743c-4509-b0d9-eb05b704f5e9/semilla-2.jpg, afbf7a89-2359-4e35-a94d-4dbdcb5c4dfd/semilla-0.jpg |
 | OK | muestra el total de filas descargadas | 358 |
-| OK | guarda la fecha de la descarga en localStorage (ascenso2026:admin:ultimo-respaldo) | 2026-10-14T21:45:35.867Z |
+| OK | guarda la fecha de la descarga en localStorage (ascenso2026:admin:ultimo-respaldo) | 2026-10-14T22:41:42.061Z |
 | OK | tras descargar desaparece el badge de la pestaña |  |
 | OK | tras descargar desaparece el aviso en Más → Administración |  |
 
@@ -825,7 +835,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | vista previa: plan del respaldo frente al actual | Prueba vs Cortesía |
-| OK | la confirmación detalla lo que se restaurará del perfil | Para vigia@prueba.pe: reemplazará su progreso en la nube por el del respaldo (260 XP, 25 preguntas, 14 oct, 16:45); antes se guarda una copi |
+| OK | la confirmación detalla lo que se restaurará del perfil | Para vigia@prueba.pe: reemplazará su progreso en la nube por el del respaldo (260 XP, 25 preguntas, 14 oct, 17:41); antes se guarda una copi |
 | OK | admin_restaurar_perfil: plan, apodo y contadores del respaldo (sin tocar rol ni bloqueo) | {"plan":"prueba","pp":0,"sp":0} |
 
 ## Respaldo: progreso actual mayor, actividad posterior y cuenta sin progreso
@@ -835,7 +845,7 @@ Comprobaciones de los encargos 01 a 04: 336 de 336 superadas. Nuevas del encargo
 | OK | actual > respaldo: advertencia ámbar destacada en la vista previa con las cifras | Atención: hoy la cuenta tiene más progreso que el respaldo (9,000 XP y 500 preguntas frente a 5,400 XP y 380 preguntas). Si restauras, su celular adop · borde rgb(240, 164, 58) |
 | OK | la advertencia se repite en el modal de confirmación | Atención: hoy la cuenta tiene más progreso que el respaldo (9,000 XP y 500 preguntas frente a 5,400 XP y 380 preguntas). |
 | OK | restaurado pese a la advertencia (5400 XP) |  |
-| OK | «Deshacer» con actividad posterior: la confirmación lo advierte | La cuenta tiene actividad posterior a la restauración (última: 14 oct, 16:45). Lo estudiado desde entonces no se conserva en el progreso: qu |
+| OK | «Deshacer» con actividad posterior: la confirmación lo advierte | La cuenta tiene actividad posterior a la restauración (última: 14 oct, 17:41). Lo estudiado desde entonces no se conserva en el progreso: qu |
 | OK | «Deshacer» devuelve EXACTAMENTE el estado previo (9000 XP); lo estudiado después (5600) queda solo en el historial |  |
 | OK | cuenta sin progreso actual: sin advertencia |  |
 | OK | deshacer con sin_estado: la cuenta queda sin progreso y el resultado lo explica | La cuenta no tenía progreso guardado antes; el celular volverá a subir el suyo al sincronizar. |
@@ -956,6 +966,7 @@ No se incluyen en el precache del service worker.
 - `58_bloqueo_sin_conexion.png`: Bloqueo sin conexión: se ven los datos de pago; enviar requiere internet
 - `60_admin_respaldo.png`: Administración → Respaldo: aviso, totales por tabla, última descarga, «Descargar respaldo» y «Restaurar progreso de un usuario»
 - `61_restaurar_previa.png`: Restaurar progreso: vista previa del respaldo frente al actual, casilla «También plan, apodo y contadores» y nota «El celular del usuario adoptará el progreso restaurado…»
+- `62_ajustes_actualizacion.png`: Ajustes → Aplicación: versión instalada y «Buscar actualización» («Ya tienes la última versión»)
 
 ## Limitaciones de estas pruebas
 

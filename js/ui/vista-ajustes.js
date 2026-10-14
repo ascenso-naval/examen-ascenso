@@ -20,6 +20,7 @@ import { escuchar } from '../bus.js';
 import { cerrarSesionUsuario, APODO_RE, AYUDA_APODO } from '../cuenta.js';
 import { estaInstalada } from '../instalacion.js';
 import { abrirInstalacion } from './instalar.js';
+import { buscarActualizacion } from '../sw-registro.js';
 import * as acceso from '../acceso.js';
 import { textoPrueba } from './vista-inicio.js';
 
@@ -57,6 +58,15 @@ function htmlInstalar() {
   }
   return `<div class="lista" id="instalar-ajuste">
         <button type="button" class="fila" data-accion="instalar"><span class="fila-icono">${icono('descargar')}</span><span class="fila-cuerpo"><span class="fila-titulo">Instalar en el celular</span><span class="fila-sub">Ábrela con un toque desde tu pantalla de inicio y sin conexión</span></span>${icono('chev-der', { clase: 'chev', tam: 20 })}</button>
+      </div>`;
+}
+
+function htmlActualizar() {
+  return `<div class="lista mt-s" id="actualizar-ajuste">
+        <div class="ajuste">
+          <span class="ajuste-texto"><strong>Versión instalada</strong><span id="version-instalada">${esc(APP_VERSION)}</span></span>
+          <button type="button" class="btn btn-secundario btn-chico" data-accion="buscar-actualizacion">Buscar actualización</button>
+        </div>
       </div>`;
 }
 
@@ -163,6 +173,7 @@ export function montar(raiz, params) {
 
       <h2>Aplicación</h2>
       ${htmlInstalar()}
+      ${htmlActualizar()}
 
       <h2>Perfil</h2>
       <div class="lista">
@@ -323,6 +334,13 @@ export function montar(raiz, params) {
       }
       case 'cerrar-sesion': await cerrarSesionUsuario(); return;
       case 'instalar': abrirInstalacion(); return;
+      case 'buscar-actualizacion': {
+        b.disabled = true;
+        const texto = b.textContent;
+        b.textContent = 'Buscando…';
+        try { await buscarActualizacion(); } finally { b.disabled = false; b.textContent = texto; }
+        return;
+      }
       default: return;
     }
     guardar();

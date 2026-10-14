@@ -75,7 +75,7 @@ const CONSEJOS = [
 function textoCuenta() {
   const f = estado.ajustes.fechaExamen;
   if (!f) {
-    return { titulo: 'Ascenso 2026', sub: '<a href="#/ajustes">Configura la fecha del examen</a> para ver la cuenta regresiva.' };
+    return { titulo: 'Ascensos 2027', sub: '<a href="#/ajustes">Configura la fecha del examen</a> para ver la cuenta regresiva.' };
   }
   const n = diasEntre(hoyISO(), f);
   if (n > 1) return { titulo: `Faltan ${fmtNum(n)} días`, sub: `Examen: ${esc(fmtFechaLarga(f))}` };

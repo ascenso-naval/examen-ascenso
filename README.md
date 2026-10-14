@@ -1,4 +1,4 @@
-# Ascenso 2026 — Simulador de examen (PWA)
+# Ascensos 2027 — Simulador de examen (PWA)
 
 Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 preguntas con 5 alternativas: **Reglamentos**, **MAPLO** e **Inglés**. Funciona **sin conexión** en el celular (iPhone y Android) una vez instalada.
 
@@ -63,7 +63,7 @@ Todo usa rutas relativas (`./`), así que funciona en `https://usuario.github.io
 1. Crea el repositorio `examen-ascenso` en GitHub (público, o privado con un plan que permita Pages).
 2. Copia **el contenido** de `app/` (no la carpeta) a la raíz del repositorio y súbelo:
    ```bash
-   git init && git add . && git commit -m "Ascenso 2026"
+   git init && git add . && git commit -m "Ascensos 2027"
    git branch -M main
    git remote add origin https://github.com/USUARIO/examen-ascenso.git
    git push -u origin main
@@ -99,6 +99,8 @@ La versión vive en dos archivos que deben coincidir:
 La forma fácil es `python3 scripts/subir_version.py` (sube el último número: 1.0.0 → 1.0.1) o `python3 scripts/subir_version.py 1.1.0` para fijar una versión. También puedes editar ambos archivos a mano.
 
 Qué pasa en los celulares: al abrir la app con internet, el navegador detecta que `sw.js` cambió, descarga la versión nueva en segundo plano y muestra **«Nueva versión disponible · Actualizar»**. Al tocar *Actualizar* se activa la versión nueva, se recarga la app y se borra la caché anterior. El progreso no se pierde.
+
+Desde la v1.4.1 la app busca una versión nueva cada vez que vuelve a primer plano o recupera la conexión (como mucho una vez cada 5 minutos), y **Ajustes → Aplicación** muestra la versión instalada y el botón **«Buscar actualización»**: si hay una versión nueva aparece el aviso «Nueva versión disponible · Actualizar»; si no, «Ya tienes la última versión (x.y.z)»; sin red, «Sin conexión». En la v1.4.1 el nombre visible pasó a **«Ascensos 2027»**; los identificadores internos (claves `ascenso2026:*` de localStorage, `app: 'ascenso2026'`, caché `ascenso2026-<versión>`, formato `ascenso2026-respaldo` y nombres de archivo exportados) no cambian, para que nadie pierda su progreso.
 
 Aunque olvides subir la versión, los archivos se refrescan solos en segundo plano (estrategia «caché primero y actualización en segundo plano»): el cambio se ve en la siguiente apertura. Subir la versión garantiza una actualización completa y coherente.
 

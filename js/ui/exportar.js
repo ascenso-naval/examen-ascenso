@@ -48,7 +48,7 @@ export function puedeCompartir() {
 export async function compartirProgreso() {
   const { nombre, blob } = archivo();
   try {
-    await navigator.share({ files: [new File([blob], nombre, { type: 'application/json' })], title: 'Progreso Ascenso 2026' });
+    await navigator.share({ files: [new File([blob], nombre, { type: 'application/json' })], title: 'Progreso Ascensos 2027' });
     anotarExportacion();
   } catch (e) {
     if (e && e.name !== 'AbortError') toast('No se pudo compartir. Usa «Exportar progreso».', { tipo: 'error' });

@@ -161,8 +161,8 @@ const esObjeto = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
  */
 export function validarRespaldo(obj) {
   const mal = (error) => ({ ok: false, error });
-  if (!esObjeto(obj)) return mal('El archivo no es un respaldo de Ascenso 2026 (no es un objeto JSON).');
-  if (obj.formato !== FORMATO) return mal('El archivo no es un respaldo de Ascenso 2026 (falta «formato: ascenso2026-respaldo»). Si es un progreso exportado desde Ajustes, impórtalo allí.');
+  if (!esObjeto(obj)) return mal('El archivo no es un respaldo de Ascensos 2027 (no es un objeto JSON).');
+  if (obj.formato !== FORMATO) return mal('El archivo no es un respaldo de Ascensos 2027 (falta «formato: ascenso2026-respaldo»). Si es un progreso exportado desde Ajustes, impórtalo allí.');
   if (obj.version !== VERSION_FORMATO) return mal(`Versión de respaldo no compatible (${String(obj.version).slice(0, 10)}); esta app lee la versión ${VERSION_FORMATO}.`);
   if (!esObjeto(obj.tablas)) return mal('El respaldo no tiene la sección «tablas».');
   for (const def of TABLAS) {

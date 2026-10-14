@@ -96,7 +96,7 @@ export function alReemplazarEstado(fn) { oyentes.add(fn); return () => oyentes.d
 /** Combina un estado leído (posiblemente antiguo o parcial) con los valores por defecto. */
 export function migrar(obj) {
   if (!obj || typeof obj !== 'object' || obj.app !== 'ascenso2026') {
-    throw new Error('El archivo no contiene un progreso de Ascenso 2026.');
+    throw new Error('El archivo no contiene un progreso de Ascensos 2027.');
   }
   const base = estadoInicial();
   const v = Number(obj.v) || 1;

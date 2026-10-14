@@ -116,7 +116,7 @@ export function montarInstalacion({ forzar = false } = {}) {
         return `<div class="inst-exito" role="status" tabindex="-1">
           <span class="inst-exito-ico">${icono('check', { tam: 30 })}</span>
           <strong>Lista: ábrela desde tu pantalla de inicio</strong>
-          <span>Busca el icono del timón «Ascenso 2026».</span>
+          <span>Busca el icono del timón «Ascensos 2027».</span>
         </div>`;
       case 'manual':
         return `<p class="inst-guia-titulo">Instálala desde el menú del navegador:</p>${manual}`;
@@ -146,7 +146,7 @@ export function montarInstalacion({ forzar = false } = {}) {
     return `<div class="instalar-panel">
       <header class="inst-cabeza">
         <img class="inst-icono" src="./iconos/icon-192.png" width="84" height="84" alt="">
-        <h1 id="inst-titulo" tabindex="-1">Instala Ascenso 2026</h1>
+        <h1 id="inst-titulo" tabindex="-1">Instala Ascensos 2027</h1>
         <p class="inst-sub">Tenla en tu celular como una app más: un toque y a estudiar.</p>
       </header>
       ${VENTAJAS}

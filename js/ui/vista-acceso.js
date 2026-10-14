@@ -31,7 +31,7 @@ export function montarAcceso(raiz, { alIngresar }) {
       <section class="acceso" aria-labelledby="acceso-titulo">
         <div class="acceso-cabeza">
           ${MARCA}
-          <h1 id="acceso-titulo">Ascenso 2026</h1>
+          <h1 id="acceso-titulo">Ascensos 2027</h1>
           <p class="acceso-sub">Simulador de los exámenes de ascenso: Reglamentos, MAPLO e Inglés.</p>
         </div>
         ${mensaje ? `<p class="aviso-acceso aviso-acceso-error" role="alert">${icono('alerta', { tam: 20 })}<span>${esc(mensaje)}</span></p>` : ''}
