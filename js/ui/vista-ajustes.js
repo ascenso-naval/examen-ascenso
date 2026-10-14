@@ -1,5 +1,6 @@
-// vista-ajustes.js — Ajustes: perfil, estudio, banco (modo ampliado / no verificadas con
-// conteo), apariencia, sonidos, exportar/importar/reiniciar progreso y «Acerca de».
+// vista-ajustes.js — Ajustes: cuenta (correo, apodo, sincronización, diagnóstico, cerrar
+// sesión), perfil, estudio, banco (modo ampliado / no verificadas con conteo), apariencia,
+// sonidos, exportar/importar/reiniciar progreso y «Acerca de».
 
 import { estado, guardar, guardarYa, leerExportacion, reemplazarEstado, reiniciarProgreso, almacen } from '../estado.js';
 import { D, conteoDisponible, fuentesDe } from '../datos.js';
@@ -13,6 +14,45 @@ import { confirmar } from './modal.js';
 import { toast } from './toast.js';
 import { exportarProgreso, compartirProgreso, puedeCompartir } from './exportar.js';
 import { sonar } from './sonido.js';
+import * as sync from '../sincronizacion.js';
+import * as nube from '../nube.js';
+import { cerrarSesionUsuario, APODO_RE, AYUDA_APODO } from '../cuenta.js';
+
+const TEXTO_SITUACION = {
+  ok: 'Al día', pendiente: 'Cambios pendientes de subir', sincronizando: 'Sincronizando…',
+  offline: 'Sin conexión: se subirá al volver la red', error: 'Error al sincronizar',
+};
+
+function htmlSituacion(s = sync.situacionSync()) {
+  return `<strong>Sincronización</strong><span>${esc(TEXTO_SITUACION[s.tipo] || '')}${s.ultimaSync ? ` · última: ${esc(fmtFechaHora(s.ultimaSync))}` : ''}${s.cola ? ` · ${s.cola} sesión(es) en cola` : ''}${s.tipo === 'error' && s.error ? ` · ${esc(s.error)}` : ''}</span>`;
+}
+
+function htmlCuenta() {
+  const m = sync.metaNube();
+  const correo = m.correo || nube.sesionLocal()?.correo || '';
+  return `<h2>Cuenta</h2>
+      <div class="lista" id="cuenta">
+        <div class="ajuste"><span class="ajuste-texto"><strong>Correo</strong><span id="correo-cuenta">${esc(correo)}</span></span>${icono('usuario', { tam: 22 })}</div>
+        <div class="ajuste-bloque">
+          <label for="apodo-cuenta"><strong>Apodo</strong> <span class="peq atenuado">(así apareces en el ranking)</span></label>
+          <div class="fila-flex mt-s">
+            <input class="entrada" id="apodo-cuenta" type="text" maxlength="20" autocomplete="nickname" autocapitalize="off" spellcheck="false" placeholder="Sin apodo" value="${esc(m.apodo || '')}">
+            <button type="button" class="btn btn-secundario btn-chico" data-accion="guardar-apodo">Guardar</button>
+          </div>
+          <p class="ayuda-campo">${esc(AYUDA_APODO)}</p>
+          <p class="error-campo" id="apodo-error" role="alert" hidden></p>
+        </div>
+        <div class="ajuste">
+          <span class="ajuste-texto" id="situacion-sync" aria-live="polite">${htmlSituacion()}</span>
+          <button type="button" class="btn btn-secundario btn-chico" data-accion="sincronizar-ahora">Sincronizar ahora</button>
+        </div>
+        <a class="fila" href="#/diagnostico"><span class="fila-icono">${icono('pulso')}</span><span class="fila-cuerpo"><span class="fila-titulo">Diagnóstico de conexión</span><span class="fila-sub">Prueba la conexión con el servidor</span></span>${icono('chev-der', { clase: 'chev', tam: 20 })}</a>
+        ${m.rol === 'admin' ? `<a class="fila" href="#/admin"><span class="fila-icono">${icono('escudo')}</span><span class="fila-cuerpo"><span class="fila-titulo">Administración</span><span class="fila-sub">Usuarios, actividad y CSV</span></span>${icono('chev-der', { clase: 'chev', tam: 20 })}</a>` : ''}
+        <div class="ajuste-bloque">
+          <button type="button" class="btn btn-borde btn-bloque" data-accion="cerrar-sesion">${icono('salir', { tam: 20 })}Cerrar sesión</button>
+        </div>
+      </div>`;
+}
 
 const PASOS = {
   metaDiaria: { min: 5, max: 300, paso: 5, fmt: (v) => fmtNum(v) },
@@ -72,7 +112,7 @@ function htmlAcerca() {
     <h3 class="mt-l" style="margin-bottom:4px">Preguntas por examen y fuente</h3>
     ${bloques}
     <p class="texto-largo mt-m">El banco fue generado a partir del temario oficial y de bancos de años anteriores, y verificado por auditoría frente a los reglamentos. Aun así, ante cualquier duda contrasta la pregunta con el reglamento o manual vigente: la norma oficial siempre prevalece.</p>
-    <p class="mini">Funciona sin conexión. Tu progreso se guarda solo en este dispositivo.</p>
+    <p class="mini">Funciona sin conexión. Tu progreso se guarda en este dispositivo y se sincroniza con tu cuenta cuando hay internet.</p>
   </section>`;
 }
 
@@ -83,6 +123,8 @@ export function montar(raiz, params) {
       <h1>Ajustes</h1>
       <p class="sub">Los cambios se guardan al instante.</p>
       ${!almacen.disponible ? `<p class="aviso-almacen">${icono('alerta', { tam: 20 })}<span>Este navegador no permite guardar datos. Exporta tu progreso antes de cerrar la app.</span></p>` : ''}
+
+      ${htmlCuenta()}
 
       <h2>Perfil</h2>
       <div class="lista">
@@ -118,7 +160,7 @@ export function montar(raiz, params) {
       <h2>Tus datos</h2>
       <div class="lista">
         <div class="ajuste-bloque">
-          <p class="peq atenuado" style="margin:0 0 12px">Exporta tu progreso a un archivo para tener una copia o pasarlo a otro dispositivo.${estado.ultimaExportacion ? ` Última exportación: ${esc(fmtFechaHora(estado.ultimaExportacion))}.` : ''}</p>
+          <p class="peq atenuado" style="margin:0 0 12px">Tu progreso se sincroniza con tu cuenta. Además puedes exportarlo a un archivo como respaldo manual.${estado.ultimaExportacion ? ` Última exportación: ${esc(fmtFechaHora(estado.ultimaExportacion))}.` : ''}</p>
           <div class="botones" style="margin-top:0">
             <button type="button" class="btn btn-secundario btn-bloque" data-accion="exportar">${icono('descargar', { tam: 20 })}Exportar progreso</button>
             ${puedeCompartir() ? `<button type="button" class="btn btn-secundario btn-bloque" data-accion="compartir">${icono('compartir', { tam: 20 })}Compartir archivo</button>` : ''}
@@ -157,6 +199,23 @@ export function montar(raiz, params) {
     aplicarApariencia();
     toast('Progreso importado.', { tipo: 'exito' });
     refrescar();
+  }
+
+  async function guardarApodo() {
+    const campo = raiz.querySelector('#apodo-cuenta');
+    const error = raiz.querySelector('#apodo-error');
+    const apodo = campo.value.trim();
+    error.hidden = true;
+    if (!APODO_RE.test(apodo)) { error.textContent = AYUDA_APODO; error.hidden = false; return; }
+    try {
+      const guardado = await nube.cambiarApodo(apodo);
+      sync.actualizarMeta({ apodo: guardado });
+      campo.value = guardado;
+      toast(`Apodo guardado: ${guardado}`, { tipo: 'exito' });
+    } catch (e) {
+      error.textContent = e.message;
+      error.hidden = false;
+    }
   }
 
   async function reiniciar() {
@@ -214,6 +273,17 @@ export function montar(raiz, params) {
       case 'compartir': await compartirProgreso(); break;
       case 'importar': raiz.querySelector('#archivo').click(); return;
       case 'reiniciar': await reiniciar(); return;
+      case 'guardar-apodo': await guardarApodo(); return;
+      case 'sincronizar-ahora': {
+        b.disabled = true;
+        const r = await sync.sincronizar();
+        b.disabled = false;
+        if (r.ok) toast(r.resultado === 'fusion' ? 'Progreso combinado con el de tu cuenta.' : 'Progreso sincronizado.', { tipo: 'exito', icono: 'nube-ok' });
+        else if (r.motivo === 'offline' || r.motivo === 'red') toast('Sin conexión: se sincronizará al volver la red.', { icono: 'nube-off' });
+        else if (r.mensaje) toast(r.mensaje, { tipo: 'error' });
+        return;
+      }
+      case 'cerrar-sesion': await cerrarSesionUsuario(); return;
       default: return;
     }
     guardar();
@@ -245,7 +315,12 @@ export function montar(raiz, params) {
   raiz.addEventListener('click', alClic);
   raiz.addEventListener('input', alEntrada);
   raiz.addEventListener('change', alCambio);
+  const quitarSync = sync.alCambiarSync((s) => {
+    const el = raiz.querySelector('#situacion-sync');
+    if (el) el.innerHTML = htmlSituacion(s);
+  });
   return () => {
+    quitarSync();
     raiz.removeEventListener('click', alClic);
     raiz.removeEventListener('input', alEntrada);
     raiz.removeEventListener('change', alCambio);

@@ -977,3 +977,111 @@ body.en-sesion .toasts { bottom: calc(var(--acciones-h) + var(--inf) + 12px); }
 @media (min-width: 760px) {
   .hoja { border-radius: 22px; bottom: 24px; }
 }
+
+/* =========================================================================
+   Encargo 02 — cuenta, sincronización, ranking, administración y diagnóstico
+   ========================================================================= */
+
+/* ---------- Pantalla de acceso (sin sesión) ---------- */
+body.sin-sesion .nav { display: none; }
+body.sin-sesion #vista { padding-bottom: calc(var(--inf) + 28px); }
+.acceso { max-width: 440px; margin: 0 auto; }
+.acceso-cabeza {
+  margin: calc(-12px - var(--sup)) -16px 22px;
+  padding: calc(var(--sup) + 34px) 18px 28px;
+  background: var(--portada); color: var(--portada-texto);
+  border-radius: 0 0 28px 28px; text-align: center;
+}
+.acceso-marca { color: #D4AF37; margin: 0 auto 10px; display: block; }
+.acceso-cabeza h1 { margin: 0 0 6px; color: var(--portada-texto); }
+.acceso-sub { margin: 0 auto; max-width: 30ch; color: var(--portada-texto-2); font-size: 0.95rem; }
+.aviso-acceso {
+  display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px;
+  padding: 12px 14px; border-radius: 14px; background: var(--ambar-suave); color: var(--ambar-texto);
+  font-size: 0.92rem; font-weight: 600;
+}
+.aviso-acceso[hidden] { display: none; }
+.aviso-acceso svg { flex: none; margin-top: 1px; }
+.aviso-acceso-error { background: var(--rojo-suave); color: var(--rojo-texto); }
+.acceso .segmentos { margin-bottom: 18px; }
+.acceso-form .campo { margin-bottom: 16px; }
+.acceso-form .rotulo { display: block; font-weight: 680; margin-bottom: 8px; }
+.acceso-form .ayuda { display: block; font-size: 0.84rem; color: var(--texto-3); margin-top: 6px; }
+.clave-caja { position: relative; }
+.clave-caja .entrada { padding-right: 52px; }
+.clave-caja .clave-ver { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); color: var(--texto-2); }
+.error-campo { margin: 4px 0 12px; color: var(--rojo-texto); font-weight: 600; font-size: 0.92rem; }
+.ok-campo { margin: 4px 0 12px; color: var(--verde-texto); font-weight: 600; font-size: 0.92rem; }
+.error-campo[hidden], .ok-campo[hidden] { display: none; }
+.ayuda-campo { margin: 6px 0 0; font-size: 0.84rem; color: var(--texto-3); }
+.revisa-correo svg { color: var(--oro-texto); margin: 4px auto 8px; display: block; }
+.revisa-correo h2 { margin: 0 0 6px; }
+.privacidad summary .fila-cuerpo { display: flex; align-items: center; gap: 8px; font-weight: 650; }
+.privacidad .desplegable-cuerpo { padding: 2px 16px 12px; font-size: 0.92rem; }
+.privacidad .desplegable-cuerpo p { margin: 8px 0; }
+
+/* ---------- Indicador de sincronización (Inicio) ---------- */
+.portada-botones { display: flex; align-items: center; gap: 4px; flex: none; }
+.chip-sync {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 4px 10px;
+  border-radius: 999px; border: 1px solid rgba(241, 236, 226, 0.22); background: rgba(241, 236, 226, 0.08);
+  color: var(--portada-texto-2); font: inherit; font-size: 0.78rem; font-weight: 650; cursor: pointer; white-space: nowrap;
+}
+.chip-sync[data-sync="ok"] { color: #7FDDB0; }
+.chip-sync[data-sync="pendiente"], .chip-sync[data-sync="sincronizando"] { color: #E9C759; }
+.chip-sync[data-sync="offline"] { color: var(--portada-texto-2); }
+.chip-sync[data-sync="error"] { color: #F6A3A3; }
+.chip-sync[data-sync="sincronizando"] svg { animation: girar 1s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* ---------- Ranking ---------- */
+.tarjeta-ranking .etiqueta { flex: none; }
+.lista-ranking { padding: 0; }
+.fila-ranking { cursor: default; }
+.fila-ranking.es-yo { background: var(--sel-fondo); box-shadow: inset 3px 0 0 var(--sel-borde); }
+.ranking-pos {
+  flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 800; font-variant-numeric: tabular-nums; background: var(--casco-2); color: var(--texto-2);
+}
+.ranking-pos.medalla-1 { background: #D4AF37; color: #0B1F3A; }
+.ranking-pos.medalla-2 { background: #C3CBD6; color: #0B1F3A; }
+.ranking-pos.medalla-3 { background: #C98B55; color: #0B1F3A; }
+.ranking-valor { flex: none; text-align: right; }
+.ranking-valor strong { display: block; font-size: 1.05rem; }
+.ranking-valor .mini { display: block; color: var(--texto-3); }
+.fila-ranking .fila-sub svg { vertical-align: -2px; color: var(--ambar-texto); }
+.mi-posicion { margin: 14px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--oro-suave); color: var(--oro-texto); font-weight: 650; }
+.invitacion-apodo { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+.invitacion-apodo svg { flex: none; color: var(--oro-texto); }
+.invitacion-apodo p { margin: 0 0 10px; }
+
+/* ---------- Administración ---------- */
+.cifras-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 380px) { .cifras-3 { grid-template-columns: repeat(2, 1fr); } }
+.panel-resumen .cifras { margin-top: 0; }
+.admin-botones { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+.admin-botones .btn { gap: 6px; }
+.tabla-desliza {
+  overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radio);
+  background: var(--casco); box-shadow: var(--sombra); margin: 0 0 8px;
+}
+.tabla-desliza:focus-visible { outline: 2px solid var(--sel-borde); outline-offset: 2px; }
+.tabla-admin { min-width: 980px; font-size: 0.86rem; }
+.tabla-admin th, .tabla-admin td { padding: 9px 10px; white-space: nowrap; vertical-align: middle; }
+.tabla-admin thead th { border-top: 0; color: var(--texto-3); font-weight: 650; }
+.tabla-admin tbody tr:nth-child(odd) { background: rgba(127, 127, 127, 0.04); }
+.orden-col { font: inherit; color: inherit; background: none; border: 0; padding: 4px 0; cursor: pointer; min-height: 32px; }
+.tabla-admin th[aria-sort="ascending"] .orden-col, .tabla-admin th[aria-sort="descending"] .orden-col { color: var(--oro-texto); }
+.celda-acciones { display: flex; gap: 6px; }
+.celda-acciones .btn { min-height: 36px; padding: 6px 10px; font-size: 0.84rem; }
+.fila-bloqueada td { color: var(--texto-3); }
+
+/* ---------- Diagnóstico ---------- */
+.diag-resumen { display: flex; gap: 8px; align-items: center; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; font-weight: 700; }
+.diag-resumen.diag-ok { background: var(--verde-suave); color: var(--verde-texto); }
+.diag-resumen.diag-mal { background: var(--rojo-suave); color: var(--rojo-texto); }
+.lista-diag .fila { cursor: default; }
+.lista-diag .diag-ok .fila-icono { color: var(--verde-texto); background: var(--verde-suave); }
+.lista-diag .diag-mal .fila-icono { color: var(--rojo-texto); background: var(--rojo-suave); }
+.lista-diag .diag-aviso .fila-icono { color: var(--ambar-texto); background: var(--ambar-suave); }
+.form-apodo .rotulo, .form-clave .rotulo, .form-recuperar .rotulo { display: block; }

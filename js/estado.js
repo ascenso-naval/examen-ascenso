@@ -71,6 +71,13 @@ export let estado = estadoInicial();
 /** Información del almacenamiento para avisar en la interfaz. */
 export const almacen = { disponible: false, error: null, avisado: false, alFallar: null };
 
+/**
+ * Ganchos para la sincronización con la nube (sincronizacion.js):
+ *   alEscribir(origen) se llama tras cada escritura en localStorage. origen = 'local' para
+ *   los cambios del usuario y 'nube' cuando el estado viene del servidor (no marca pendiente).
+ */
+export const ganchos = { alEscribir: null };
+
 function probarAlmacenamiento() {
   try {
     const k = '__ascenso2026_prueba__';
@@ -126,6 +133,7 @@ export function cargarEstado() {
     const txt = window.localStorage.getItem(CLAVE);
     if (!txt) return false;
     estado = migrar(JSON.parse(txt));
+    ultimoTexto = JSON.stringify(estado);
     return true;
   } catch (e) {
     console.warn('Estado guardado ilegible; se empieza de cero.', e);
@@ -134,32 +142,54 @@ export function cargarEstado() {
   }
 }
 
-function escribir() {
-  if (!almacen.disponible) return;
-  try {
+// Último texto escrito: si el estado no cambió, no se reescribe ni se marca pendiente
+// (guardarYa() se llama también al ocultar la app aunque no haya cambios).
+let ultimoTexto = null;
+
+function escribir(origen = 'local') {
+  const deNube = origen === 'nube';
+  let texto = JSON.stringify(estado);
+  if (!deNube) {
+    if (texto === ultimoTexto) return;
     estado.actualizado = new Date().toISOString();
-    window.localStorage.setItem(CLAVE, JSON.stringify(estado));
-    almacen.error = null;
-  } catch (e) {
-    almacen.error = e;
-    console.warn('No se pudo guardar el progreso', e);
-    if (typeof almacen.alFallar === 'function') almacen.alFallar(e);
+    texto = JSON.stringify(estado);
+  }
+  ultimoTexto = texto;
+  if (almacen.disponible) {
+    try {
+      window.localStorage.setItem(CLAVE, texto);
+      almacen.error = null;
+    } catch (e) {
+      almacen.error = e;
+      console.warn('No se pudo guardar el progreso', e);
+      if (typeof almacen.alFallar === 'function') almacen.alFallar(e);
+    }
+  }
+  // Aunque no haya localStorage, el cambio debe llegar a la nube.
+  if (typeof ganchos.alEscribir === 'function') {
+    try { ganchos.alEscribir(deNube ? 'nube' : 'local'); } catch (e) { console.warn(e); }
   }
 }
 
 /** Guarda con retardo (agrupa ráfagas de cambios). */
-export const guardar = debounce(escribir, 400);
+export const guardar = debounce(() => escribir('local'), 400);
 
 /** Guarda inmediatamente (al ocultar la app, entregar un simulacro, importar…). */
-export function guardarYa() {
+export function guardarYa(origen = 'local') {
+  const habia = guardar.pendiente();
   guardar.cancel();
-  escribir();
+  // Si había un guardado local en espera, ese cambio sigue siendo del usuario.
+  escribir(habia ? 'local' : origen);
 }
 
-/** Sustituye el estado completo (importar / reiniciar) y avisa a los oyentes. */
-export function reemplazarEstado(nuevo) {
+/**
+ * Sustituye el estado completo (importar / reiniciar / sincronizar) y avisa a los oyentes.
+ * Con { origen: 'nube' } no se marca como cambio pendiente de subir.
+ */
+export function reemplazarEstado(nuevo, { origen = 'local' } = {}) {
   estado = nuevo;
-  guardarYa();
+  guardar.cancel();
+  escribir(origen);
   for (const fn of oyentes) fn(estado);
 }
 

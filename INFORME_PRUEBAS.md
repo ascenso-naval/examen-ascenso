@@ -1,10 +1,10 @@
 # Informe de pruebas — Ascenso 2026 (PWA)
 
-Fecha: 6/10/2026, 12:41:40 a. m. (hora de Lima). Duración: 72 s.
+Fecha: 7/10/2026, 7:15:55 p. m. (hora de Lima). Duración: 166 s.
 
 Entorno: Chromium (Playwright 1.56.0), viewport 390×844, `isMobile: true`, `hasTouch`, escala 2, locale es-PE, zona America/Lima. App servida con `python3 -m http.server 8123 --directory app`.
 
-**Resultado: 119 de 119 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
+**Resultado: 207 de 207 comprobaciones superadas.** Errores de consola: 0. Avisos de consola: 0.
 
 Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `node verificar_composicion.mjs`, `node unitarias.mjs`).
 
@@ -19,15 +19,36 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | Exportar → borrar → importar restaura | Exportar e importar | OK (4 comprobaciones) |
 | El modo ampliado cambia el conteo disponible | Modo ampliado | OK (3 comprobaciones) |
 | Segunda carga con la red cortada funciona (también bajo un subdirectorio) | Sin conexión, Subdirectorio | OK (5 comprobaciones) |
-| Capturas de cada pantalla principal en `app/_capturas/` | — | 30 capturas |
+| Capturas de cada pantalla principal en `app/_capturas/` | — | 44 capturas |
 | `node --check` de todos los módulos y JSON del manifest | Estáticas | OK (13 comprobaciones) |
-| Extra: lógica (niveles, racha, SRS, XP, nota, migración), interacciones, tema claro, nueva versión del SW | Lógica (unitarias), Interacciones, Pantallas, Tema claro, Nueva versión | OK (48 comprobaciones) |
+| Extra: lógica (niveles, racha, SRS, XP, nota, migración), interacciones, tema claro, nueva versión del SW | Lógica (unitarias), Interacciones, Pantallas, Tema claro, Nueva versión | OK (58 comprobaciones) |
+
+## Cobertura del encargo 02 (sección 5)
+
+Comprobaciones del encargo 01 (sin los grupos «Nube»): 129 de 129 superadas (la app ahora ingresa con la cuenta precargada del servidor simulado).
+
+| Requisito | Grupos de pruebas | Resultado |
+|---|---|---|
+| Vendor local, SW network-only para supabase.co, versión 1.1.0, documentación y esquema | Nube (estáticas) | OK (11 comprobaciones) |
+| Pantalla de acceso sin red muestra el mensaje correcto | Nube: acceso sin red | OK (5 comprobaciones) |
+| Registro → apodo → práctica → sincroniza (verificado en el mock) → cerrar sesión | Nube: registro y sincronización | OK (13 comprobaciones) |
+| Ingresar en «otro dispositivo» (contexto nuevo) → el progreso llega | Nube: otro dispositivo | OK (2 comprobaciones) |
+| Offline con sesión: estudiar y encolar → al volver la red se sube; conflicto → fusión | Nube: sin conexión y fusión | OK (9 comprobaciones) |
+| Ranking muestra la posición propia | Nube: ranking | OK (4 comprobaciones) |
+| Usuario normal no ve el panel; la RPC responde 403 | Nube: usuario normal | OK (4 comprobaciones) |
+| Admin ve #/admin con datos y exporta CSV | Nube: administración | OK (9 comprobaciones) |
+| Usuario bloqueado → expulsado | Nube: bloqueo | OK (6 comprobaciones) |
+| Diagnóstico, confirmación de correo, recuperar contraseña | Nube: diagnóstico, Nube: confirmación de correo, Nube: recuperar contraseña | OK (8 comprobaciones) |
+
+## Esquema SQL en PostgreSQL 16 local
+
+`backend/pruebas_schema.sql` instala `backend/schema.sql` tres veces (idempotencia) sobre un clúster temporal con roles anon/authenticated/service_role/supabase_auth_admin y un esquema `auth` mínimo, y simula sesiones con `request.jwt.claims`. Resultado (`backend/pruebas_schema.out`): **80 comprobaciones OK, 0 fallidas** — todas superadas.
 
 ## Estáticas
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | node --check de 41 archivos JS |  |
+| OK | node --check de 52 archivos JS |  |
 | OK | manifest.webmanifest es JSON válido |  |
 | OK | manifest: name y short_name |  |
 | OK | manifest: display standalone y orientación portrait |  |
@@ -35,11 +56,27 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | OK | manifest: iconos 192, 512 y maskable |  |
 | OK | manifest: theme/background navy |  |
 | OK | iconos PNG con el tamaño declarado | iconos/icon-192.png=192x192, iconos/icon-512.png=512x512, iconos/icon-maskable-192.png=192x192, iconos/icon-maskable-512.png=512x512, iconos/apple-touch-icon.png=180x180 |
-| OK | el service worker precachea todos los archivos de la app | 59 entradas |
+| OK | el service worker precachea todos los archivos de la app | 71 entradas |
 | OK | las capturas no están en el precache |  |
-| OK | APP_VERSION coincide en sw.js y js/version.js | 1.0.0 / 1.0.0 |
+| OK | APP_VERSION coincide en sw.js y js/version.js | 1.1.0 / 1.1.0 |
 | OK | sin alert/confirm/prompt nativos |  |
-| OK | sin recursos externos (http/https) en HTML, CSS y JS |  |
+| OK | sin recursos externos (http/https) en HTML, CSS y JS (salvo la API de Supabase) |  |
+
+## Nube (estáticas)
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | vendor/supabase.js local (UMD de supabase-js) y sin el archivo suelto | 217901 bytes |
+| OK | index.html carga el vendor antes de los módulos y sin CDN |  |
+| OK | config-supabase.js coincide con backend/supabase.config.json |  |
+| OK | ninguna secret key en app/ ni backend/ |  |
+| OK | SW: precachea el vendor y deja supabase.co en network-only |  |
+| OK | APP_VERSION 1.1.0 |  |
+| OK | schema.sql: 4 tablas con RLS, trigger de alta y todas las funciones | 10 funciones |
+| OK | schema.sql probado en PostgreSQL 16 local (backend/pruebas_schema.out) | 80 comprobaciones OK |
+| OK | rutas JSON del estado documentadas en README y schema.sql, coherentes con estado.js |  |
+| OK | README: secciones «Cuenta y sincronización» y «Administración» |  |
+| OK | backend/INSTRUCCIONES_SUPABASE.md con los pasos del dashboard |  |
 
 ## Composición (script)
 
@@ -85,14 +122,24 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | OK | exportar → leer conserva el progreso |  |
 | OK | importar rechaza archivos ajenos | El archivo no contiene un progreso de Ascenso 2026. |
 | OK | migración completa los campos que faltan |  |
+| OK | fusión de una pregunta: gana el intento más reciente y se unen los historiales sin duplicar la parte común | {"n":6,"a":4,"h":"101011","u":3000,"s":[2,"2026-10-10"]} |
+| OK | fusión de registros idénticos no cambia nada |  |
+| OK | historiales recortados (10): máximos y el historial más reciente |  |
+| OK | fusión: unión de preguntas y de simulacros (por id, en orden) |  |
+| OK | fusión: XP y contadores = máximo |  |
+| OK | fusión: días unidos (máximos y meta si cualquiera la cumplió) |  |
+| OK | fusión: logros unidos con la fecha más antigua |  |
+| OK | fusión: ajustes y sesiones en curso locales |  |
+| OK | tieneProgreso() distingue un estado vacío |  |
+| OK | mock: nivelDe() coincide con la app |  |
 
 ## Carga inicial
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | la app carga y muestra Inicio | 429 ms |
+| OK | la app carga, se ingresa con la cuenta y muestra Inicio | 548 ms |
 | OK | service worker registrado y activo con scope ./ | http://localhost:8123/ |
-| OK | precache del app shell y del banco | ascenso2026-1.0.0: 53 recursos |
+| OK | precache del app shell y del banco | ascenso2026-1.1.0: 65 recursos |
 | OK | manifest enlazado, iconos accesibles y meta tags iOS | Ascenso 2026 — Simulador de examen; content-type application/manifest+json |
 | OK | sin errores de consola en la carga inicial |  |
 
@@ -105,7 +152,7 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | OK | botón «Repetir las falladas» presente |  |
 | OK | XP guardado en localStorage | 142 (esperado 142) |
 | OK | respuestas y actividad del día guardadas | respondidas 10 |
-| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1791265233953,"s":[0,"2026-10-06"]} |
+| OK | la fallada entra a repaso (caja 0, hoy) | {"n":1,"a":0,"h":"0","u":1791418393935,"s":[0,"2026-10-07"]} |
 | OK | logro «Primer paso» desbloqueado |  |
 | OK | el resumen sigue disponible tras recargar | 9 |
 | OK | tras recargar se conservan XP y meta diaria | brújula 10, XP 142 |
@@ -136,7 +183,7 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | OK | MAPLO «como el examen»: 60 % oficial-maplo | 6 de 10 |
 | OK | tarjeta «Continuar sesión» con el tiempo restante | Simulacro en curso MAPLO: 2 de 10 respondidas Quedan 14:57 Continuar Descartar |
 | OK | al retomar se conservan las respuestas | 2 respondidas |
-| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 6 oct, 00:41. Entregado al agotarse el tiempo. |
+| OK | entrega automática al agotarse el tiempo | Simulacro de MAPLO, 7 oct, 19:13. Entregado al agotarse el tiempo. |
 
 ## Repaso
 
@@ -144,8 +191,8 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 |---|---|---|
 | OK | las falladas aparecen pendientes hoy | 19 en pantalla; 19 en el estado |
 | OK | la fallada de la práctica está pendiente |  |
-| OK | acierto en repaso: caja 0 → 1, próxima = mañana | [1,"2026-10-07"] |
-| OK | fallo en repaso: caja 0, próxima = hoy | [0,"2026-10-06"] |
+| OK | acierto en repaso: caja 0 → 1, próxima = mañana | [1,"2026-10-08"] |
+| OK | fallo en repaso: caja 0, próxima = hoy | [0,"2026-10-07"] |
 | OK | resumen del repaso | Repaso completado |
 | OK | contador de repasos acertados | 1 |
 
@@ -158,7 +205,7 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | OK | Explorar MAPLO: grupos por capítulo/anexo (21 en el banco final; >50 si el banco trae item «-») | 21 grupos |
 | OK | buscador sin tildes con resultados agrupados por fuente | 19 fichas |
 | OK | Progreso: gráfico de notas con el simulacro |  |
-| OK | Progreso: mapa de calor de 12 semanas | 79 días |
+| OK | Progreso: mapa de calor de 12 semanas | 80 días |
 | OK | Logros: 20 medallas (bloqueadas en gris) |  |
 
 ## Interacciones
@@ -167,7 +214,7 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 |---|---|---|
 | OK | nombre y cuenta regresiva en Inicio | Hola, Marco / Faltan 70 días |
 | OK | elegir artículos actualiza el conteo disponible | 12 preguntas disponibles La sesión tendrá hasta 12 |
-| OK | la sesión solo usa preguntas de los artículos elegidos | 9 preguntas, ítems 1.02, 1.01 |
+| OK | la sesión solo usa preguntas de los artículos elegidos | 9 preguntas, ítems 1.01, 1.02 |
 | OK | al salir con «atrás» la práctica queda como sesión en curso |  |
 | OK | descartar la sesión en curso (con confirmación) |  |
 | OK | «Marcar todo para repaso» marca las preguntas del artículo | 12 de 12 |
@@ -187,9 +234,9 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 
 | Resultado | Comprobación | Detalle |
 |---|---|---|
-| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-06.json (8779 bytes) |
+| OK | exportar descarga un .json con el progreso | ascenso2026-progreso-2026-10-07.json (8846 bytes) |
 | OK | reiniciar (doble confirmación) borra el progreso |  |
-| OK | importar restaura el progreso | XP 996, 2 simulacros, 71 preguntas |
+| OK | importar restaura el progreso | XP 1004, 2 simulacros, 72 preguntas |
 | OK | el progreso importado persiste tras recargar |  |
 
 ## Tema claro
@@ -210,8 +257,8 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | aviso «Nueva versión disponible» cuando se instala una versión nueva |  |
-| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.0.0-prueba |
-| OK | el progreso se conserva tras actualizar | XP 1006 |
+| OK | «Actualizar» activa la versión nueva (skipWaiting), recarga y borra la caché vieja | ascenso2026-1.1.0-prueba |
+| OK | el progreso se conserva tras actualizar | XP 1019 |
 
 ## Subdirectorio
 
@@ -226,6 +273,138 @@ Cómo repetirlas: `cd pruebas && npm install && node pruebas.mjs` (por partes: `
 | Resultado | Comprobación | Detalle |
 |---|---|---|
 | OK | sin errores de consola en todo el recorrido |  |
+
+## Nube: acceso sin red
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | con red: la pantalla de acceso no muestra el aviso «Sin conexión» |  |
+| OK | acceso: aviso de privacidad, «¿Olvidaste tu contraseña?» y mostrar/ocultar contraseña |  |
+| OK | mostrar contraseña cambia el campo a texto |  |
+| OK | sin sesión y sin red: mensaje claro en la pantalla de acceso | Sin conexión. Para ingresar o crear tu cuenta necesitas internet. Después de ingresar una vez, la app funciona sin conexión en este dispositivo. |
+| OK | intentar ingresar sin red muestra el error legible | Sin conexión. Para ingresar o crear tu cuenta necesitas internet. Después de ingresar una vez, la app funciona sin conexión en este dispositivo. |
+
+## Nube: registro y sincronización
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | registro: valida contraseña de al menos 8 caracteres |  |
+| OK | registro: valida el formato del apodo |  |
+| OK | primer ingreso con progreso local: pregunta «¿Conservar el progreso de este dispositivo?» | ¿Conservar el progreso de este dispositivo? |
+| OK | apodo ya usado («grumete» = «Grumete»): la cuenta se crea sin apodo | {"apodo":null,"rol":"usuario"} |
+| OK | ranking sin apodo: invita a crearlo |  |
+| OK | cambiar_apodo: el servidor rechaza un apodo duplicado con mensaje legible |  |
+| OK | apodo guardado con cambiar_apodo |  |
+| OK | «Conservar»: el progreso local sube como estado inicial | XP 500 |
+| OK | al terminar la práctica se sincroniza: estado y evento en el servidor | XP 675; evento n=10, aciertos=10 |
+| OK | evento de práctica con n, aciertos, examen e id_cliente |  |
+| OK | las 10 respuestas están en el estado remoto |  |
+| OK | Inicio: indicador «Sincronizado» |  |
+| OK | cerrar sesión: borra sesión y progreso del dispositivo (conserva la apariencia) |  |
+
+## Nube: otro dispositivo
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | ingresar en otro dispositivo (contexto nuevo): el progreso llega | XP 675, 13 preguntas |
+| OK | los ajustes también llegan (adopción del remoto sin cambios locales) | 315 de 360 XP |
+
+## Nube: sin conexión y fusión
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin conexión: se puede estudiar; el estado queda pendiente y el evento en cola | pendiente true, cola 1 |
+| OK | el otro dispositivo sube sus cambios mientras B está sin conexión |  |
+| OK | al volver la red se sube lo encolado y se fusiona: respuestas de ambos dispositivos | 33 preguntas |
+| OK | fusión: XP = máximo de ambos | 815 (B 815, C 815) |
+| OK | fusión: conserva el progreso anterior y la fecha más antigua de los logros |  |
+| OK | eventos: los 3 registrados una sola vez (cola + idempotencia) | 3 eventos |
+| OK | B queda sincronizado (sin pendientes ni cola) |  |
+| OK | reenviar un evento con el mismo id_cliente no lo duplica |  |
+| OK | «Sincronizar» en el otro dispositivo trae el estado fusionado |  |
+
+## Nube: ranking
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | ranking: muestra la posición propia resaltada | Tu posición: 3.º con 815 XP |
+| OK | ranking: sin cuentas bloqueadas y sin correos |  |
+| OK | ranking: pestaña «Nota promedio» |  |
+| OK | Inicio: tarjeta de ranking con la posición | RankingTu posición: 3.º de 6 · 815 XP 3.º |
+
+## Nube: usuario normal
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | usuario normal: «Más» no muestra Administración |  |
+| OK | usuario normal: #/admin muestra «Acceso restringido» |  |
+| OK | RPC admin_usuarios con usuario normal → 403 (42501) | {"admin":403,"codigo":"42501","perfiles":1,"rol":403,"borrar":403,"anon":401,"ajeno":403} |
+| OK | reglas del mock: solo su perfil, no cambia su rol, no borra, anon 401, no escribe filas ajenas |  |
+
+## Nube: administración
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | admin: «Más» muestra Administración |  |
+| OK | admin ve #/admin con todos los usuarios | 7 filas, 7 registrados |
+| OK | resumen: activos hoy y sesiones hoy | activos 2, sesiones 7 |
+| OK | la tabla muestra correo y apodo |  |
+| OK | tabla ordenable (XP descendente) | pirata@prueba.pe |
+| OK | buscador por correo/apodo |  |
+| OK | exporta CSV de usuarios | ascenso2026-usuarios-2026-10-07.csv: 7 filas |
+| OK | exporta CSV de eventos | 10 eventos |
+| OK | detalle: eventos recientes y mapa de calor de actividad | 3 sesiones |
+
+## Nube: bloqueo
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | el admin no tiene botón para bloquearse a sí mismo |  |
+| OK | admin bloquea una cuenta desde el panel |  |
+| OK | usuario bloqueado → expulsado con «Cuenta bloqueada; contacta al administrador» | Cuenta bloqueada; contacta al administrador. |
+| OK | la sesión del bloqueado se cierra |  |
+| OK | un bloqueado no puede volver a ingresar |  |
+| OK | admin desbloquea la cuenta |  |
+
+## Nube: diagnóstico
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | diagnóstico (admin): Auth, REST, versión del esquema y RLS en orden | 8 pasos |
+
+## Nube: confirmación de correo
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | con confirmación de correo: muestra «Revisa tu correo» |  |
+| OK | ingresar antes de confirmar: mensaje legible |  |
+| OK | tras confirmar e ingresar, el apodo elegido queda guardado |  |
+
+## Nube: recuperar contraseña
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | «¿Olvidaste tu contraseña?» envía el enlace |  |
+| OK | el enlace vuelve a la app con ?code= | http://localhost:8123/?code=… |
+| OK | el código se retira de la dirección |  |
+| OK | la contraseña nueva funciona |  |
+
+## Nube: progreso sin sincronizar (auditoría)
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin conexión: quedan cambios pendientes |  |
+| OK | cerrar sesión con cambios sin subir: pide confirmación advirtiendo la pérdida |  |
+| OK | al cancelar se conservan la sesión y el progreso local |  |
+| OK | ingresar con otra cuenta habiendo cambios sin subir: pide confirmación |  |
+| OK | al cancelar no se mezcla ni se borra el progreso de la otra cuenta |  |
+| OK | la cuenta dueña reingresa y sus cambios pendientes llegan a la nube |  |
+
+## Nube: errores de página
+
+| Resultado | Comprobación | Detalle |
+|---|---|---|
+| OK | sin excepciones de JavaScript en los escenarios de la nube |  |
 
 ## Detalle de la verificación de composición
 
@@ -271,8 +450,23 @@ No se incluyen en el precache del service worker.
 - `28_inicio_con_fecha.png`: Inicio con nombre y cuenta regresiva al examen
 - `29_practica_articulos.png`: Práctica: «Elegir artículos» con ítems del temario seleccionados
 - `30_mayusculas_letra_grande.png`: Pregunta en MAYÚSCULAS y letra grande (como el examen real)
+- `31_acceso_sin_red.png`: Acceso sin sesión y sin red: mensaje «Sin conexión»
+- `32_acceso.png`: Pantalla de acceso: Ingresar / Registrarse, mostrar contraseña, recuperar y privacidad
+- `33_registro.png`: Registro: correo, contraseña (mín. 8) y apodo
+- `34_conservar_progreso.png`: Primer ingreso con progreso local: ¿conservarlo y subirlo?
+- `35_inicio_sincronizado.png`: Inicio con el indicador de sincronización y la tarjeta de ranking
+- `36_ajustes_cuenta.png`: Ajustes → Cuenta: correo, apodo, sincronización, diagnóstico y cerrar sesión
+- `37_sin_conexion_pendiente.png`: Sin conexión con sesión: se estudia y los cambios quedan en cola
+- `38_ranking.png`: Ranking por XP con la fila propia resaltada
+- `39_admin_restringido.png`: Usuario normal en #/admin: acceso restringido
+- `40_admin.png`: Panel de administración: resumen, exportación CSV y tabla de usuarios (página completa, sin la barra inferior)
+- `41_admin_detalle.png`: Administración: detalle de un usuario con actividad y sesiones (página completa, sin la barra inferior)
+- `42_cuenta_bloqueada.png`: Usuario bloqueado: expulsado a la pantalla de acceso
+- `43_diagnostico.png`: Diagnóstico de conexión: Auth, REST, versión del esquema, RLS y permisos (página completa, sin la barra inferior)
+- `44_revisa_correo.png`: Registro con confirmación de correo activada: «Revisa tu correo»
 
 ## Limitaciones de estas pruebas
 
 - Se ejecutan en Chromium. Safari iOS no está disponible en este entorno: la instalación en iPhone y el comportamiento de `black-translucent` y las zonas seguras deben verificarse en un dispositivo real.
 - Los sonidos (Web Audio) y la vibración no se verifican de forma automática.
+- Supabase real no es accesible desde el entorno de desarrollo: Auth/REST se prueban con `pruebas/mock-supabase.mjs` y el SQL con PostgreSQL 16 local. Tras publicar, verificar con Ajustes → Diagnóstico de conexión.

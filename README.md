@@ -8,7 +8,8 @@ Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 pre
 - **Explorar**: fichas por artículo y buscador de texto.
 - **Progreso**: dominio, evolución de notas, actividad de 12 semanas y puntos débiles.
 - **Gamificación**: XP, niveles con rangos navales, meta diaria, racha y 20 logros.
-- Sitio estático: HTML, CSS y JavaScript (módulos ES) sin dependencias ni recursos externos.
+- **Cuenta** con correo y contraseña (v1.1.0): el progreso se **sincroniza** entre dispositivos (offline-first), **ranking** por apodo y **panel de administración** (ver secciones 7 y 8).
+- Sitio estático: HTML, CSS y JavaScript (módulos ES). Única dependencia: copia local de `@supabase/supabase-js` en `vendor/` (sin CDN). El backend es Supabase (`backend/schema.sql`).
 
 ---
 
@@ -28,7 +29,7 @@ La primera vez se necesita internet para descargar el banco (unos 2 MB). Despué
 2. Toca el menú **⋮** → **Instalar app** (o «Añadir a la pantalla principal»), o acepta el aviso de instalación.
 3. Abre la app desde el icono.
 
-**Copias de seguridad.** El progreso vive solo en el dispositivo. Exporta de vez en cuando (Ajustes → Exportar progreso; en iPhone puedes usar «Compartir archivo» para guardarlo en Archivos o enviártelo). Para pasar el progreso a otro celular: exporta en uno e importa en el otro.
+**Cuenta y copias de seguridad.** La primera vez se ingresa (o se crea la cuenta) con internet; desde entonces la app funciona sin conexión y sincroniza el progreso con la cuenta cuando hay red. Para usarla en otro celular basta ingresar con la misma cuenta. Exportar/importar (Ajustes) sigue disponible como respaldo manual.
 
 ## 2. Usarla en la computadora
 
@@ -108,18 +109,80 @@ Aunque olvides subir la versión, los archivos se refrescan solos en segundo pla
 
 **XP, niveles y logros.** Práctica +10/+15/+20 por acierto según dificultad y +2 por intento fallido; repaso +12 por acierto; simulacro: aciertos ×1.5 del valor de práctica + 100 si aprueba + 100 si la nota es ≥ 18; meta diaria +50; cada 7 días de racha +150. Nivel *n* desde 120·(*n*−1)·*n*/2 XP (nivel 1 = 0, nivel 2 = 120, nivel 3 = 360…), con rangos de Grumete (1-3) a Almirante (25+). Un día cuenta para la racha si se cumple la meta diaria (30 por defecto).
 
-## 7. Datos y privacidad
+## 7. Cuenta y sincronización
 
-Todo se guarda en el navegador del dispositivo, en `localStorage` bajo la clave `ascenso2026:estado` (con escritura diferida y guardado inmediato al ocultar la app). Nada se envía a ningún servidor. Si el navegador no permite guardar (modo privado), la app sigue funcionando en memoria y lo avisa.
+**Acceso.** Al abrir la app sin sesión aparece la pantalla de acceso: *Ingresar* / *Registrarse* (correo, contraseña de al menos 8 caracteres con mostrar/ocultar y, al registrarse, un **apodo** único de 3-20 caracteres `[A-Za-z0-9 _.-]`), «¿Olvidaste tu contraseña?» (enlace por correo que vuelve a la app con `?code=` y pide la contraseña nueva) y un aviso de privacidad. Sin sesión y sin red se muestra «Sin conexión…». Si Supabase exige confirmar el correo, la app muestra «Revisa tu correo» y guarda el apodo para aplicarlo al primer ingreso. Con una sesión guardada (supabase-js la guarda en `localStorage['ascenso2026:auth']`) la app entra directo, **también sin conexión**.
 
-## 8. Estructura
+**Primer ingreso con progreso local** (p. ej. quien usaba la v1.0): «¿Conservar el progreso de este dispositivo?» → *Conservar y subir* lo sube como estado inicial (o lo fusiona si la cuenta ya tenía progreso en la nube); *Descartar* deja el de la cuenta. Al **cerrar sesión** se intenta subir lo pendiente (si no se puede, se avisa), y se borran del dispositivo la sesión y el progreso (se conservan tema, letra, mayúsculas y sonidos). Una **cuenta bloqueada** (`esta_bloqueado()` o rechazo RLS al subir) se cierra con el mensaje «Cuenta bloqueada; contacta al administrador».
+
+**Sincronización (offline-first).** El estado local (`estado.js`) es la fuente de verdad; cada cambio real lo marca *pendiente* y programa una subida con 20 s de retardo; además se sincroniza al terminar una práctica/simulacro/repaso, al ocultar la app (`visibilitychange`), al recuperar la conexión (`online`), al abrirla y con «Sincronizar ahora» (Ajustes) o tocando el indicador de Inicio (✓ *Sincronizado* / ⟳ *Pendiente* / *Sin conexión*). Los fallos de red nunca bloquean el estudio: se reintenta con espera exponencial (5 s, 10 s, 20 s… hasta 5 min). Metadatos en `localStorage['ascenso2026:nube']` (cuenta vinculada, `pendiente`, `ultimaSync`, cola de eventos, ranking en caché).
+
+Algoritmo de cada sincronización (`js/sincronizacion.js`):
+1. Envía la **cola de eventos** (`eventos_sesion`), cada uno con `id_cliente` único por usuario: el servidor ignora los reenvíos (`on conflict (usuario_id, id_cliente) do nothing`); un evento que el servidor rechace por datos fuera de rango se descarta para no atascar la cola.
+2. Consulta solo la fecha `actualizado` del estado remoto (la pone el servidor). Si es **más nueva** que `ultimaSync`:
+   - con cambios locales pendientes → **fusión por secciones** (`js/fusion.js`) y se sube el resultado;
+   - sin cambios pendientes → se **adopta el remoto** (si hay una sesión de estudio abierta en pantalla se conservan las sesiones locales).
+3. Si hay cambios pendientes (o la cuenta aún no tiene estado), **sube** el estado completo (`upsert` en `estado_progreso`) y guarda la nueva `actualizado` como `ultimaSync`. Si hubo cambios durante la subida, sigue pendiente.
+
+**Fusión por secciones** (`fusionar(local, remoto)`):
+
+| Sección | Regla |
+|---|---|
+| `p` (progreso por pregunta) | Por cada id, base = registro con el intento más reciente (`u`): su SRS, marca, etc. Historiales unidos: parte común + intentos propios de cada lado (`n` y `a` se suman sin contar dos veces la parte común). Si algún historial ya está recortado a 10, `n` y `a` = máximo y `h` = el más reciente. |
+| `sims` | Unión por `id`, ordenados por fecha. |
+| `dias` | Unión por fecha; el mismo día: máximo de `r`, `a` y `xp`; `meta` si cualquiera la cumplió (la racha resultante es la mayor). |
+| `xp`, `cont` | Máximo (campo a campo en `cont`). |
+| `logros`, `fuentesDominadas` | Unión, con la fecha más antigua. |
+| `ajustes`, `config`, `sesiones`, `ultimoResumen`, `ultimaExportacion` | Los locales. |
+
+Limitación conocida: como en toda fusión sin historial de cambios, un «Reiniciar progreso» hecho en un dispositivo mientras otro tenía cambios sin subir no borra lo del otro (la fusión une).
+
+**Eventos.** Al terminar una práctica, simulacro o repaso se registra `{tipo, examen (null si es mixto), inicio, fin, n, aciertos, nota (simulacro), duracion_s, id_cliente}`; sin red quedan en la cola persistente.
+
+**Ranking** (Más → Ranking y tarjeta en Inicio): top 50 por XP o por nota promedio de simulacros, con posición, apodo, XP, nota y racha; la fila propia se resalta (y se añade aunque quede fuera del top). Sin apodo, invita a elegirlo. Se actualiza al abrir, con el botón o tirando hacia abajo; sin red muestra la última copia.
+
+**Rutas JSON del estado que usa el servidor** (`ranking()` y `admin_usuarios()` en `backend/schema.sql`; deben mantenerse coherentes con `js/estado.js`):
+
+| Dato | Ruta en `estado_progreso.estado` | Cálculo |
+|---|---|---|
+| XP | `estado.xp` | entero |
+| Nivel | desde `estado.xp` | nivel *n* si 60·(n−1)·n ≤ xp < 60·n·(n+1) (igual que `nivelDe()`) |
+| Racha | `estado.dias["AAAA-MM-DD"].meta = 1` | días consecutivos con meta que terminan hoy o ayer (fecha de Lima) |
+| Preguntas respondidas | `estado.cont.respondidas` | entero |
+| Simulacros | `estado.sims` (longitud) y `eventos_sesion` tipo `simulacro` | el mayor |
+| Nota promedio | `eventos_sesion.nota` (simulacros); si no hay, `estado.sims[*].nota` | 1 decimal |
+| Actividad diaria | `estado.dias["AAAA-MM-DD"].r` y `eventos_sesion` | preguntas = máximo de ambos; sesiones = eventos |
+
+## 8. Administración
+
+Solo para la cuenta con `rol = 'admin'` (el correo del dueño, `marconavy2510@gmail.com`, lo recibe automáticamente al registrarse). La entrada aparece en **Más → Administración** (`#/admin`) y en Ajustes → Cuenta; a los demás no se les muestra, y aunque entren a `#/admin` ven «Acceso restringido»: el servidor rechaza las funciones `admin_*` con 403.
+
+- **Resumen**: usuarios registrados, activos hoy y en 7 días (con preguntas o sesiones), sesiones hoy, simulacros totales y bloqueados.
+- **Tabla de usuarios** (deslizable, ordenable tocando el encabezado, con buscador por correo/apodo): correo, apodo, último ingreso, XP, nivel, racha, preguntas, simulacros, nota promedio y estado; acciones **Bloquear/Desbloquear** (no puedes bloquearte a ti mismo) y **Detalle** (`#/admin/usuario/<id>`: cifras, mapa de calor de 12 semanas y sesiones recientes).
+- **Exportar CSV** de usuarios y de eventos (UTF-8 con BOM, separador coma; se abre en Excel).
+- **Diagnóstico** (`#/diagnostico`, también para cualquier usuario desde Ajustes → Cuenta): configuración, red, Auth (`/auth/v1/health`), sesión, REST y versión del esquema (`version_esquema()`), RLS activado en las 4 tablas (`diagnostico_esquema()`), aislamiento (solo se ve el perfil propio) y permisos de las funciones de administración.
+
+Pasos en el dashboard de Supabase: `backend/INSTRUCCIONES_SUPABASE.md`.
+
+## 9. Datos y privacidad
+
+El progreso se guarda en el navegador (`localStorage['ascenso2026:estado']`, con escritura diferida y guardado inmediato al ocultar la app) y se sincroniza con la cuenta en Supabase. En el servidor se guardan: correo, apodo, el estado de estudio, las sesiones terminadas y la fecha de los ingresos (como mucho uno cada 6 h). Cada usuario solo puede leer y escribir lo suyo (RLS); el administrador lo consulta mediante funciones del servidor; en el ranking solo se ve el apodo, XP, nota promedio y racha. La clave de la app (`publishable key`) es pública por diseño; la seguridad está en las políticas RLS. Si el navegador no permite guardar (modo privado), la app sigue funcionando en memoria y lo avisa.
+
+## 10. Estructura
 
 ```
 index.html              página única: carga js/main.js
 manifest.webmanifest    datos de instalación (nombre, iconos, colores)
 sw.js                   service worker: precache con versión y actualización en segundo plano
 css/estilos.css         estilos (tema oscuro/claro con variables CSS)
-js/main.js              arranque, rutas y navegación inferior
+js/main.js              arranque, sesión, rutas y navegación inferior
+vendor/supabase.js      @supabase/supabase-js v2.117.3 (UMD local → window.supabase)
+js/config-supabase.js   URL y publishable key del proyecto (sustituibles para pruebas)
+js/nube.js              envoltorio de Supabase: cuenta, estado, eventos, ranking, admin, diagnóstico
+js/sincronizacion.js    sincronización offline-first (pendiente, cola, reintentos)
+js/fusion.js            fusión por secciones del estado local y remoto
+js/cuenta.js            flujo de la cuenta: tras ingresar, cerrar sesión, expulsar, apodo
+js/bus.js               avisos internos (fin de sesión de estudio)
 js/router.js            enrutador por hash (#/inicio, #/practica, …)
 js/datos.js             carga del banco, índices, grupos, filtro base, barajado y búsqueda
 js/estado.js            estado persistente, migraciones, exportar/importar
@@ -132,7 +195,8 @@ js/sesion.js            sesiones en curso (práctica/repaso y simulacro)
 js/sw-registro.js       registro del SW y aviso de nueva versión
 js/version.js           APP_VERSION visible
 js/util.js              fechas locales, azar con semilla, formato
-js/ui/vista-*.js        una vista por pantalla
+js/ui/vista-*.js        una vista por pantalla (acceso, ranking, admin y diagnóstico incluidas)
+js/ui/csv.js            exportación CSV (Blob)
 js/ui/*.js              componentes: modal, toast, anillo, gráfico, mapa de calor, iconos…
 data/                   banco.json y meta.json (generados por scripts/construir_banco.py)
 iconos/                 iconos PNG y SVG (generados por scripts/generar_iconos.py)
@@ -142,18 +206,21 @@ INFORME_PRUEBAS.md      resultado de las pruebas automáticas
 
 Iconos: `python3 scripts/generar_iconos.py` los vuelve a generar con Pillow (timón dorado sobre azul marino; diseño propio, sin emblemas oficiales).
 
-## 9. Pruebas
+## 11. Pruebas
 
 ```bash
 cd pruebas
 npm install          # instala Playwright 1.56 (usa el Chromium ya instalado)
-node pruebas.mjs     # escenarios de la especificación, capturas e INFORME_PRUEBAS.md
+node pruebas.mjs     # escenarios de las especificaciones (01 y 02), capturas e INFORME_PRUEBAS.md
+node mock-supabase.mjs           # solo el servidor simulado de Supabase (puerto 54321)
 node verificar_composicion.mjs   # solo la verificación de la composición del simulacro
 node unitarias.mjs               # solo la lógica: niveles, racha, SRS, XP, nota y migración
 ```
 
-## 10. Limitaciones conocidas
+`pruebas.mjs` levanta `pruebas/mock-supabase.mjs` (emula GoTrue y PostgREST con las mismas reglas que el esquema: 401/403 al violarlas) y apunta la app a él con `localStorage['ascenso2026:supabase'] = {"url": …, "key": …}`. Los escenarios de la nube están en `pruebas/escenarios_nube.mjs`. El esquema SQL se prueba en un PostgreSQL 16 local con `backend/pruebas_schema.sql` (salida en `backend/pruebas_schema.out`).
+
+## 12. Limitaciones conocidas
 
 - Las pruebas automáticas usan Chromium; la instalación en iPhone (Safari) debe verificarse en un dispositivo real.
-- El progreso no se sincroniza entre dispositivos: se mueve con exportar/importar.
+- La conexión con el Supabase real solo se verificó con el servidor simulado y con PostgreSQL local; tras publicar, usa **Ajustes → Diagnóstico de conexión**.
 - El banco fue generado a partir del temario oficial y de bancos previos, y verificado por auditoría. Ante cualquier duda, contrasta con el reglamento o manual vigente.

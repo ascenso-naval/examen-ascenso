@@ -5,10 +5,12 @@
  * · Estrategia: primero caché y actualización en segundo plano (stale-while-revalidate).
  * · Una versión nueva queda «en espera»; la página muestra «Nueva versión disponible ·
  *   Actualizar», que envía SKIP_WAITING y recarga.
+ * · Las llamadas a Supabase (*.supabase.co: Auth y REST) NUNCA pasan por la caché:
+ *   van directo a la red (network-only), igual que cualquier petición que no sea GET.
  *
  * PARA PUBLICAR CAMBIOS: sube APP_VERSION (y la de js/version.js) — ver README.
  */
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const PREFIJO = 'ascenso2026-';
 const CACHE = `${PREFIJO}${APP_VERSION}`;
 
@@ -18,6 +20,13 @@ const ARCHIVOS = [
   './manifest.webmanifest',
   './css/estilos.css',
   './js/main.js',
+  './vendor/supabase.js',
+  './js/config-supabase.js',
+  './js/nube.js',
+  './js/fusion.js',
+  './js/sincronizacion.js',
+  './js/cuenta.js',
+  './js/bus.js',
   './js/version.js',
   './js/util.js',
   './js/datos.js',
@@ -57,6 +66,11 @@ const ARCHIVOS = [
   './js/ui/vista-resumen.js',
   './js/ui/vista-sesion.js',
   './js/ui/vista-simulacro.js',
+  './js/ui/vista-acceso.js',
+  './js/ui/vista-ranking.js',
+  './js/ui/vista-admin.js',
+  './js/ui/vista-diagnostico.js',
+  './js/ui/csv.js',
   './iconos/favicon.svg',
   './iconos/favicon-32.png',
   './iconos/icon-192.png',
@@ -159,6 +173,8 @@ self.addEventListener('fetch', (evento) => {
   const req = evento.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Supabase (Auth, REST, RPC): siempre red, nunca caché.
+  if (/\.supabase\.(co|in)$/.test(url.hostname) || /^\/(auth|rest|realtime|storage)\/v1\//.test(url.pathname)) return;
   if (url.origin !== self.location.origin) return;
   const base = new URL('./', self.location.href).pathname;
   if (!url.pathname.startsWith(base)) return;

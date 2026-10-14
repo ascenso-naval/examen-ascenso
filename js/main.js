@@ -1,9 +1,13 @@
 // main.js — Arranque de la app: estado, apariencia, carga del banco (pantalla breve),
-// rutas por hash, navegación inferior, guardado al ocultar la app y service worker.
+// sesión (pantalla de acceso si no hay), rutas por hash, navegación inferior,
+// sincronización con la nube, guardado al ocultar la app y service worker.
 
 import { cargarEstado, guardarYa, almacen } from './estado.js';
 import { cargarDatos } from './datos.js';
-import { definirRutas, iniciarRouter } from './router.js';
+import { definirRutas, iniciarRouter, refrescar } from './router.js';
+import * as nube from './nube.js';
+import * as sync from './sincronizacion.js';
+import * as cuenta from './cuenta.js';
 import { registrarSW } from './sw-registro.js';
 import { pendientesHoy } from './consultas.js';
 import { esc } from './util.js';
@@ -23,6 +27,10 @@ import * as vProgreso from './ui/vista-progreso.js';
 import * as vLogros from './ui/vista-logros.js';
 import * as vAjustes from './ui/vista-ajustes.js';
 import * as vMas from './ui/vista-mas.js';
+import * as vRanking from './ui/vista-ranking.js';
+import * as vAdmin from './ui/vista-admin.js';
+import * as vDiagnostico from './ui/vista-diagnostico.js';
+import { montarAcceso } from './ui/vista-acceso.js';
 
 const RUTAS = [
   { patron: '/inicio', montar: vInicio.montar, nav: 'inicio' },
@@ -42,6 +50,10 @@ const RUTAS = [
   { patron: '/logros', montar: vLogros.montar, nav: 'mas' },
   { patron: '/ajustes', montar: vAjustes.montar, nav: 'mas' },
   { patron: '/mas', montar: vMas.montar, nav: 'mas' },
+  { patron: '/ranking', montar: vRanking.montar, nav: 'mas' },
+  { patron: '/admin', montar: vAdmin.montarPanel, nav: 'mas' },
+  { patron: '/admin/usuario/:id', montar: vAdmin.montarDetalle, nav: 'mas' },
+  { patron: '/diagnostico', montar: vDiagnostico.montar, nav: 'mas' },
 ];
 
 const DESTINOS = [
@@ -81,6 +93,79 @@ function errorDeCarga(e) {
   carga.appendChild(b);
 }
 
+function quitarCarga() {
+  const carga = document.getElementById('carga');
+  if (!carga) return;
+  carga.classList.add('oculta');
+  setTimeout(() => carga.remove(), 260);
+}
+
+let routerIniciado = false;
+let recuperandoClave = false;
+
+/** Entra a la app con una sesión válida (o persistida, aunque no haya red). */
+function entrar(usuario) {
+  document.body.classList.remove('sin-sesion');
+  sync.iniciar({
+    alExpulsar: (motivo) => cuenta.expulsar(motivo),
+    alAplicarRemoto: () => {
+      aplicarApariencia();
+      if (!document.body.classList.contains('en-sesion') && !document.querySelector('.modal')) refrescar();
+    },
+  });
+  if (!routerIniciado) {
+    routerIniciado = true;
+    iniciarRouter(document.getElementById('vista'));
+    actualizarPunto();
+    window.addEventListener('hashchange', actualizarPunto);
+  } else {
+    refrescar();
+  }
+  sync.sincronizar();
+  if (recuperandoClave) { recuperandoClave = false; cuenta.pedirNuevaContrasena(); }
+}
+
+/** Muestra la pantalla de acceso (sin sesión). */
+function mostrarAcceso() {
+  document.body.classList.add('sin-sesion');
+  const vista = document.getElementById('vista');
+  let limpiar = null;
+  limpiar = montarAcceso(vista, {
+    alIngresar: async (usuario, op) => {
+      await cuenta.trasIngresar(usuario, op);
+      if (limpiar) limpiar();
+      vista.innerHTML = '';
+      entrar(usuario);
+    },
+  });
+}
+
+/** Sesión al abrir: procesa los enlaces de correo (?code=…) y lee la sesión guardada. */
+async function sesionInicial() {
+  const url = new URL(window.location.href);
+  const conCodigo = url.searchParams.has('code') || url.searchParams.has('error_description');
+  try {
+    // Escucha de eventos de Auth (recuperación de contraseña, cierre por token inválido).
+    nube.onAuthStateChange((evento) => {
+      if (evento === 'PASSWORD_RECOVERY') {
+        if (routerIniciado) cuenta.pedirNuevaContrasena(); else recuperandoClave = true;
+      }
+      if (evento === 'SIGNED_OUT' && routerIniciado && !cuenta.saliendo && !nube.sesionLocal()) cuenta.expulsar('sesion');
+    });
+    if (conCodigo && nube.enLinea()) await nube.cliente().auth.initialize();
+  } catch (e) {
+    console.warn('No se pudo iniciar el cliente de Supabase:', e);
+  }
+  if (conCodigo) {
+    url.searchParams.delete('code');
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_code');
+    url.searchParams.delete('error_description');
+    try { history.replaceState(null, '', url.pathname + (url.search || '') + url.hash); } catch { /* sin historial */ }
+  }
+  return nube.sesionLocal();
+}
+
 async function arrancar() {
   cargarEstado();
   aplicarApariencia();
@@ -100,13 +185,28 @@ async function arrancar() {
   }
 
   definirRutas(RUTAS);
-  iniciarRouter(document.getElementById('vista'));
-  actualizarPunto();
-  window.addEventListener('hashchange', actualizarPunto);
-
-  const carga = document.getElementById('carga');
-  carga.classList.add('oculta');
-  setTimeout(() => carga.remove(), 260);
+  const usuario = await sesionInicial();
+  quitarCarga();
+  if (!usuario) {
+    mostrarAcceso();
+  } else if (sync.usuarioVinculado() !== usuario.id && nube.enLinea()) {
+    // Sesión nueva en este dispositivo (p. ej. tras confirmar el correo): vincular primero.
+    try {
+      await cuenta.trasIngresar(usuario, {});
+      entrar(usuario);
+    } catch (e) {
+      if (e && e.tipo === 'bloqueado') { cuenta.expulsar('bloqueada'); return; }
+      if (e && e.tipo === 'cancelado') {
+        try { window.sessionStorage.setItem(cuenta.CLAVE_MENSAJE, e.message); } catch { /* sin almacenamiento */ }
+        mostrarAcceso();
+        return;
+      }
+      entrar(usuario);
+    }
+  } else {
+    entrar(usuario);
+    cuenta.revisarAlAbrir(usuario, (motivo) => cuenta.expulsar(motivo));
+  }
 
   if (!almacen.disponible) {
     toast('Este navegador no permite guardar datos (¿modo privado?). La app funciona, pero exporta tu progreso antes de cerrar.', { tipo: 'error', duracion: 7000 });
@@ -114,7 +214,7 @@ async function arrancar() {
 
   // Guardar siempre al ocultar o cerrar la app (iOS puede suspenderla sin aviso).
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') guardarYa(); });
-  window.addEventListener('pagehide', guardarYa);
+  window.addEventListener('pagehide', () => guardarYa());
 
   registrarSW();
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});

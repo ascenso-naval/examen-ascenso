@@ -13,6 +13,35 @@ import { insignia, barra } from './comun.js';
 import { htmlContinuar, manejarContinuar } from './continuar.js';
 import { abrirHoja } from './modal.js';
 import { exportarProgreso } from './exportar.js';
+import { toast } from './toast.js';
+import * as sync from '../sincronizacion.js';
+import { obtenerRanking } from './vista-ranking.js';
+
+const TEXTO_SYNC = {
+  ok: ['nube-ok', 'Sincronizado'],
+  pendiente: ['repaso', 'Pendiente'],
+  sincronizando: ['repaso', 'Sincronizando…'],
+  offline: ['nube-off', 'Sin conexión'],
+  error: ['alerta', 'Error al sincronizar'],
+};
+
+/** Indicador de sincronización (✓ sincronizado / ⟳ pendiente / sin conexión). */
+export function htmlSync(s = sync.situacionSync()) {
+  const [ic, texto] = TEXTO_SYNC[s.tipo] || TEXTO_SYNC.ok;
+  return `${icono(ic, { tam: 16 })}<span>${esc(texto)}</span>`;
+}
+
+function htmlTarjetaRanking(datos) {
+  const meta = sync.metaNube();
+  const filas = datos && datos.filas;
+  const yo = filas ? filas.find((r) => r.es_yo) : null;
+  let sub = 'Compara tu XP y tu nota con la promoción';
+  if (!meta.apodo) sub = 'Elige un apodo para aparecer en el ranking';
+  else if (yo) sub = `Tu posición: ${yo.posicion}.º de ${filas.length > yo.posicion ? filas.length : yo.posicion} · ${fmtNum(yo.xp)} XP`;
+  return `<span class="fila-icono">${icono('podio')}</span>
+    <span class="fila-cuerpo"><span class="fila-titulo">Ranking</span><span class="fila-sub" data-ranking-sub>${esc(sub)}</span></span>
+    ${yo ? `<span class="etiqueta etiqueta-oro">${yo.posicion}.º</span>` : ''}${icono('chev-der', { clase: 'chev', tam: 20 })}`;
+}
 
 const CONSEJOS = [
   'Lee el enunciado completo antes de mirar las alternativas: en el examen real muchas se diferencian por una sola palabra.',
@@ -68,6 +97,8 @@ function filaExamen(e) {
 }
 
 export function montar(raiz) {
+  let vivo = true;
+  let rankingCache = sync.metaNube().ranking?.xp || null;
   function pintar() {
     const hoy = infoHoy();
     const niv = nivelDe(estado.xp);
@@ -84,7 +115,10 @@ export function montar(raiz) {
           <h1 class="cuenta">${esc(cuenta.titulo)}</h1>
           <p class="cuenta-sub">${cuenta.sub}</p>
         </div>
-        <a class="btn-icono" href="#/ajustes" aria-label="Ajustes">${icono('ajustes')}</a>
+        <div class="portada-botones">
+          <button type="button" class="chip-sync" data-accion="sincronizar" data-sync="${sync.situacionSync().tipo}" aria-live="polite" aria-label="Estado de sincronización">${htmlSync()}</button>
+          <a class="btn-icono" href="#/ajustes" aria-label="Ajustes">${icono('ajustes')}</a>
+        </div>
       </div>
       <div class="portada-panel">
         <div class="brujula" role="img" aria-label="Meta diaria: ${hoy.respondidas} de ${hoy.meta} preguntas hoy">
@@ -131,6 +165,8 @@ export function montar(raiz) {
       </a>
     </nav>
 
+    <ul class="lista mt-m"><li><a class="fila tarjeta-ranking" href="#/ranking" id="tarjeta-ranking">${htmlTarjetaRanking(rankingCache)}</a></li></ul>
+
     <h2>Tus exámenes</h2>
     <ul class="lista">${D.examenes.map(filaExamen).join('')}</ul>
 
@@ -144,6 +180,13 @@ export function montar(raiz) {
     if (await manejarContinuar(b, pintar)) return;
     const accion = b.dataset.accion;
     if (accion === 'exportar') { exportarProgreso(); pintar(); return; }
+    if (accion === 'sincronizar') {
+      const r = await sync.sincronizar();
+      if (r.ok) toast(r.resultado === 'fusion' ? 'Progreso combinado con el de tu cuenta.' : 'Progreso sincronizado.', { tipo: 'exito', icono: 'nube-ok' });
+      else if (r.motivo === 'offline' || r.motivo === 'red') toast('Sin conexión: se sincronizará al volver la red.', { icono: 'nube-off' });
+      else if (r.mensaje) toast(r.mensaje, { tipo: 'error' });
+      return;
+    }
     if (accion === 'examen') {
       const ex = b.dataset.valor;
       const elegido = await abrirHoja({
@@ -165,5 +208,20 @@ export function montar(raiz) {
 
   pintar();
   raiz.addEventListener('click', alClic);
-  return () => raiz.removeEventListener('click', alClic);
+  const quitarSync = sync.alCambiarSync((s) => {
+    const chip = raiz.querySelector('.chip-sync');
+    if (chip) { chip.dataset.sync = s.tipo; chip.innerHTML = htmlSync(s); }
+  });
+  // Ranking: se muestra la caché y se refresca en segundo plano (como mucho cada 5 min).
+  obtenerRanking('xp', 300000).then((r) => {
+    if (!vivo || !r) return;
+    rankingCache = r;
+    const t = raiz.querySelector('#tarjeta-ranking');
+    if (t) t.innerHTML = htmlTarjetaRanking(r);
+  });
+  return () => {
+    vivo = false;
+    quitarSync();
+    raiz.removeEventListener('click', alClic);
+  };
 }

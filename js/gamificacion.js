@@ -7,6 +7,24 @@ import { D, disponiblesFuente } from './datos.js';
 import { hoyISO, sumarDias, horaDe } from './util.js';
 import { aplicarResultado } from './srs.js';
 import { resumen } from './estadisticas.js';
+import { emitir } from './bus.js';
+
+const EXAMENES_VALIDOS = new Set(['reglamentos', 'maplo', 'ingles']);
+
+/** Aviso de fin de sesión para el registro de eventos en la nube (ver sincronizacion.js). */
+function avisarFin(tipo, examen, inicioMs, finMs, n, aciertos, nota, duracionS, idSesion) {
+  emitir('sesion-terminada', {
+    tipo,
+    examen: EXAMENES_VALIDOS.has(examen) ? examen : null,   // repasos/prácticas mixtas → null
+    inicio: new Date(inicioMs || finMs).toISOString(),
+    fin: new Date(finMs).toISOString(),
+    n,
+    aciertos,
+    nota,
+    duracion_s: Math.max(0, Math.round(duracionS || 0)),
+    id_cliente: `${idSesion || 'x'}-${finMs.toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Niveles
@@ -279,8 +297,12 @@ export function cerrarSesionEstudio(ses) {
   const eventos = [];
   estado.cont.sesiones += 1;
   otorgar('primer_paso', eventos);
-  revisarHorario(ses.inicio || Date.now(), Date.now(), eventos);
+  const fin = Date.now();
+  revisarHorario(ses.inicio || fin, fin, eventos);
   guardarYa();
+  const ids = Object.keys(ses.resp || {}).filter((id) => ses.resp[id] !== null && ses.resp[id] !== undefined);
+  avisarFin(ses.tipo === 'repaso' ? 'repaso' : 'practica', ses.examen, ses.inicio, fin, ids.length,
+    ids.filter((id) => ses.ok && ses.ok[id]).length, null, (ses.activoMs || 0) / 1000, ses.id);
   return eventos;
 }
 
@@ -373,6 +395,7 @@ export function entregarSimulacro(ses) {
 
   estado.sesiones.simulacro = null;
   guardarYa();
+  avisarFin('simulacro', ses.examen, ses.inicio, ahora, total, aciertos, nota, ses.usado || 0, ses.id);
   return { sim, anterior, eventos };
 }
 
