@@ -53,6 +53,8 @@ function htmlTarjetaRanking(datos) {
   const yo = filas ? filas.find((r) => r.es_yo) : null;
   let sub = 'Compara tu XP y tu nota con la promoción';
   if (!meta.apodo) sub = 'Elige un apodo para aparecer en el ranking';
+  // [1.5.0] En modo oculto la posición es la que tendría si participara.
+  else if (yo && meta.rankingVisible === false) sub = `Modo oculto: estarías en el puesto ${yo.posicion} · ${fmtNum(yo.xp)} XP`;
   else if (yo) sub = `Tu posición: ${yo.posicion}.º de ${filas.length > yo.posicion ? filas.length : yo.posicion} · ${fmtNum(yo.xp)} XP`;
   return `<span class="fila-icono">${icono('podio')}</span>
     <span class="fila-cuerpo"><span class="fila-titulo">Ranking</span><span class="fila-sub" data-ranking-sub>${esc(sub)}</span></span>

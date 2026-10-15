@@ -146,6 +146,8 @@ function mostrarAcceso() {
       if (limpiar) limpiar();
       vista.innerHTML = '';
       entrar(usuario);
+      // [1.5.0] Con la app ya montada: «Completa tus datos» y la pregunta del ranking si faltan.
+      cuenta.revisarDatosCuenta();
     },
   });
 }
@@ -208,6 +210,7 @@ async function arrancar() {
     try {
       await cuenta.trasIngresar(usuario, {});
       entrar(usuario);
+      cuenta.revisarDatosCuenta();
     } catch (e) {
       if (e && e.tipo === 'bloqueado') { cuenta.expulsar('bloqueada'); return; }
       if (e && e.tipo === 'cancelado') {

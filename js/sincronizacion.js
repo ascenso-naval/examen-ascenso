@@ -22,6 +22,12 @@ export const CLAVE_META = 'ascenso2026:nube';
 const RETARDO_SUBIDA = 20000;
 const BASE = {
   usuario: null, correo: '', apodo: null, rol: null,
+  // [1.5.0] Datos de la cuenta propia que la interfaz necesita sin consultar al servidor
+  // (Ajustes → Cuenta y el modo oculto del ranking). Nunca hay datos de otras cuentas.
+  nombre: null, apellido: null, rankingVisible: null,
+  // [1.5.0 · ronda 2] true si al servidor le faltaban el nombre o el apellido la última vez que
+  // se leyó el perfil: con esa marca «Completa tus datos» se exige también sin conexión.
+  datosPendientes: false,
   pendiente: false, ultimaSync: null, ultimaSubida: null, ultimoIntento: null,
   cola: [], error: null, ranking: null,
 };
@@ -262,11 +268,22 @@ async function ejecutar() {
     return { ok: true, resultado };
   } catch (e) {
     const err = e instanceof nube.ErrorNube ? e : new nube.ErrorNube(String(e?.message || e), 'servidor');
+    if (err.tipo === 'eliminado' && alExpulsar) {
+      // [1.5.0] La cuenta se fue a la papelera mientras la app estaba abierta.
+      situacion = 'error';
+      alExpulsar('eliminada');
+      return { ok: false, motivo: 'eliminada' };
+    }
     if (err.tipo === 'bloqueado' || err.tipo === 'permiso') {
-      // ¿La cuenta fue bloqueada? (las políticas RLS rechazan sus escrituras)
+      // ¿La cuenta fue bloqueada o eliminada? (las políticas RLS rechazan sus escrituras)
       let bloqueado = err.tipo === 'bloqueado';
       if (!bloqueado) { try { bloqueado = await nube.estaBloqueado(); } catch { /* se reintenta luego */ } }
       if (bloqueado && alExpulsar) { situacion = 'error'; alExpulsar('bloqueada'); return { ok: false, motivo: 'bloqueada' }; }
+      if (err.tipo === 'permiso' && alExpulsar) {
+        let eliminado = false;
+        try { eliminado = await nube.estaEliminado(); } catch { /* se reintenta luego */ }
+        if (eliminado) { situacion = 'error'; alExpulsar('eliminada'); return { ok: false, motivo: 'eliminada' }; }
+      }
     }
     if (err.tipo === 'sesion' && alExpulsar) {
       if ((await nube.verificarSesion()) === 'invalida') { alExpulsar('sesion'); return { ok: false, motivo: 'sesion' }; }

@@ -1,13 +1,17 @@
-// vista-admin.js — Panel de administración (#/admin, solo si es_admin()), en pestañas:
-// · Usuarios: resumen, tabla ordenable con buscador, plan de acceso y consumo de la prueba,
-//   «Marcar plan» (cortesía / pagado / prueba), bloquear/desbloquear, detalle por usuario
-//   (eventos y mapa de calor) y exportación CSV de usuarios y eventos.
+// vista-admin.js — Panel de administración (#/admin), en pestañas:
+// · Usuarios (solo admin): resumen, tabla ordenable con buscador, nombre, apellido y rol,
+//   plan de acceso y consumo de la prueba, «Marcar plan» (cortesía / pagado / prueba),
+//   bloquear/desbloquear, [1.5.0] acciones de rol y «Eliminar cuenta» con motivo, la sección
+//   «Papelera» (restaurar en 30 días) y la purga perezosa al abrir la pestaña; detalle por
+//   usuario (eventos y mapa de calor) y exportación CSV de usuarios y eventos.
 // · Pagos (#/admin?tab=pagos): comprobantes pendientes / verificados / rechazados con el voucher
-//   (URL firmada, ampliable), «Verificar y desbloquear» y «Rechazar» con motivo.
-// · Cobro (#/admin?tab=cobro): configuración de pago (Yape, Plin, monto, límites, ayuda).
-// · Respaldo (#/admin?tab=respaldo, v1.4.0): descargar el respaldo completo y restaurar el
-//   progreso de un usuario desde un archivo (js/ui/admin-respaldo.js).
-// El servidor también lo impide: las funciones admin_* responden 403 a quien no es admin.
+//   (URL firmada, ampliable), «Verificar y desbloquear» y «Rechazar» con motivo. [1.5.0] Es la
+//   ÚNICA pestaña que ve un verificador.
+// · Cobro (#/admin?tab=cobro, solo admin): configuración de pago (Yape, Plin, monto, límites, ayuda).
+// · Respaldo (#/admin?tab=respaldo, v1.4.0, solo admin): descargar el respaldo completo y
+//   restaurar el progreso de un usuario desde un archivo (js/ui/admin-respaldo.js).
+// El servidor también lo impide: admin_pagos/admin_resolver_pago exigen verificador y el resto
+// de las funciones admin_* responden 403 (42501) a quien no es administrador.
 
 import * as nube from '../nube.js';
 import * as sync from '../sincronizacion.js';
@@ -21,10 +25,15 @@ import { mapaCalor } from './heatmap.js';
 import { aCsv, descargarCsv } from './csv.js';
 import { crearRespaldo } from './admin-respaldo.js';
 import { respaldoVencido } from '../respaldo.js';
+import { NOMBRE_ROL, htmlRol, htmlAccionesRol, htmlPapelera, confirmarRol, pedirMotivoEliminar } from './admin-cuentas.js';
 
 const COLUMNAS = [
   { clave: 'correo', titulo: 'Correo' },
   { clave: 'apodo', titulo: 'Apodo' },
+  // [1.5.0] Nombre, apellido y rol: solo los ven el administrador y el verificador (en Pagos).
+  { clave: 'nombre', titulo: 'Nombre' },
+  { clave: 'apellido', titulo: 'Apellido' },
+  { clave: 'rol', titulo: 'Rol' },
   { clave: 'ultimo_ingreso', titulo: 'Último ingreso', fecha: true },
   { clave: 'xp', titulo: 'XP', num: true },
   { clave: 'nivel', titulo: 'Nivel', num: true },
@@ -39,19 +48,32 @@ const COLUMNAS = [
 const fechaCorta = (v) => (v ? fmtFechaHora(v) : '—');
 const nota = (v) => (v === null || v === undefined ? '—' : fmtNota(Number(v)));
 /** [Auditoría H6] Eventos que escribe el servidor (pagos y cambios de plan): sin examen, con detalle. */
-const esEventoCuenta = (t) => typeof t === 'string' && (t.startsWith('pago_') || t === 'plan_cambiado' || t === 'restauracion');
+const esEventoCuenta = (t) => typeof t === 'string' && (t.startsWith('pago_') || t === 'plan_cambiado' || t === 'restauracion'
+  || t === 'rol_cambiado' || t === 'cuenta_eliminada' || t === 'cuenta_restaurada' || t === 'cuenta_purgada' || t === 'datos_completados');
 const nombreTipo = (t) => ({
   practica: 'Práctica', simulacro: 'Simulacro', repaso: 'Repaso',
   pago_registrado: 'Comprobante enviado', pago_aprobado: 'Pago verificado', pago_rechazado: 'Pago rechazado', plan_cambiado: 'Cambio de plan', restauracion: 'Restauración',
+  // [1.5.0] Eventos del encargo 06.
+  rol_cambiado: 'Cambio de rol', cuenta_eliminada: 'Cuenta eliminada', cuenta_restaurada: 'Cuenta restaurada',
+  cuenta_purgada: 'Cuenta purgada', datos_completados: 'Datos completados',
 }[t] || t);
 
-/** ¿Puede ver el panel? Usa la caché del rol y lo confirma con el servidor si hay red. */
-async function verificarAdmin() {
-  if (!nube.enLinea()) return sync.metaNube().rol === 'admin' ? 'sin-red' : false;
+/**
+ * ¿Puede ver el panel y con qué alcance? Usa la caché del rol y lo confirma con el servidor si
+ * hay red. Devuelve 'admin', 'verificador', 'sin-red' o false.
+ */
+async function verificarAcceso() {
+  if (!nube.enLinea()) {
+    const r = sync.metaNube().rol;
+    return r === 'admin' || r === 'verificador' ? 'sin-red' : false;
+  }
   try {
-    const si = await nube.esAdmin();
-    sync.actualizarMeta({ rol: si ? 'admin' : 'usuario' });
-    return si;
+    const admin = await nube.esAdmin();
+    // es_verificador() = admin o verificador: solo hace falta preguntarlo si no es admin.
+    const verif = admin ? true : await nube.esVerificador();
+    const rol = admin ? 'admin' : verif ? 'verificador' : 'usuario';
+    sync.actualizarMeta({ rol });
+    return admin ? 'admin' : verif ? 'verificador' : false;
   } catch (e) {
     return e.tipo === 'red' ? 'sin-red' : false;
   }
@@ -110,6 +132,10 @@ export function montarPanel(raiz, params = {}) {
   let filtro = '';
   let orden = { col: 'ultimo_ingreso', dir: -1 };
   let vivo = true;
+  /** 'admin' | 'verificador' (el verificador solo ve la pestaña Pagos). */
+  let acceso = 'admin';
+  /** Última purga de la papelera: {purgadas, pendientes_auth}. */
+  let purga = null;
   let pestana = PESTANAS.some((t) => t.valor === params.tab) ? params.tab : 'usuarios';
   let filtroPago = 'pendiente';
   let pagos = null;            // filas de admin_pagos(filtroPago)
@@ -118,6 +144,10 @@ export function montarPanel(raiz, params = {}) {
   let config = null;           // admin_configurar_pago({})
   let errorConfig = null;
   const urls = new Map();      // ruta del voucher → URL firmada
+  /** [1.5.0 · ronda 2] ruta del voucher → ErrorNube si el servidor no entregó la URL firmada. */
+  const fallosUrl = new Map();
+  /** Promesa de la última carga de admin_usuarios() (para saber qué cuentas están en la papelera). */
+  let cargaUsuarios = null;
   const yo = nube.sesionLocal()?.id;
   const respaldo = crearRespaldo({
     raiz,
@@ -126,10 +156,30 @@ export function montarPanel(raiz, params = {}) {
     alCambiarAviso: () => actualizarAvisoRespaldo(),
   });
 
+  /** Cuentas activas (admin_usuarios incluye las de la papelera, que van en su sección). */
+  const activas = () => (usuarios || []).filter((u) => !u.eliminado_en);
+  /** Cuentas en la papelera, de la más reciente a la más antigua. */
+  const eliminadas = () => (usuarios || []).filter((u) => u.eliminado_en)
+    .slice().sort((a, b) => String(b.eliminado_en).localeCompare(String(a.eliminado_en)));
+  /**
+   * Ids de las cuentas en la papelera: §3 pide que los usuarios eliminados no aparezcan en Pagos.
+   * Desde el esquema 1.4.0 eso lo cumple el SERVIDOR (`admin_pagos()` lleva «and p.eliminado_en
+   * is null»), así que este cruce con `admin_usuarios()` queda solo como defensa para una base
+   * sin actualizar. Se aplica únicamente cuando esa lista está disponible, es decir con sesión
+   * de administrador: al verificador `admin_usuarios()` le responde 42501 y nunca se le pide
+   * (ver `conUsuarios()`), así que su 403 no produce ningún error visible.
+   */
+  const idsEnPapelera = () => new Set((usuarios || []).filter((u) => u.eliminado_en).map((u) => u.id));
+  /** Espera la carga de usuarios (solo el administrador la tiene) para la defensa de arriba. */
+  async function conUsuarios() {
+    if (acceso !== 'admin' || usuarios) return;
+    try { await cargaUsuarios; } catch { /* se verá el error en la pestaña Usuarios */ }
+  }
+
   function filasVisibles() {
     const f = normalizar(filtro.trim());
-    let r = usuarios || [];
-    if (f) r = r.filter((u) => normalizar(`${u.correo || ''} ${u.apodo || ''}`).includes(f));
+    let r = activas();
+    if (f) r = r.filter((u) => normalizar(`${u.correo || ''} ${u.apodo || ''} ${u.nombre || ''} ${u.apellido || ''}`).includes(f));
     const col = COLUMNAS.find((c) => c.clave === orden.col);
     return r.slice().sort((a, b) => {
       const x = a[orden.col];
@@ -163,8 +213,11 @@ export function montarPanel(raiz, params = {}) {
       <table class="tabla tabla-admin">
         <thead><tr>${COLUMNAS.map(th).join('')}<th scope="col">Acciones</th></tr></thead>
         <tbody>${filas.map((u) => `<tr data-id="${esc(u.id)}" class="${u.bloqueado ? 'fila-bloqueada' : ''}">
-          <td class="celda-correo">${esc(u.correo || '—')}${u.rol === 'admin' ? ' <span class="etiqueta etiqueta-oro">admin</span>' : ''}</td>
-          <td>${esc(u.apodo || '—')}</td>
+          <td class="celda-correo">${esc(u.correo || '—')}</td>
+          <td>${esc(u.apodo || '—')}${u.ranking_visible === false ? ' <span class="etiqueta" data-oculto="1">oculto</span>' : ''}</td>
+          <td class="celda-nombre">${esc(u.nombre || '—')}</td>
+          <td class="celda-apellido">${esc(u.apellido || '—')}</td>
+          <td class="celda-rol">${htmlRol(u)}</td>
           <td>${esc(fechaCorta(u.ultimo_ingreso))}</td>
           <td class="num">${fmtNum(u.xp || 0)}</td>
           <td class="num">${u.nivel || 1}</td>
@@ -178,17 +231,22 @@ export function montarPanel(raiz, params = {}) {
             <a class="btn btn-secundario btn-chico" href="#/admin/usuario/${encodeURIComponent(u.id)}">Detalle</a>
             ${u.rol === 'admin' ? '' : `<button type="button" class="btn btn-borde btn-chico" data-accion="plan" data-id="${esc(u.id)}">Marcar plan</button>`}
             ${u.id === yo ? '' : `<button type="button" class="btn btn-borde btn-chico" data-accion="bloquear" data-id="${esc(u.id)}" data-bloquear="${u.bloqueado ? '0' : '1'}">${u.bloqueado ? 'Desbloquear' : 'Bloquear'}</button>`}
+            ${htmlAccionesRol(u, yo)}
+            ${u.id === yo || u.rol === 'admin' ? '' : `<button type="button" class="btn btn-borde btn-chico btn-eliminar" data-accion="eliminar-cuenta" data-id="${esc(u.id)}">Eliminar cuenta</button>`}
           </td>
         </tr>`).join('')}</tbody>
       </table>
     </div>
-    <p class="mini">${fmtNum(filas.length)} de ${fmtNum(usuarios.length)} usuarios${filtro ? ' (filtrados)' : ''}. Toca un encabezado para ordenar.</p>`;
+    <p class="mini">${fmtNum(filas.length)} de ${fmtNum(activas().length)} usuarios activos${filtro ? ' (filtrados)' : ''}. Toca un encabezado para ordenar.</p>`;
   }
 
   const htmlAvisoRespaldo = () => (respaldoVencido() ? ' <span class="etiqueta etiqueta-ambar" id="tab-respaldo-aviso" role="img" aria-label="Respaldo pendiente (más de 7 días)"></span>' : '');
 
+  /** Pestañas visibles: todas para el administrador, solo «Pagos» para el verificador. */
+  const pestanasVisibles = () => (acceso === 'verificador' ? PESTANAS.filter((t) => t.valor === 'pagos') : PESTANAS);
+
   function htmlPestanas() {
-    return `<div class="segmentos pestanas-admin" role="tablist" aria-label="Secciones de administración">${PESTANAS.map((t) => `<button type="button" role="tab" id="tab-${t.valor}" aria-controls="panel-admin" aria-selected="${t.valor === pestana}" aria-pressed="${t.valor === pestana}" data-accion="tab" data-valor="${t.valor}">${esc(t.texto)}${t.valor === 'pagos' && nPendientes ? ` <span class="etiqueta etiqueta-oro" id="tab-pagos-conteo">${nPendientes}</span>` : ''}${t.valor === 'respaldo' ? htmlAvisoRespaldo() : ''}</button>`).join('')}</div>`;
+    return `<div class="segmentos pestanas-admin" role="tablist" aria-label="Secciones de administración">${pestanasVisibles().map((t) => `<button type="button" role="tab" id="tab-${t.valor}" aria-controls="panel-admin" aria-selected="${t.valor === pestana}" aria-pressed="${t.valor === pestana}" data-accion="tab" data-valor="${t.valor}">${esc(t.texto)}${t.valor === 'pagos' && nPendientes ? ` <span class="etiqueta etiqueta-oro" id="tab-pagos-conteo">${nPendientes}</span>` : ''}${t.valor === 'respaldo' ? htmlAvisoRespaldo() : ''}</button>`).join('')}</div>`;
   }
 
   function actualizarAvisoRespaldo() {
@@ -197,7 +255,8 @@ export function montarPanel(raiz, params = {}) {
   }
 
   function htmlUsuarios() {
-    const r = resumenPanel(usuarios, actividad);
+    const r = resumenPanel(activas(), actividad);
+    const enPapelera = eliminadas();
     return `<section class="tarjeta panel-resumen" aria-label="Resumen">
         <dl class="cifras cifras-3">
           <div><dt>Usuarios registrados</dt><dd class="num" data-dato="registrados">${fmtNum(r.registrados)}</dd></div>
@@ -206,9 +265,10 @@ export function montarPanel(raiz, params = {}) {
           <div><dt>Sesiones hoy</dt><dd class="num" data-dato="sesiones-hoy">${fmtNum(r.sesionesHoy)}</dd></div>
           <div><dt>Simulacros totales</dt><dd class="num" data-dato="simulacros">${fmtNum(r.simulacros)}</dd></div>
           <div><dt>Bloqueados</dt><dd class="num">${fmtNum(r.bloqueados)}</dd></div>
-          <div><dt>Pagados</dt><dd class="num" data-dato="pagados">${fmtNum(usuarios.filter((u) => u.plan === 'pagado').length)}</dd></div>
-          <div><dt>Cortesía</dt><dd class="num" data-dato="cortesia">${fmtNum(usuarios.filter((u) => u.plan === 'cortesia').length)}</dd></div>
-          <div><dt>En prueba</dt><dd class="num" data-dato="en-prueba">${fmtNum(usuarios.filter((u) => u.rol !== 'admin' && (u.plan || 'prueba') === 'prueba').length)}</dd></div>
+          <div><dt>Pagados</dt><dd class="num" data-dato="pagados">${fmtNum(activas().filter((u) => u.plan === 'pagado').length)}</dd></div>
+          <div><dt>Cortesía</dt><dd class="num" data-dato="cortesia">${fmtNum(activas().filter((u) => u.plan === 'cortesia').length)}</dd></div>
+          <div><dt>En prueba</dt><dd class="num" data-dato="en-prueba">${fmtNum(activas().filter((u) => u.rol !== 'admin' && (u.plan || 'prueba') === 'prueba').length)}</dd></div>
+          <div><dt>En la papelera</dt><dd class="num" data-dato="papelera">${fmtNum(enPapelera.length)}</dd></div>
         </dl>
       </section>
       <div class="botones-fila admin-botones">
@@ -218,23 +278,32 @@ export function montarPanel(raiz, params = {}) {
       </div>
       <h2>Usuarios</h2>
       <div class="caja-buscar">${icono('buscar', { tam: 20 })}
-        <input class="entrada entrada-buscar" id="buscar-usuario" type="search" placeholder="Buscar por correo o apodo" aria-label="Buscar por correo o apodo" value="${esc(filtro)}" autocomplete="off">
+        <input class="entrada entrada-buscar" id="buscar-usuario" type="search" placeholder="Buscar por correo, apodo o nombre" aria-label="Buscar por correo, apodo o nombre" value="${esc(filtro)}" autocomplete="off">
       </div>
-      <div id="tabla-usuarios" class="mt-s">${htmlTabla()}</div>`;
+      <div id="tabla-usuarios" class="mt-s">${htmlTabla()}</div>
+      ${htmlPapelera(enPapelera, Math.max(purga ? Number(purga.pendientes_auth) || 0 : 0, enPapelera.filter((u) => u.purga_pendiente_auth).length))}`;
   }
 
   // ---------------- Pagos ----------------
   function htmlPago(g) {
     const pendiente = g.estado === 'pendiente';
     const url = urls.get(g.captura_path);
+    const fallo = fallosUrl.get(g.captura_path);
+    // Si el servidor no entrega la imagen, se dice en la tarjeta en vez de dejar un marcador sin
+    // explicación. Desde el esquema 1.4.0 la política de Storage admite a es_verificador(), así
+    // que esto solo salta si el servidor lo niega de verdad (base sin actualizar, objeto que ya
+    // no está, URL caducada): la app no presupone el permiso ni lo da por perdido.
+    const marcador = fallo
+      ? `<span class="pago-voucher-vacio" data-fallo="${esc(fallo.tipo || 'servidor')}" title="${esc(fallo.message)}">${icono('candado', { tam: 22 })}<span class="mini">Imagen no disponible</span></span>`
+      : `<span class="pago-voucher-vacio">${icono('subir', { tam: 22 })}<span class="mini">Voucher</span></span>`;
     return `<li class="pago tarjeta" data-id="${esc(g.id)}" data-estado="${esc(g.estado)}">
       <div class="pago-cabeza">
-        <span class="fila-cuerpo"><span class="fila-titulo">${esc(g.apodo || 'Sin apodo')}</span><span class="fila-sub pago-correo">${esc(g.correo || '—')}</span></span>
+        <span class="fila-cuerpo"><span class="fila-titulo">${esc(g.apodo || 'Sin apodo')}</span>${g.nombre || g.apellido ? `<span class="fila-sub pago-nombre">${esc(`${g.nombre || ''} ${g.apellido || ''}`.trim())}</span>` : ''}<span class="fila-sub pago-correo">${esc(g.correo || '—')}</span></span>
         <span class="etiqueta ${pendiente ? 'etiqueta-ambar' : g.estado === 'aprobado' ? 'etiqueta-ok' : 'etiqueta-mal'}">${pendiente ? 'Pendiente' : g.estado === 'aprobado' ? 'Verificado' : 'Rechazado'}</span>
       </div>
       <div class="pago-cuerpo">
         <button type="button" class="pago-voucher" data-accion="voucher" data-ruta="${esc(g.captura_path || '')}" aria-label="Ampliar el voucher de ${esc(g.apodo || g.correo || '')}">
-          ${url ? `<img src="${esc(url)}" alt="Voucher de ${esc(g.apodo || g.correo || '')}">` : `<span class="pago-voucher-vacio">${icono('subir', { tam: 22 })}<span class="mini">Voucher</span></span>`}
+          ${url ? `<img src="${esc(url)}" alt="Voucher de ${esc(g.apodo || g.correo || '')}">` : marcador}
         </button>
         <dl class="pago-datos">
           <div><dt>Medio</dt><dd>${esc(NOMBRE_MEDIO[g.medio] || g.medio || '—')}</dd></div>
@@ -263,7 +332,22 @@ export function montarPanel(raiz, params = {}) {
     } else cuerpo = `<ul class="lista-pagos">${pagos.map(htmlPago).join('')}</ul>`;
     return `<p class="peq atenuado">Compara el voucher y el número de operación con tu historial de Yape o Plin antes de verificar.</p>
       ${filtroHtml}
+      ${htmlAvisoVoucher()}
       <div id="lista-pagos" class="mt-m" aria-live="polite">${cuerpo}</div>`;
+  }
+
+  /**
+   * Aviso solo para el caso en que el servidor niegue las imágenes al VERIFICADOR. Con el esquema
+   * 1.4.0 no pasa: la política «comprobantes_select_dueno_o_admin» (§7.b) admite es_verificador(),
+   * así que la miniatura se carga igual que para el administrador. Si la base está sin actualizar
+   * (la política antigua solo abría la rama de es_admin()), la app no lo esconde: explica qué pasa
+   * y con qué datos puede verificar igual.
+   */
+  function htmlAvisoVoucher() {
+    if (acceso !== 'verificador') return '';
+    const hay = (pagos || []).some((g) => g.captura_path && (fallosUrl.get(g.captura_path) || {}).tipo === 'permiso');
+    if (!hay) return '';
+    return `<p class="aviso-almacen" id="aviso-voucher" role="status">${icono('candado', { tam: 20 })}<span>El servidor no autoriza a tu rol (verificador) a abrir la imagen del voucher. Verifica con el medio, el número de operación y el monto, o pide al administrador que revise la imagen.</span></p>`;
   }
 
   async function cargarPagos() {
@@ -272,7 +356,11 @@ export function montarPanel(raiz, params = {}) {
     if (vivo && pestana === 'pagos') pintarCuerpo();
     try {
       const filas = await nube.adminPagos(filtroPago);
-      pagos = filas || [];
+      // §3: los usuarios eliminados no aparecen en Pagos. Lo filtra `admin_pagos()` en el
+      // servidor; el cruce con `admin_usuarios()` es solo defensa (ver `idsEnPapelera`).
+      await conUsuarios();
+      const fuera = idsEnPapelera();
+      pagos = (filas || []).filter((g) => !fuera.has(g.usuario_id));
       if (filtroPago === 'pendiente') nPendientes = pagos.length;
     } catch (e) {
       errorPagos = e.message;
@@ -280,19 +368,33 @@ export function montarPanel(raiz, params = {}) {
     if (!vivo || pestana !== 'pagos') return;
     pintar();
     // Miniaturas: URL firmada de cada voucher (10 min).
+    const tareas = [];
     for (const g of pagos || []) {
       if (!g.captura_path || urls.has(g.captura_path)) continue;
-      nube.urlComprobante(g.captura_path).then((u) => {
+      tareas.push(nube.urlComprobante(g.captura_path).then((u) => {
         urls.set(g.captura_path, u);
+        fallosUrl.delete(g.captura_path);
         const b = raiz.querySelector(`.pago[data-id="${CSS.escape(g.id)}"] .pago-voucher`);
         if (b && vivo) b.innerHTML = `<img src="${esc(u)}" alt="Voucher de ${esc(g.apodo || g.correo || '')}">`;
-      }).catch(() => {});
+      }).catch((e) => {
+        // Si el servidor niega la URL firmada (base sin actualizar, objeto ausente), se deja
+        // constancia para la tarjeta y el aviso en vez de dejar el marcador sin explicación.
+        fallosUrl.set(g.captura_path, e);
+      }));
+    }
+    if (tareas.length) {
+      Promise.allSettled(tareas).then(() => {
+        if (vivo && pestana === 'pagos' && fallosUrl.size) pintarCuerpo();
+      });
     }
   }
 
   async function contarPendientes() {
     try {
-      nPendientes = ((await nube.adminPagos('pendiente')) || []).length;
+      const filas = (await nube.adminPagos('pendiente')) || [];
+      await conUsuarios();
+      const fuera = idsEnPapelera();
+      nPendientes = filas.filter((g) => !fuera.has(g.usuario_id)).length;
       const t = raiz.querySelector('#tab-pagos');
       if (t && vivo) t.innerHTML = `Pagos${nPendientes ? ` <span class="etiqueta etiqueta-oro" id="tab-pagos-conteo">${nPendientes}</span>` : ''}`;
     } catch { /* sin conteo */ }
@@ -300,6 +402,8 @@ export function montarPanel(raiz, params = {}) {
 
   function abrirVoucher(ruta) {
     const url = urls.get(ruta);
+    const fallo = fallosUrl.get(ruta);
+    if (!url && fallo) { toast(fallo.message, { tipo: 'error', duracion: 7000 }); return; }
     if (!url) { toast('El voucher aún se está cargando.', { icono: 'reloj' }); return; }
     abrirHoja({
       titulo: 'Voucher',
@@ -325,7 +429,10 @@ export function montarPanel(raiz, params = {}) {
       if (u) u.plan = 'pagado';
       cargarPagos();
     } catch (e) {
-      toast(e.message, { tipo: 'error' });
+      // El mensaje del servidor se muestra tal cual y el pago se queda como estaba: p. ej. si la
+      // cuenta pasó a la papelera mientras la pestaña estaba abierta, admin_resolver_pago()
+      // responde 22023 («restáurala primero») y no se resuelve nada.
+      toast(e.message, { tipo: 'error', duracion: 7000 });
     }
   }
 
@@ -491,6 +598,78 @@ export function montarPanel(raiz, params = {}) {
     }
   }
 
+  // ---------------- [1.5.0] Roles y papelera ----------------
+
+  /** Cambia el rol de una cuenta (con confirmación y los mensajes de error del servidor). */
+  async function asignarRol(id, rol) {
+    const u = (usuarios || []).find((x) => x.id === id);
+    if (!u || !(await confirmarRol(u, rol))) return;
+    try {
+      const r = await nube.adminAsignarRol(id, rol);
+      u.rol = (r && r.rol) || rol;
+      toast(`${u.correo || u.apodo || 'La cuenta'}: ahora es ${NOMBRE_ROL[u.rol].toLowerCase()}.`, { tipo: 'exito' });
+      pintarCuerpo();
+    } catch (e) {
+      toast(e.message, { tipo: 'error', duracion: 7000 });
+    }
+  }
+
+  /** Manda una cuenta a la papelera (motivo obligatorio; se puede restaurar 30 días). */
+  async function eliminarCuenta(id) {
+    const u = (usuarios || []).find((x) => x.id === id);
+    if (!u) return;
+    const motivo = await pedirMotivoEliminar(u);
+    if (!motivo) return;
+    try {
+      const r = await nube.adminEliminarCuenta(id, motivo);
+      u.eliminado_en = (r && r.eliminado_en) || new Date().toISOString();
+      u.eliminado_motivo = motivo;
+      toast('Cuenta eliminada: está en la papelera y podrás restaurarla 30 días.', { tipo: 'exito', icono: 'papelera' });
+      pintarCuerpo();
+      contarPendientes();
+    } catch (e) {
+      toast(e.message, { tipo: 'error', duracion: 7000 });
+    }
+  }
+
+  /** Saca una cuenta de la papelera: vuelve a entrar a la app con todos sus datos. */
+  async function restaurarCuenta(id) {
+    const u = (usuarios || []).find((x) => x.id === id);
+    if (!u) return;
+    const ok = await confirmar({
+      titulo: '¿Restaurar esta cuenta?',
+      texto: `${u.correo || u.apodo || 'La cuenta'} volverá a entrar a la app con todo su progreso, su plan y sus pagos intactos.`,
+      aceptar: 'Restaurar',
+    });
+    if (!ok) return;
+    try {
+      await nube.adminRestaurarCuenta(id);
+      u.eliminado_en = null;
+      u.eliminado_motivo = null;
+      toast('Cuenta restaurada.', { tipo: 'exito' });
+      pintarCuerpo();
+    } catch (e) {
+      toast(e.message, { tipo: 'error', duracion: 7000 });
+    }
+  }
+
+  /**
+   * Purga perezosa: al abrir la pestaña Usuarios se borra de forma definitiva lo que lleva más
+   * de 30 días en la papelera (el servidor guarda antes una copia en cuentas_purgadas).
+   */
+  async function purgarPapelera() {
+    try {
+      const r = await nube.adminPurgarPapelera();
+      purga = r || null;
+      const n = r ? Number(r.purgadas) || 0 : 0;
+      if (n > 0) {
+        toast(`Papelera: ${fmtNum(n)} cuenta${n === 1 ? '' : 's'} purgada${n === 1 ? '' : 's'} de forma definitiva (más de 30 días).`, { icono: 'papelera', duracion: 7000 });
+      }
+    } catch (e) {
+      if (e.tipo !== 'red') console.warn('No se pudo purgar la papelera:', e.message);
+    }
+  }
+
   // ---------------- Pintado ----------------
   function htmlCuerpo() {
     if (pestana === 'pagos') return htmlPagos();
@@ -518,6 +697,9 @@ export function montarPanel(raiz, params = {}) {
 
   async function cargar() {
     error = null;
+    // [1.5.0] Purga perezosa antes de listar: así la papelera que se muestra ya está al día.
+    await purgarPapelera();
+    if (!vivo) return;
     try {
       const [u, a] = await Promise.all([nube.adminUsuarios(), nube.adminActividadDiaria(30)]);
       usuarios = u || [];
@@ -530,12 +712,15 @@ export function montarPanel(raiz, params = {}) {
 
   function cambiarPestana(t) {
     if (t === pestana) return;
+    if (!pestanasVisibles().some((x) => x.valor === t)) return;
     if (pestana === 'respaldo') respaldo.alSalir();
     pestana = t;
     try { history.replaceState(history.state, '', `#/admin${t === 'usuarios' ? '' : `?tab=${t}`}`); } catch { /* sin historial */ }
     pintar();
     if (t === 'pagos') cargarPagos();
     if (t === 'cobro' && !config) cargarConfig();
+    // Volver a Usuarios vuelve a purgar y a releer (purga perezosa, sin cron).
+    if (t === 'usuarios') cargaUsuarios = cargar();
   }
 
   function exportarUsuarios() {
@@ -547,6 +732,10 @@ export function montarPanel(raiz, params = {}) {
       { clave: 'nota_promedio', titulo: 'nota_promedio' }, { clave: 'ultima_actividad', titulo: 'ultima_actividad' },
       { clave: 'plan', titulo: 'plan' }, { clave: 'preguntas_prueba', titulo: 'preguntas_prueba' },
       { clave: 'simulacros_prueba', titulo: 'simulacros_prueba' }, { clave: 'pagado_en', titulo: 'pagado_en' },
+      // [1.5.0] Columnas nuevas AL FINAL (las anteriores no cambian de orden).
+      { clave: 'nombre', titulo: 'nombre' }, { clave: 'apellido', titulo: 'apellido' },
+      { clave: 'ranking_visible', titulo: 'ranking_visible' }, { clave: 'eliminado_en', titulo: 'eliminado_en' },
+      { clave: 'eliminado_motivo', titulo: 'eliminado_motivo' },
     ];
     descargarCsv(`ascenso2026-usuarios-${hoyISO()}.csv`, aCsv(filasVisibles(), cols));
     toast('CSV de usuarios exportado.', { tipo: 'exito', icono: 'descargar' });
@@ -596,7 +785,7 @@ export function montarPanel(raiz, params = {}) {
     } else if (a === 'recargar') {
       if (pestana === 'pagos') cargarPagos();
       else if (pestana === 'respaldo') respaldo.recargar();
-      else if (pestana === 'cobro') { config = null; pintarCuerpo(); cargarConfig(); } else { usuarios = null; pintarCuerpo(); cargar(); }
+      else if (pestana === 'cobro') { config = null; pintarCuerpo(); cargarConfig(); } else { usuarios = null; pintarCuerpo(); cargaUsuarios = cargar(); }
     } else if (a === 'tab') cambiarPestana(b.dataset.valor);
     else if (a === 'filtro-pago') {
       filtroPago = b.dataset.valor;
@@ -610,6 +799,9 @@ export function montarPanel(raiz, params = {}) {
     else if (a === 'csv-usuarios') exportarUsuarios();
     else if (a === 'csv-eventos') exportarEventos();
     else if (a === 'bloquear') bloquear(b.dataset.id, b.dataset.bloquear === '1');
+    else if (a === 'rol') asignarRol(b.dataset.id, b.dataset.rol);
+    else if (a === 'eliminar-cuenta') eliminarCuenta(b.dataset.id);
+    else if (a === 'restaurar-cuenta') restaurarCuenta(b.dataset.id);
   }
   function alEscribir(e) {
     // [Auditoría H5] Al editar el formulario «Cobro» se oculta el error de validación anterior.
@@ -634,19 +826,24 @@ export function montarPanel(raiz, params = {}) {
   }
 
   raiz.innerHTML = `${cabecera({ volver: '/mas' })}<h1>Administración</h1><p class="peq atenuado" role="status">Comprobando permisos…</p>`;
-  verificarAdmin().then((si) => {
+  verificarAcceso().then((si) => {
     if (!vivo) return;
     if (si === 'sin-red') { raiz.innerHTML = htmlSinRed(); return; }
     if (!si) { raiz.innerHTML = htmlRestringido(); return; }
+    acceso = si;
+    // [1.5.0] El verificador solo tiene la pestaña Pagos (las demás RPC le darían 42501).
+    if (acceso === 'verificador') pestana = 'pagos';
     pintar();
-    cargar();
-    // Los límites de la prueba (para la columna Plan) salen de la configuración de pago.
-    cargarConfig(false).then(() => {
-      if (!vivo) return;
-      if (pestana === 'cobro') pintarCuerpo();
-      const t = raiz.querySelector('#tabla-usuarios');
-      if (t && usuarios) t.innerHTML = htmlTabla();
-    });
+    if (acceso === 'admin') {
+      cargaUsuarios = cargar();
+      // Los límites de la prueba (para la columna Plan) salen de la configuración de pago.
+      cargarConfig(false).then(() => {
+        if (!vivo) return;
+        if (pestana === 'cobro') pintarCuerpo();
+        const t = raiz.querySelector('#tabla-usuarios');
+        if (t && usuarios) t.innerHTML = htmlTabla();
+      });
+    }
     if (pestana === 'pagos') cargarPagos(); else contarPendientes();
   });
   raiz.addEventListener('click', alClic);
@@ -671,10 +868,11 @@ export function montarDetalle(raiz, params) {
   const id = params.id;
 
   async function cargar() {
-    const si = await verificarAdmin();
+    const si = await verificarAcceso();
     if (!vivo) return;
     if (si === 'sin-red') { raiz.innerHTML = htmlSinRed(); return; }
-    if (!si) { raiz.innerHTML = htmlRestringido(); return; }
+    // El detalle de un usuario es solo del administrador (admin_usuarios exige admin).
+    if (si !== 'admin') { raiz.innerHTML = htmlRestringido(); return; }
     raiz.innerHTML = `${cabecera({ volver: '/admin' })}<h1>Usuario</h1><p class="peq atenuado" role="status">Cargando…</p>`;
     try {
       const [usuarios, actividad, eventos] = await Promise.all([nube.adminUsuarios(), nube.adminActividadDiaria(84), nube.adminEventos(id, 100)]);
@@ -686,7 +884,8 @@ export function montarDetalle(raiz, params) {
       raiz.innerHTML = `
         ${cabecera({ volver: '/admin' })}
         <h1>${esc(u.apodo || 'Sin apodo')}</h1>
-        <p class="sub">${esc(u.correo || '')} · ${u.bloqueado ? 'Bloqueado' : 'Activo'}${u.rol === 'admin' ? ' · administrador' : ` · plan: ${esc({ prueba: 'prueba gratis', pendiente: 'pago en revisión', pagado: 'pagado', cortesia: 'cortesía' }[u.plan || 'prueba'] || u.plan)}`}</p>
+        <p class="sub" id="detalle-sub">${esc(`${u.nombre || ''} ${u.apellido || ''}`.trim() || 'Sin nombre registrado')} · ${esc(u.correo || '')} · ${u.eliminado_en ? 'En la papelera' : u.bloqueado ? 'Bloqueado' : 'Activo'} · ${esc(NOMBRE_ROL[u.rol] || u.rol || 'Usuario')}${u.rol === 'admin' ? '' : ` · plan: ${esc({ prueba: 'prueba gratis', pendiente: 'pago en revisión', pagado: 'pagado', cortesia: 'cortesía' }[u.plan || 'prueba'] || u.plan)}`}</p>
+        ${u.eliminado_en ? `<p class="aviso-almacen" id="detalle-papelera">${icono('papelera', { tam: 20 })}<span>Cuenta en la papelera desde ${esc(fechaCorta(u.eliminado_en))}. Motivo: ${esc(u.eliminado_motivo || '—')}. Se puede restaurar desde la pestaña Usuarios.</span></p>` : ''}
         <section class="tarjeta">
           <dl class="cifras cifras-3">
             <div><dt>XP</dt><dd class="num">${fmtNum(u.xp || 0)}</dd></div>

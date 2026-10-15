@@ -1054,6 +1054,10 @@ body.sin-sesion #vista { padding-bottom: calc(var(--inf) + 28px); }
 .invitacion-apodo { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
 .invitacion-apodo svg { flex: none; color: var(--oro-texto); }
 .invitacion-apodo p { margin: 0 0 10px; }
+/* [1.5.0] Ranking en modo oculto: «Estás en modo oculto… Estarías en el puesto N». */
+.aviso-oculto { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+.aviso-oculto svg { flex: none; color: var(--ambar-texto); }
+.aviso-oculto p { margin: 0; }
 
 /* ---------- Administración ---------- */
 .cifras-3 { grid-template-columns: repeat(3, 1fr); }

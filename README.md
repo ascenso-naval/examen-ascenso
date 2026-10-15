@@ -12,6 +12,7 @@ Aplicación web instalable para estudiar los tres exámenes de ascenso de 40 pre
 - **Instalar con un toque** (v1.2.0): quien abre el enlace en el celular sin la app instalada ve primero una pantalla que lo guía (botón nativo en Android, guía de 3 pasos en iPhone; ver sección 1).
 - **Prueba gratis y pago único** (v1.3.0): cada cuenta nueva estudia gratis hasta un límite (por defecto 50 preguntas y 1 simulacro); luego la app pide un pago único de S/ 20 por Yape o Plin con voucher y número de operación, que el administrador verifica desde el panel (ver sección 9).
 - **Respaldo y restauración** (v1.4.0): el administrador descarga desde el panel un respaldo completo de los datos del servidor en un archivo JSON y puede restaurar el progreso de un usuario desde ese archivo, con vista previa y «Deshacer» (ver sección 10).
+- **Roles, cuentas y privacidad** (v1.5.0): nombre y apellido obligatorios (solo los ven el administrador y el verificador), **ranking opcional** con modo oculto, dos niveles de administración (**administrador** y **verificador**, que solo ve Pagos) y **papelera de cuentas de 30 días** con restauración y purga definitiva (ver sección 11).
 - Desde la v1.3.0 **se necesita una cuenta para estudiar**: sin sesión solo se ve la pantalla de acceso.
 - Sitio estático: HTML, CSS y JavaScript (módulos ES). Única dependencia: copia local de `@supabase/supabase-js` en `vendor/` (sin CDN). El backend es Supabase (`backend/schema.sql`).
 
@@ -177,7 +178,8 @@ Solo para la cuenta con `rol = 'admin'` (el correo del dueño, `marconavy2510@gm
 - **Tabla de usuarios** (deslizable, ordenable tocando el encabezado, con buscador por correo/apodo): correo, apodo, último ingreso, XP, nivel, racha, preguntas, simulacros, nota promedio y estado; acciones **Bloquear/Desbloquear** (no puedes bloquearte a ti mismo) y **Detalle** (`#/admin/usuario/<id>`: cifras, mapa de calor de 12 semanas y sesiones recientes).
 - **Exportar CSV** de usuarios y de eventos (UTF-8 con BOM, separador coma; se abre en Excel).
 - Desde la v1.3.0 el panel tiene pestañas: **Usuarios** (lo anterior, más la columna *Plan* y «Marcar plan»), **Pagos** y **Cobro** (ver sección 9); desde la v1.4.0, también **Respaldo** (ver sección 10). El CSV de usuarios añade `plan`, `preguntas_prueba`, `simulacros_prueba` y `pagado_en`.
-- **Diagnóstico** (`#/diagnostico`, también para cualquier usuario desde Ajustes → Cuenta): configuración, red, Auth (`/auth/v1/health`), sesión, REST y versión del esquema (`version_esquema()`), RLS activado en las 4 tablas (`diagnostico_esquema()`), prueba gratis y pagos (`pagos_ok`), respaldo y restauración (`respaldo_ok`, esquema 1.3.0), aislamiento (solo se ve el perfil propio) y permisos de las funciones de administración.
+- Desde la **v1.5.0**, Usuarios trae además **Nombre**, **Apellido** y **Rol** con las acciones de rol, **«Eliminar cuenta»** y la sección **Papelera**, y hay un segundo nivel de administración (**verificador**, que solo ve Pagos): todo en la **sección 11**. El CSV de usuarios añade `nombre`, `apellido`, `ranking_visible`, `eliminado_en` y `eliminado_motivo`.
+- **Diagnóstico** (`#/diagnostico`, también para cualquier usuario desde Ajustes → Cuenta): configuración, red, Auth (`/auth/v1/health`), sesión, REST y versión del esquema (`version_esquema()`), RLS activado en las 4 tablas (`diagnostico_esquema()`), prueba gratis y pagos (`pagos_ok`), respaldo y restauración (`respaldo_ok`, esquema 1.3.0), **cuenta y roles** (`cuenta_ok`, esquema 1.4.0: roles, nombre y apellido, papelera y bitácora de respaldos), aislamiento (solo se ve el perfil propio) y permisos de las funciones de administración.
 
 Pasos en el dashboard de Supabase: `backend/INSTRUCCIONES_SUPABASE.md`.
 
@@ -231,11 +233,46 @@ Las filas van completas (incluidos rol, bloqueado, plan, contadores, `pagado_en`
 
 Archivos: `js/respaldo.js` (paginación, deduplicación, verificación, armado y validación del archivo, aviso de 7 días) y `js/ui/admin-respaldo.js` (la pestaña).
 
-## 11. Datos y privacidad
+## 11. Roles, cuentas y privacidad
 
-El progreso se guarda en el navegador (`localStorage['ascenso2026:estado']`, con escritura diferida y guardado inmediato al ocultar la app) y se sincroniza con la cuenta en Supabase. En el servidor se guardan: correo, apodo, el estado de estudio, las sesiones terminadas, la fecha de los ingresos (como mucho uno cada 6 h) y, desde la v1.3.0, el plan de acceso con el consumo de la prueba y los comprobantes de pago (medio, número de operación y la captura del voucher en un almacenamiento privado que solo ven el dueño y el administrador). Cada usuario solo puede leer y escribir lo suyo (RLS); el administrador lo consulta mediante funciones del servidor; en el ranking solo se ve el apodo, XP, nota promedio y racha. La clave de la app (`publishable key`) es pública por diseño; la seguridad está en las políticas RLS. Si el navegador no permite guardar (modo privado), la app sigue funcionando en memoria y lo avisa.
+Desde la **v1.5.0** (esquema **1.4.0**: `backend/schema.sql` §6.d). La app lo comprueba en **Ajustes → Diagnóstico de conexión** («Cuenta y roles»). Regla madre: **nada elimina información de usuarios** sin paso por la papelera de 30 días.
 
-## 12. Estructura
+**Nombre y apellido (obligatorios).** El registro pide **Nombre** y **Apellido** además del correo, la contraseña y el apodo, con el aviso «Tu nombre y apellido solo los ve el administrador para verificar tu pago. Los demás usuarios solo ven tu apodo». Se envían como **metadatos del alta** (el trigger `manejar_nuevo_usuario` los guarda) y, por si el metadato no llegara, la app los confirma con `completar_datos()` al primer ingreso. Las **cuentas creadas antes de la v1.5.0** los completan al siguiente ingreso en la pantalla **«Completa tus datos»**, que **no se puede saltar**: no tiene botón de cerrar, ni «Más tarde», ni salida sin conexión. Solo se cierra cuando `completar_datos()` los confirma en el servidor; **sin conexión avisa y se queda abierta** («se cerrará en cuanto vuelva el internet»), y si la app se abre sin red con los datos pendientes vuelve a exigirse (el dispositivo recuerda la marca `datosPendientes` de la última vez que habló con el servidor). Se pueden corregir en **Ajustes → Cuenta**. Validación: 2 a 60 caracteres, sin los signos `<` ni `>`.
+
+**Ranking opcional.** `perfiles.ranking_visible` vale `null` mientras no se haya preguntado. La app pregunta **«¿Quieres aparecer en el ranking?»** con dos botones (*Sí, aparecer* / *No, permanecer oculto*): en el **mismo paso que elegir el apodo** cuando la cuenta todavía no tiene apodo, y en una **pantalla breve propia** cuando ya lo tenía (el caso de quien se acaba de registrar y de las cuentas antiguas). Se cambia cuando se quiera con el conmutador **«Aparecer en el ranking»** de Ajustes → Cuenta.
+- **Modo visible:** como siempre (apodo, XP, nota promedio, racha y la fila propia resaltada).
+- **Modo oculto:** el ranking encabeza con «**Estás en modo oculto: los demás no te ven. Estarías en el puesto N**» y la lista va **sin la fila propia**; nadie más te ve. La posición *N* la calcula el servidor como si participaras, sin desplazar a los demás (los ocultos no ocupan puesto). En Inicio, la tarjeta dice «Modo oculto: estarías en el puesto N».
+
+**Dos niveles de administración.**
+
+| Rol | Qué puede hacer |
+|---|---|
+| **Usuario** | Estudiar. No ve el panel. |
+| **Verificador** | En Más → Administración ve **solo la pestaña Pagos** (con el contador de pendientes): ve el apodo, el nombre, el correo, el medio, el número de operación, el monto y **la imagen del voucher** (miniatura y ampliada, con la misma URL firmada que el administrador), y **verifica o rechaza** pagos. Las demás pestañas no se le muestran y las RPC de administrador le responden 403 (`42501`). |
+| **Administrador** | Todo: usuarios, roles, pagos, cobro, respaldo, papelera y CSV. |
+
+El correo del dueño (`marconavy2510@gmail.com`) recibe el rol admin al registrarse. En **Usuarios**, cada fila trae **Nombre**, **Apellido** y **Rol**, y las acciones **«Hacer verificador»**, **«Hacer administrador»** y **«Volver a usuario»**, cada una con confirmación. El servidor impone dos reglas y la app muestra su mensaje tal cual: **nadie cambia su propio rol** (que lo haga otro administrador) y **la base nunca queda sin administradores activos** (primero nombra a otro). Cada cambio deja el evento `rol_cambiado` en la bitácora del usuario.
+
+**Eliminar una cuenta (papelera de 30 días).** En Usuarios, **«Eliminar cuenta»** abre un modal con el **motivo obligatorio** (hasta 300 caracteres) y el aviso «Podrás restaurarla durante 30 días». Al confirmar:
+- la cuenta **deja de entrar a la app al instante**, aunque su sesión siga válida: al abrirla (o al sincronizar) se cierra con «**Cuenta eliminada; contacta al administrador**», y tampoco puede volver a ingresar;
+- **no se borra nada**: solo se marcan `eliminado_en`, `eliminado_por` y `eliminado_motivo` (evento `cuenta_eliminada`);
+- desaparece de la tabla de usuarios activos, del **ranking** y de **Pagos** (en los dos casos lo excluye el **servidor**: `admin_pagos()` lleva `and p.eliminado_en is null`, y lo mismo vale con la sesión de un verificador; el panel conserva el cruce con `admin_usuarios()` solo como defensa de una base sin actualizar). Sus pagos **no se borran**: siguen en la tabla y en el respaldo, y vuelven a verse al restaurar la cuenta. Mientras esté en la papelera, `admin_resolver_pago()` tampoco deja resolverlos: responde «No se puede resolver este pago: la cuenta está en la papelera; restáurala primero.» (`22023`) y la app muestra ese mensaje tal cual sin cambiar nada. La cuenta pasa a la sección **Papelera** (apodo, nombre, correo, **fecha**, **motivo** y **días restantes**), con el botón **«Restaurar»** (confirmación; vuelve con su progreso, su plan y sus pagos intactos, evento `cuenta_restaurada`).
+
+**Purga definitiva.** Al abrir la pestaña **Usuarios** la app llama a `admin_purgar_papelera()` (**purga perezosa**, sin tareas programadas). Las cuentas con **más de 30 días** en la papelera se borran de verdad: antes se guarda una **copia completa** en `cuentas_purgadas` (el último rastro, que no se consulta desde la app) y se borran sus pagos, sesiones, ingresos, progreso, historial y vouchers. Si purgó algo, aparece un **toast** con el número. Nadie puede adelantar la purga: el servidor rechaza un plazo menor que 30 días (`22023`). Cuando el rol de la base **no puede borrar en `auth.users`** (lo normal en Supabase), el perfil queda marcado `purga_pendiente_auth` y el panel avisa de cuántas cuentas hay que borrar a mano en **Supabase → Authentication → Users** (instrucciones en `backend/INSTRUCCIONES_SUPABASE.md` §9).
+
+**Aviso de respaldo (ahora con el servidor).** El aviso de «hace más de 7 días» usa `admin_ultimo_respaldo()`, que incluye también el **respaldo automático del Mac** y los manuales, con copia en `localStorage['ascenso2026:admin:ultimo-respaldo-servidor']`. La pestaña Respaldo muestra «**Último respaldo: 14-oct 20:00 (Mac)**» y, debajo, la última descarga hecha en ese dispositivo. **«Descargar respaldo»** deja constancia con `admin_registrar_respaldo('app', …)` (fecha, tamaño y resumen).
+
+**Quién ve qué.** `ranking()` **nunca** devuelve nombre, apellido ni correo: un usuario normal no puede ver los datos personales de nadie (RLS solo le deja su propia fila, y `admin_usuarios`/`admin_pagos` le responden 403). El **nombre y el apellido** los ven el **administrador** (Usuarios, detalle, CSV) y el **verificador** (en las tarjetas de Pagos, para comparar con el voucher). El cliente solo puede escribir `apodo`, `nombre` y `apellido` de su propia fila: `ranking_visible` y la papelera van por RPC (privilegio de columna + trigger `proteger_perfil`).
+
+**La app no da por supuesto ningún privilegio que el servidor niegue: cuando el servidor dice no, lo muestra.** La imagen del voucher se pide con `createSignedUrl()`; si alguna vez el servidor la negara (una base con la política `comprobantes_select_dueno_o_admin` sin actualizar, un objeto que ya no está), la tarjeta del pago muestra **«Imagen no disponible»** con el motivo y, al verificador, un aviso con qué datos puede verificar igual (medio, número de operación y monto). Lo mismo con los errores de `admin_resolver_pago()`: el mensaje del servidor se muestra tal cual en un toast y el pago se queda como estaba.
+
+Archivos: `js/cuenta.js` (pantallas obligatorias y pregunta del ranking), `js/ui/admin-cuentas.js` (columnas, acciones de rol, modal de eliminación y la papelera), `js/ui/vista-admin.js` (orquesta, purga, voucher y mensajes del servidor en Pagos), `js/ui/vista-ranking.js` (modo oculto) y `js/ui/vista-ajustes.js` (Cuenta).
+
+## 12. Datos y privacidad
+
+El progreso se guarda en el navegador (`localStorage['ascenso2026:estado']`, con escritura diferida y guardado inmediato al ocultar la app) y se sincroniza con la cuenta en Supabase. En el servidor se guardan: correo, apodo, **nombre y apellido** (desde la v1.5.0), el estado de estudio, las sesiones terminadas, la fecha de los ingresos (como mucho uno cada 6 h) y, desde la v1.3.0, el plan de acceso con el consumo de la prueba y los comprobantes de pago (medio, número de operación y la captura del voucher en un almacenamiento privado que solo ven el dueño y quien verifica pagos: administrador o verificador). Cada usuario solo puede leer y escribir lo suyo (RLS); el administrador lo consulta mediante funciones del servidor; en el ranking solo se ve el apodo, XP, nota promedio y racha, **y solo de quien eligió aparecer** (ver sección 11). El nombre y el apellido solo los ven el administrador y el verificador. Para borrar una cuenta se pide al administrador: la elimina al instante y puede restaurarla 30 días; después se purga de forma definitiva dejando una copia en `cuentas_purgadas`. La clave de la app (`publishable key`) es pública por diseño; la seguridad está en las políticas RLS. Si el navegador no permite guardar (modo privado), la app sigue funcionando en memoria y lo avisa.
+
+## 13. Estructura
 
 ```
 index.html              página única: carga js/main.js
@@ -248,11 +285,13 @@ js/config-supabase.js   URL y publishable key del proyecto (sustituibles para pr
 js/nube.js              envoltorio de Supabase: cuenta, estado, eventos, ranking, admin, diagnóstico
 js/sincronizacion.js    sincronización offline-first (pendiente, cola, reintentos)
 js/fusion.js            fusión por secciones del estado local y remoto
-js/cuenta.js            flujo de la cuenta: tras ingresar, cerrar sesión, expulsar, apodo
+js/cuenta.js            flujo de la cuenta: tras ingresar, cerrar sesión, expulsar, apodo,
+                        «Completa tus datos» y la pregunta del ranking (v1.5.0)
 js/acceso.js            prueba gratis: estado de acceso, consumo en lotes, sondeo del pago (v1.3.0)
 js/ui/vista-bloqueo.js  pantalla de bloqueo y pago (Yape/Plin, voucher, revisión, agradecimiento)
 js/respaldo.js          respaldo completo: paginación, deduplicación, archivo, validación y aviso de 7 días (v1.4.0)
 js/ui/admin-respaldo.js pestaña Respaldo del panel: descargar y restaurar el progreso de un usuario (v1.4.0)
+js/ui/admin-cuentas.js  Usuarios: nombre, apellido, rol, acciones de rol, eliminar y papelera (v1.5.0)
 js/bus.js               avisos internos (fin de sesión de estudio)
 js/router.js            enrutador por hash (#/inicio, #/practica, …)
 js/datos.js             carga del banco, índices, grupos, filtro base, barajado y búsqueda
@@ -279,20 +318,20 @@ INFORME_PRUEBAS.md      resultado de las pruebas automáticas
 
 Iconos: `python3 scripts/generar_iconos.py` los vuelve a generar con Pillow (timón dorado sobre azul marino; diseño propio, sin emblemas oficiales).
 
-## 13. Pruebas
+## 14. Pruebas
 
 ```bash
 cd pruebas
 npm install          # instala Playwright 1.56 (usa el Chromium ya instalado)
-node pruebas.mjs     # escenarios de las especificaciones (01 a 05), capturas e INFORME_PRUEBAS.md
+node pruebas.mjs     # escenarios de las especificaciones (01 a 06), capturas e INFORME_PRUEBAS.md
 node mock-supabase.mjs           # solo el servidor simulado de Supabase (puerto 54321)
 node verificar_composicion.mjs   # solo la verificación de la composición del simulacro
 node unitarias.mjs               # solo la lógica: niveles, racha, SRS, XP, nota y migración
 ```
 
-`pruebas.mjs` levanta `pruebas/mock-supabase.mjs` (emula GoTrue y PostgREST con las mismas reglas que el esquema: 401/403 al violarlas) y apunta la app a él con `localStorage['ascenso2026:supabase'] = {"url": …, "key": …}`. Los escenarios de la nube están en `pruebas/escenarios_nube.mjs`; los del respaldo y la restauración, en `pruebas/escenarios_respaldo.mjs` (reinician el mock y siembran más de 200 eventos y más de 50 estados con `__mock/sembrar_respaldo` para que la paginación sea real; `__mock/respaldo` simula cortes de red, páginas solapadas y tablas incompletas); los de la prueba gratis y el pago, en `pruebas/escenarios_pago.mjs` (el mock emula también Storage: subida multipart a `comprobantes/<uid>/…` y URL firmada; la cuenta `estudiante@prueba.pe` está en cortesía para que los escenarios del encargo 01 no choquen con el límite). El esquema SQL se prueba en un PostgreSQL 16 local con `backend/pruebas_schema.sql` (salida en `backend/pruebas_schema.out`).
+`pruebas.mjs` levanta `pruebas/mock-supabase.mjs` (emula GoTrue y PostgREST con las mismas reglas que el esquema: 401/403 al violarlas) y apunta la app a él con `localStorage['ascenso2026:supabase'] = {"url": …, "key": …}`. Los escenarios de la nube están en `pruebas/escenarios_nube.mjs`; los del respaldo y la restauración, en `pruebas/escenarios_respaldo.mjs` (reinician el mock y siembran más de 200 eventos y más de 50 estados con `__mock/sembrar_respaldo` para que la paginación sea real; `__mock/respaldo` simula cortes de red, páginas solapadas y tablas incompletas); los de la prueba gratis y el pago, en `pruebas/escenarios_pago.mjs` (el mock emula también Storage: subida multipart a `comprobantes/<uid>/…` y URL firmada; la cuenta `estudiante@prueba.pe` está en cortesía para que los escenarios del encargo 01 no choquen con el límite); y los de **roles, cuentas y privacidad** (sección 11), en `pruebas/escenarios_cuenta.mjs` (reinicia el mock; `__mock/datos` deja una cuenta «antigua» sin nombre ni respuesta del ranking, `__mock/papelera` envejece una eliminación para probar la purga de los 30 días, `__mock/respaldos` siembra un respaldo del Mac y `__mock/pago` un comprobante pendiente para el verificador). El esquema SQL se prueba en un PostgreSQL 16 local con `backend/pruebas_schema.sql` (salida en `backend/pruebas_schema.out`).
 
-## 14. Limitaciones conocidas
+## 15. Limitaciones conocidas
 
 - Las pruebas automáticas usan Chromium; la instalación en iPhone (Safari) debe verificarse en un dispositivo real.
 - La conexión con el Supabase real solo se verificó con el servidor simulado y con PostgreSQL local; tras publicar, usa **Ajustes → Diagnóstico de conexión**.

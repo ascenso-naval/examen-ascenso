@@ -1,6 +1,9 @@
 // admin-respaldo.js — Pestaña «Respaldo» del panel de administración (#/admin?tab=respaldo, v1.4.0):
 // · Resumen (admin_respaldo_resumen): totales por tabla, tamaño estimado, vouchers y la fecha
 //   de la última descarga en este dispositivo; aviso fijo y aviso de 7 días.
+// · [1.5.0] El aviso de los 7 días usa `admin_ultimo_respaldo()` (cuenta también el respaldo
+//   automático del Mac y el manual) con copia en localStorage, y «Descargar respaldo» deja
+//   constancia con `admin_registrar_respaldo('app', …)`: «Último respaldo: 14-oct 20:00 (Mac)».
 // · «Descargar respaldo»: todas las tablas paginadas (js/respaldo.js) en un archivo JSON, con
 //   barra de progreso por tabla, reintento por página y verificación «filas = total».
 // · «Restaurar progreso de un usuario»: archivo de respaldo → cuenta → vista previa →
@@ -75,15 +78,23 @@ export function crearRespaldo({ raiz, pintar, activa, alCambiarAviso }) {
     } catch (e) {
       errorResumen = e.message;
     }
+    // [1.5.0] Último respaldo según el servidor (app, Mac o manual): es la fuente del aviso.
+    try {
+      R.anotarRespaldoServidor(await nube.adminUltimoRespaldo());
+      if (alCambiarAviso) alCambiarAviso();
+    } catch { /* se usa lo guardado en el dispositivo */ }
     cargandoResumen = false;
     repintar();
   }
 
   function htmlUltima() {
     const u = R.ultimoRespaldo();
+    const srv = R.ultimoRespaldoServidor();
+    const ef = R.ultimoEfectivo();
     const vencido = R.respaldoVencido();
-    return `<p class="peq resp-ultima mt-s">Última descarga en este dispositivo: <strong id="resp-ultima" data-fecha="${esc(u || '')}">${u ? esc(fecha(u)) : 'nunca'}</strong>
-      ${vencido ? `<span class="etiqueta etiqueta-ambar" id="resp-vencido">${u ? 'Hace más de 7 días' : 'Pendiente'}</span>` : '<span class="etiqueta etiqueta-ok" id="resp-al-dia">Al día</span>'}</p>`;
+    return `<p class="peq resp-ultima mt-s">Último respaldo: <strong id="resp-ultimo-servidor" data-fecha="${esc(ef ? ef.fecha : '')}" data-origen="${esc(ef ? ef.origen : '')}">${ef ? `${esc(fecha(ef.fecha))} (${esc(R.NOMBRE_ORIGEN[ef.origen] || ef.origen)})` : 'nunca'}</strong>
+      ${vencido ? `<span class="etiqueta etiqueta-ambar" id="resp-vencido">${ef ? 'Hace más de 7 días' : 'Pendiente'}</span>` : '<span class="etiqueta etiqueta-ok" id="resp-al-dia">Al día</span>'}
+      <br><span class="mini">Última descarga en este dispositivo: <strong id="resp-ultima" data-fecha="${esc(u || '')}">${u ? esc(fecha(u)) : 'nunca'}</strong>${srv ? ` · registrado en el servidor: ${esc(fecha(srv.generado_en))} (${esc(R.NOMBRE_ORIGEN[srv.origen] || srv.origen)})` : ''}</span></p>`;
   }
 
   function htmlResumen() {
@@ -161,6 +172,21 @@ export function crearRespaldo({ raiz, pintar, activa, alCambiarAviso }) {
       resultado = { nombre, blob, filas: r.filas, diferencias: r.diferencias };
       descargarBlob(nombre, blob);
       R.anotarRespaldo(new Date());
+      // [1.5.0] Constancia en el servidor (bitácora «respaldos»): así el aviso de los 7 días
+      // vale para cualquier dispositivo y se distingue del respaldo automático del Mac.
+      try {
+        const reg = await nube.adminRegistrarRespaldo('app', r.respaldo.generado_en, blob.size, {
+          archivo: nombre,
+          filas: r.filas,
+          version_app: APP_VERSION,
+          tablas: (resumen && resumen.tablas) || null,
+          diferencias: r.diferencias.length,
+        });
+        R.anotarRespaldoServidor({ origen: (reg && reg.origen) || 'app', generado_en: (reg && reg.generado_en) || r.respaldo.generado_en, bytes: blob.size });
+      } catch (e) {
+        if (e.tipo !== 'red') console.warn('No se pudo registrar el respaldo en el servidor:', e.message);
+        R.anotarRespaldoServidor({ origen: 'app', generado_en: r.respaldo.generado_en, bytes: blob.size });
+      }
       descarga.fin = true;
       if (alCambiarAviso) alCambiarAviso();
       toast(r.diferencias.length ? 'Respaldo descargado con diferencias: revisa el aviso.' : `Respaldo descargado: ${fmtNum(r.filas)} filas.`, { tipo: r.diferencias.length ? 'info' : 'exito', icono: 'descargar' });

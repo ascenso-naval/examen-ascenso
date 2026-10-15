@@ -13,7 +13,7 @@ export const CLAVE_AUTH = 'ascenso2026:auth';
 export class ErrorNube extends Error {
   /**
    * @param {string} mensaje
-   * @param {'red'|'credenciales'|'no_confirmado'|'bloqueado'|'permiso'|'sesion'|'validacion'|'conflicto'|'limite'|'config'|'servidor'} tipo
+   * @param {'red'|'credenciales'|'no_confirmado'|'bloqueado'|'eliminado'|'permiso'|'sesion'|'validacion'|'conflicto'|'limite'|'config'|'servidor'} tipo
    * @param {{status?:number, codigo?:string}} extra
    */
   constructor(mensaje, tipo = 'servidor', extra = {}) {
@@ -91,6 +91,8 @@ function traducirRest(e, status) {
   const con = (msg, tipo) => new ErrorNube(msg, tipo, { status, codigo });
   if (codigo === 'PGRST301' || codigo === 'PGRST303' || /JWT/i.test(m)) return con('Tu sesión expiró. Vuelve a ingresar.', 'sesion');
   if (/bloquead/i.test(m)) return con('Cuenta bloqueada; contacta al administrador.', 'bloqueado');
+  // [1.4.0] Papelera: la cuenta deja de existir para su dueño aunque su sesión siga válida.
+  if (/cuenta eliminada/i.test(m)) return con('Cuenta eliminada; contacta al administrador.', 'eliminado');
   if (codigo === '42501') {
     if (/row-level security/i.test(m)) return con('El servidor rechazó la operación (permisos). Si tu cuenta fue bloqueada, contacta al administrador.', 'permiso');
     if (/administrador|inicia sesión/i.test(m)) return con(m, 'permiso');
@@ -184,14 +186,22 @@ export async function iniciarSesion(correo, clave) {
   }
 }
 
-/** Crea la cuenta. Devuelve {sesion, requiereConfirmacion}. El apodo va en los metadatos. */
-export async function registrarse(correo, clave, apodo) {
+/**
+ * Crea la cuenta. Devuelve {sesion, requiereConfirmacion}.
+ * El apodo y [1.4.0] el nombre y el apellido van en los metadatos del registro (el trigger
+ * manejar_nuevo_usuario los toma de raw_user_meta_data); tras el alta la app los confirma
+ * con completar_datos() por si el trigger no los hubiera tomado.
+ * @param {{apodo?:string, nombre?:string, apellido?:string}} datos
+ */
+export async function registrarse(correo, clave, datos = {}) {
   exigirRed();
+  const meta = {};
+  for (const k of ['apodo', 'nombre', 'apellido']) if (datos[k]) meta[k] = datos[k];
   try {
     const { data, error } = await cliente().auth.signUp({
       email: correo.trim(),
       password: clave,
-      options: { data: apodo ? { apodo } : {}, emailRedirectTo: urlApp() },
+      options: { data: meta, emailRedirectTo: urlApp() },
     });
     if (error) throw error;
     if (data.session) return { sesion: { id: data.user.id, correo: data.user.email || correo }, requiereConfirmacion: false };
@@ -241,7 +251,11 @@ const uid = () => {
 // Perfil, estado y eventos
 // ---------------------------------------------------------------------------
 
-/** Perfil propio (RLS solo deja ver el propio): {id, correo, apodo, rol, bloqueado…} o null. */
+/**
+ * Perfil propio (RLS solo deja ver el propio): {id, correo, apodo, rol, bloqueado,
+ * [1.4.0] nombre, apellido, ranking_visible…} o null. Una cuenta en la papelera no ve su
+ * fila (la política añade «eliminado_en is null»), así que devuelve null.
+ */
 export async function miPerfil() {
   exigirRed();
   const filas = await rest(cliente().from('perfiles').select('*').eq('id', uid()));
@@ -249,9 +263,18 @@ export async function miPerfil() {
 }
 
 export const esAdmin = () => rpc('es_admin');
+/** [1.4.0] ¿Administrador o verificador? (el verificador solo abre la pestaña Pagos). */
+export const esVerificador = () => rpc('es_verificador');
 export const estaBloqueado = () => rpc('esta_bloqueado');
+/** [1.4.0] ¿La cuenta está en la papelera? (deja de entrar a la app aunque su sesión valga). */
+export const estaEliminado = () => rpc('esta_eliminado');
 export const registrarIngreso = () => rpc('registrar_ingreso', { p_agente: (navigator.userAgent || '').slice(0, 300) });
-export const cambiarApodo = (apodo) => rpc('cambiar_apodo', { p_apodo: apodo });
+/** [1.4.0] p_visible null deja ranking_visible como está; true/false lo fija en el mismo paso. */
+export const cambiarApodo = (apodo, visible = null) => rpc('cambiar_apodo', { p_apodo: apodo, p_visible: visible });
+/** [1.4.0] «¿Quieres aparecer en el ranking?» (cuenta propia). Devuelve el valor guardado. */
+export const cambiarRankingVisible = (visible) => rpc('cambiar_ranking_visible', { p_visible: visible });
+/** [1.4.0] Nombre y apellido de la cuenta propia: {usuario_id, nombre, apellido}. */
+export const completarDatos = (nombre, apellido) => rpc('completar_datos', { p_nombre: nombre, p_apellido: apellido });
 
 /** Solo la fecha del estado remoto (consulta liviana): texto ISO o null si no hay estado. */
 export async function fechaEstadoRemoto() {
@@ -300,6 +323,25 @@ export const adminEventos = (usuario = null, limite = 200) => rpc('admin_eventos
 export const adminBloquear = (usuario, bloqueado) => rpc('admin_bloquear', { p_usuario: usuario, p_bloqueado: bloqueado });
 
 // ---------------------------------------------------------------------------
+// [1.5.0] Roles, papelera de cuentas y bitácora de respaldos (esquema 1.4.0, §6.d)
+// ---------------------------------------------------------------------------
+
+/** Cambia el rol de una cuenta (usuario / verificador / admin): {usuario_id, rol, rol_anterior}. */
+export const adminAsignarRol = (usuario, rol) => rpc('admin_asignar_rol', { p_usuario: usuario, p_rol: rol });
+/** Manda una cuenta a la papelera (no borra nada): {usuario_id, eliminado_en, purga_en}. */
+export const adminEliminarCuenta = (usuario, motivo) => rpc('admin_eliminar_cuenta', { p_usuario: usuario, p_motivo: motivo });
+/** Saca una cuenta de la papelera: {usuario_id, restaurada}. */
+export const adminRestaurarCuenta = (usuario) => rpc('admin_restaurar_cuenta', { p_usuario: usuario });
+/** Purga definitiva de lo que lleva más de 30 días en la papelera: {purgadas, pendientes_auth, dias}. */
+export const adminPurgarPapelera = () => rpc('admin_purgar_papelera', {});
+/** Deja constancia de un respaldo descargado: {id, origen, generado_en, bytes}. */
+export const adminRegistrarRespaldo = (origen, generadoEn = null, bytes = null, resumen = null) => rpc('admin_registrar_respaldo', {
+  p_origen: origen, p_generado_en: generadoEn, p_bytes: bytes, p_resumen: resumen,
+});
+/** El respaldo más reciente registrado: {origen, generado_en, bytes} o null. */
+export const adminUltimoRespaldo = () => rpc('admin_ultimo_respaldo');
+
+// ---------------------------------------------------------------------------
 // [1.3.0] Prueba gratis y pago (esquema 1.2.0, ver backend/schema.sql §6.b y §7.b)
 // ---------------------------------------------------------------------------
 
@@ -339,7 +381,11 @@ export const adminRestaurarPerfil = (usuario, { apodo = null, plan = null, pregu
 
 export const BUCKET_COMPROBANTES = 'comprobantes';
 
-function traducirStorage(e) {
+/**
+ * Traduce un error de Storage. `accion` ('subir' o 'abrir') solo cambia el texto del caso
+ * genérico: el mismo bucket se usa para subir el voucher y para volver a verlo.
+ */
+function traducirStorage(e, accion = 'subir') {
   if (e instanceof ErrorNube) return e;
   const status = Number(e?.statusCode || e?.status || 0) || null;
   const m = String(e?.message || '');
@@ -349,9 +395,15 @@ function traducirStorage(e) {
   if (/mime|content type|invalid_mime/i.test(m)) return con('El voucher debe ser una imagen (JPG, PNG o WEBP).', 'validacion');
   if (/bloquead/i.test(m)) return con('Cuenta bloqueada; contacta al administrador.', 'bloqueado');
   if (status === 401 || /jwt|token/i.test(m)) return con('Tu sesión expiró. Vuelve a ingresar.', 'sesion');
-  if (status === 403 || /row-level security|unauthorized/i.test(m)) return con('El servidor no permitió subir la imagen (permisos).', 'permiso');
+  if (status === 403 || /row-level security|unauthorized/i.test(m)) return con(`El servidor no permitió ${accion} la imagen (permisos).`, 'permiso');
   if (/bucket not found/i.test(m)) return con('Falta crear el almacenamiento de comprobantes en el servidor (bucket «comprobantes»).', 'config');
-  return con(`No se pudo subir la imagen${m ? `: ${m}` : '.'}`, 'servidor');
+  // [1.5.0 · ronda 2] Storage responde «Object not found» tanto si el objeto no existe como si la
+  // política de lectura no deja verlo (es lo que le pasa al VERIFICADOR: la política
+  // «comprobantes_select_dueno_o_admin» de schema.sql solo admite al dueño y a es_admin()).
+  if (status === 404 || /not.?found/i.test(m)) {
+    return con('El servidor no entregó la imagen del voucher: tu rol no tiene permiso para abrirla o el archivo ya no está.', 'permiso');
+  }
+  return con(`No se pudo ${accion} la imagen${m ? `: ${m}` : '.'}`, 'servidor');
 }
 
 /**
@@ -372,16 +424,22 @@ export async function subirComprobante(imagen) {
   return (r.data && r.data.path) || ruta;
 }
 
-/** URL firmada (10 min) para ver un voucher: la política deja al dueño y al administrador. */
+/**
+ * URL firmada (10 min) para ver un voucher.
+ * La política de Storage del esquema 1.4.0 (`comprobantes_select_dueno_o_admin`) solo deja al
+ * dueño del archivo y a `es_admin()`: con una sesión de VERIFICADOR el servidor responde
+ * «Object not found» y esto lanza ErrorNube de tipo 'permiso'. El panel lo trata como un fallo
+ * esperado y lo explica en pantalla (no da por supuesto un privilegio que el servidor niega).
+ */
 export async function urlComprobante(ruta, segundos = 600) {
   exigirRed();
   let r;
   try {
     r = await cliente().storage.from(BUCKET_COMPROBANTES).createSignedUrl(ruta, segundos);
   } catch (e) {
-    throw traducirStorage(e);
+    throw traducirStorage(e, 'abrir');
   }
-  if (r.error) throw traducirStorage(r.error);
+  if (r.error) throw traducirStorage(r.error, 'abrir');
   return r.data.signedUrl;
 }
 
@@ -453,6 +511,19 @@ export async function diagnostico() {
     if (faltan.length) partes.push(`faltan funciones: ${faltan.join(', ')}`);
     if (r.historial_ok === false) partes.push('la tabla estado_progreso_historial no está protegida o falta');
     return { ok: false, detalle: partes.length ? `Respaldo: ${partes.join('; ')}.` : 'Revisa diagnostico_esquema() → respaldo en el SQL Editor.' };
+  });
+  await paso('Cuenta y roles (esquema 1.4.0)', async () => {
+    if (!diag || !('cuenta_ok' in diag)) return { ok: false, detalle: 'El esquema no tiene la parte de roles y papelera: ejecuta de nuevo backend/schema.sql (1.4.0).' };
+    if (diag.cuenta_ok) return { ok: true, detalle: 'Roles (verificador), nombre y apellido, papelera de 30 días y bitácora de respaldos en orden.' };
+    const c = diag.cuenta || {};
+    const faltan = Object.entries(c.funciones || {}).filter(([, v]) => v !== true).map(([k]) => k);
+    const partes = [];
+    if (faltan.length) partes.push(`faltan funciones: ${faltan.join(', ')}`);
+    if (c.roles_ok === false) partes.push('los roles o los permisos de las funciones no son los de 1.4.0');
+    if (c.columnas_ok === false) partes.push('faltan columnas de perfiles (nombre, apellido, ranking_visible, papelera) o sus privilegios no son los correctos');
+    if (c.papelera_ok === false) partes.push('la papelera no está protegida (cuentas_purgadas, políticas o eventos)');
+    if (c.respaldos_ok === false) partes.push('la tabla respaldos no está protegida o falta');
+    return { ok: false, detalle: partes.length ? `Cuenta y roles: ${partes.join('; ')}.` : 'Revisa diagnostico_esquema() → cuenta en el SQL Editor.' };
   });
   await paso('Aislamiento de datos', async () => {
     const filas = await rest(cliente().from('perfiles').select('id'));

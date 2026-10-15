@@ -204,6 +204,8 @@ function enCola(fn) {
 
 async function manejarError(e) {
   if (e && e.tipo === 'bloqueado' && alExpulsar) { alExpulsar('bloqueada'); return; }
+  // [1.5.0] La cuenta se fue a la papelera: deja de existir para su dueño al instante.
+  if (e && e.tipo === 'eliminado' && alExpulsar) { alExpulsar('eliminada'); return; }
   if (e && e.tipo !== 'red') console.warn('Acceso:', e.message || e);
 }
 

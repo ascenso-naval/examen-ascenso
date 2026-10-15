@@ -17,7 +17,7 @@ import { sonar } from './sonido.js';
 import * as sync from '../sincronizacion.js';
 import * as nube from '../nube.js';
 import { escuchar } from '../bus.js';
-import { cerrarSesionUsuario, APODO_RE, AYUDA_APODO } from '../cuenta.js';
+import { cerrarSesionUsuario, APODO_RE, AYUDA_APODO, NOMBRE_RE, AYUDA_NOMBRE, PRIVACIDAD_DATOS } from '../cuenta.js';
 import { estaInstalada } from '../instalacion.js';
 import { abrirInstalacion } from './instalar.js';
 import { buscarActualizacion } from '../sw-registro.js';
@@ -73,10 +73,21 @@ function htmlActualizar() {
 function htmlCuenta() {
   const m = sync.metaNube();
   const correo = m.correo || nube.sesionLocal()?.correo || '';
+  const visible = m.rankingVisible === true;
   return `<h2>Cuenta</h2>
       <div class="lista" id="cuenta">
         <div class="ajuste"><span class="ajuste-texto"><strong>Correo</strong><span id="correo-cuenta">${esc(correo)}</span></span>${icono('usuario', { tam: 22 })}</div>
         <div class="ajuste"><span class="ajuste-texto"><strong>Plan</strong><span id="plan-cuenta">${esc(textoPlan())}</span></span>${icono('candado', { tam: 22 })}</div>
+        <div class="ajuste-bloque">
+          <label for="nombre-cuenta"><strong>Nombre y apellido</strong></label>
+          <input class="entrada mt-s" id="nombre-cuenta" type="text" maxlength="60" autocomplete="given-name" placeholder="Nombre" value="${esc(m.nombre || '')}">
+          <div class="fila-flex mt-s">
+            <input class="entrada" id="apellido-cuenta" type="text" maxlength="60" autocomplete="family-name" placeholder="Apellido" value="${esc(m.apellido || '')}">
+            <button type="button" class="btn btn-secundario btn-chico" data-accion="guardar-datos">Guardar</button>
+          </div>
+          <p class="ayuda-campo">${esc(PRIVACIDAD_DATOS)}</p>
+          <p class="error-campo" id="datos-cuenta-error" role="alert" hidden></p>
+        </div>
         <div class="ajuste-bloque">
           <label for="apodo-cuenta"><strong>Apodo</strong> <span class="peq atenuado">(así apareces en el ranking)</span></label>
           <div class="fila-flex mt-s">
@@ -87,11 +98,15 @@ function htmlCuenta() {
           <p class="error-campo" id="apodo-error" role="alert" hidden></p>
         </div>
         <div class="ajuste">
+          <span class="ajuste-texto" id="et-ranking-visible"><strong>Aparecer en el ranking</strong><span id="sub-ranking-visible">${visible ? 'Los demás ven tu apodo, XP, nota y racha' : 'Modo oculto: nadie te ve, pero tú ves tu posición'}</span></span>
+          <button type="button" class="interruptor" id="ranking-visible" role="switch" aria-checked="${visible}" aria-labelledby="et-ranking-visible" data-accion="ranking-visible"></button>
+        </div>
+        <div class="ajuste">
           <span class="ajuste-texto" id="situacion-sync" aria-live="polite">${htmlSituacion()}</span>
           <button type="button" class="btn btn-secundario btn-chico" data-accion="sincronizar-ahora">Sincronizar ahora</button>
         </div>
         <a class="fila" href="#/diagnostico"><span class="fila-icono">${icono('pulso')}</span><span class="fila-cuerpo"><span class="fila-titulo">Diagnóstico de conexión</span><span class="fila-sub">Prueba la conexión con el servidor</span></span>${icono('chev-der', { clase: 'chev', tam: 20 })}</a>
-        ${m.rol === 'admin' ? `<a class="fila" href="#/admin"><span class="fila-icono">${icono('escudo')}</span><span class="fila-cuerpo"><span class="fila-titulo">Administración</span><span class="fila-sub">Usuarios, actividad y CSV</span></span>${icono('chev-der', { clase: 'chev', tam: 20 })}</a>` : ''}
+        ${m.rol === 'admin' || m.rol === 'verificador' ? `<a class="fila" href="#/admin"><span class="fila-icono">${icono('escudo')}</span><span class="fila-cuerpo"><span class="fila-titulo">Administración</span><span class="fila-sub">${m.rol === 'admin' ? 'Usuarios, pagos, actividad y CSV' : 'Verificar los pagos pendientes'}</span></span>${icono('chev-der', { clase: 'chev', tam: 20 })}</a>` : ''}
         <div class="ajuste-bloque">
           <button type="button" class="btn btn-borde btn-bloque" data-accion="cerrar-sesion">${icono('salir', { tam: 20 })}Cerrar sesión</button>
         </div>
@@ -267,6 +282,46 @@ export function montar(raiz, params) {
     }
   }
 
+  /** [1.5.0] Nombre y apellido de la cuenta (completar_datos). */
+  async function guardarDatos() {
+    const cn = raiz.querySelector('#nombre-cuenta');
+    const ca = raiz.querySelector('#apellido-cuenta');
+    const error = raiz.querySelector('#datos-cuenta-error');
+    const nombre = cn.value.trim();
+    const apellido = ca.value.trim();
+    error.hidden = true;
+    if (!NOMBRE_RE.test(nombre)) { error.textContent = `Escribe tu nombre. ${AYUDA_NOMBRE}`; error.hidden = false; cn.focus(); return; }
+    if (!NOMBRE_RE.test(apellido)) { error.textContent = `Escribe tu apellido. ${AYUDA_NOMBRE}`; error.hidden = false; ca.focus(); return; }
+    try {
+      const r = await nube.completarDatos(nombre, apellido);
+      sync.actualizarMeta({ nombre: r.nombre, apellido: r.apellido, datosPendientes: false });
+      cn.value = r.nombre;
+      ca.value = r.apellido;
+      toast('Nombre y apellido guardados.', { tipo: 'exito' });
+    } catch (e) {
+      error.textContent = e.message;
+      error.hidden = false;
+    }
+  }
+
+  /** [1.5.0] Conmutador «Aparecer en el ranking» (cambiar_ranking_visible). */
+  async function conmutarRanking(b) {
+    const quiere = b.getAttribute('aria-checked') !== 'true';
+    b.disabled = true;
+    try {
+      const v = await nube.cambiarRankingVisible(quiere);
+      sync.actualizarMeta({ rankingVisible: v });
+      b.setAttribute('aria-checked', String(v));
+      const sub = raiz.querySelector('#sub-ranking-visible');
+      if (sub) sub.textContent = v ? 'Los demás ven tu apodo, XP, nota y racha' : 'Modo oculto: nadie te ve, pero tú ves tu posición';
+      toast(v ? 'Apareces en el ranking.' : 'Estás en modo oculto: los demás no te ven.', { tipo: 'exito' });
+    } catch (e) {
+      toast(e.message, { tipo: 'error' });
+    } finally {
+      b.disabled = false;
+    }
+  }
+
   async function reiniciar() {
     const uno = await confirmar({
       titulo: '¿Reiniciar tu progreso?',
@@ -323,6 +378,8 @@ export function montar(raiz, params) {
       case 'importar': raiz.querySelector('#archivo').click(); return;
       case 'reiniciar': await reiniciar(); return;
       case 'guardar-apodo': await guardarApodo(); return;
+      case 'guardar-datos': await guardarDatos(); return;
+      case 'ranking-visible': await conmutarRanking(b); return;
       case 'sincronizar-ahora': {
         b.disabled = true;
         const r = await sync.sincronizar();
@@ -366,6 +423,22 @@ export function montar(raiz, params) {
   }
 
   pintar();
+  // [1.5.0] Refresca nombre, apellido, apodo y la elección de ranking desde el servidor (los
+  // pudo cambiar otro dispositivo), y repinta solo el bloque «Cuenta».
+  let vivo = true;
+  if (nube.enLinea()) {
+    nube.miPerfil().then((p) => {
+      if (!vivo || !p) return;
+      sync.actualizarMeta({
+        apodo: p.apodo || null, nombre: p.nombre || null, apellido: p.apellido || null,
+        rankingVisible: p.ranking_visible === true || p.ranking_visible === false ? p.ranking_visible : null,
+        rol: p.rol || 'usuario', correo: p.correo || sync.metaNube().correo || '',
+      });
+      const el = raiz.querySelector('#cuenta');
+      // Si el usuario está escribiendo en el bloque no se le quita lo escrito.
+      if (el && !el.contains(document.activeElement)) el.outerHTML = htmlCuenta().replace(/^<h2>Cuenta<\/h2>\s*/, '');
+    }).catch(() => { /* sin red o sin permiso: se muestra lo guardado */ });
+  }
   if (params && params.seccion === 'acerca') {
     requestAnimationFrame(() => raiz.querySelector('#acerca')?.scrollIntoView({ block: 'start' }));
   }
@@ -381,6 +454,7 @@ export function montar(raiz, params) {
     if (el) el.textContent = textoPlan(st);
   });
   return () => {
+    vivo = false;
     quitarAcceso();
     quitarSync();
     raiz.removeEventListener('click', alClic);

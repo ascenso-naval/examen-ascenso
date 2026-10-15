@@ -1,6 +1,9 @@
 // vista-ranking.js — Ranking por apodo (top 50): pestañas XP / Nota promedio, fila propia
 // resaltada, invitación a elegir apodo, actualización con botón o «tirar para actualizar»,
 // y copia en caché para verla sin conexión.
+// [1.5.0] Ranking opcional: en modo oculto (ranking_visible = false) la lista va SIN la fila
+// propia y el encabezado dice «Estás en modo oculto… Estarías en el puesto N» (la posición la
+// calcula el servidor como si participara; los demás no la ven).
 
 import * as nube from '../nube.js';
 import * as sync from '../sincronizacion.js';
@@ -60,9 +63,13 @@ export function montar(raiz) {
   let vivo = true;
 
   function pintar() {
-    const apodo = sync.metaNube().apodo;
-    const filas = datos && datos.filas;
-    const yo = filas ? filas.find((r) => r.es_yo) : null;
+    const meta = sync.metaNube();
+    const apodo = meta.apodo;
+    const oculto = meta.rankingVisible === false;
+    const todas = datos && datos.filas;
+    const yo = todas ? todas.find((r) => r.es_yo) : null;
+    // En modo oculto la fila propia no se muestra en la lista (los demás tampoco la ven).
+    const filas = todas && oculto ? todas.filter((r) => !r.es_yo) : todas;
     raiz.innerHTML = `
       ${cabecera({ volver: '/mas', derecha: `<button type="button" class="btn-icono" data-accion="actualizar" aria-label="Actualizar ranking"${cargando ? ' aria-busy="true"' : ''}>${icono('repaso')}</button>` })}
       <h1>Ranking</h1>
@@ -70,8 +77,11 @@ export function montar(raiz) {
       ${!apodo ? `<section class="tarjeta invitacion-apodo">${icono('usuario', { tam: 26 })}<div>
         <p><strong>Elige un apodo para aparecer en el ranking.</strong> Tu correo nunca se muestra.</p>
         <button type="button" class="btn btn-primario btn-chico" data-accion="apodo">Elegir apodo</button></div></section>` : ''}
+      ${oculto ? `<section class="tarjeta aviso-oculto" id="ranking-oculto" role="status">${icono('ojo-no', { tam: 26 })}<div>
+        <p><strong>Estás en modo oculto: los demás no te ven.</strong>${yo ? ` Estarías en el puesto <strong>${yo.posicion}</strong>.` : ''}</p>
+        <p class="peq atenuado" style="margin:4px 0 0">Para aparecer, activa «Aparecer en el ranking» en <a class="enlace" href="#/ajustes">Ajustes → Cuenta</a>.</p></div></section>` : ''}
       ${segmentos([{ valor: 'xp', texto: 'XP' }, { valor: 'nota', texto: 'Nota promedio' }], orden, 'orden', 'Ordenar por')}
-      ${yo ? `<p class="mi-posicion" role="status">Tu posición: <strong>${yo.posicion}.º</strong> ${orden === 'nota' ? `con nota ${yo.nota_promedio === null ? '—' : fmtNota(Number(yo.nota_promedio))}` : `con ${fmtNum(yo.xp)} XP`}</p>` : ''}
+      ${yo && !oculto ? `<p class="mi-posicion" role="status">Tu posición: <strong>${yo.posicion}.º</strong> ${orden === 'nota' ? `con nota ${yo.nota_promedio === null ? '—' : fmtNota(Number(yo.nota_promedio))}` : `con ${fmtNum(yo.xp)} XP`}</p>` : ''}
       ${cargando && !filas ? '<p class="peq atenuado mt-m" role="status">Cargando ranking…</p>' : ''}
       ${filas && filas.length ? `<ol class="lista lista-ranking mt-m">${filas.map((r) => filaRanking(r, orden)).join('')}</ol>` : ''}
       ${filas && !filas.length ? vacio({ icono: 'podio', titulo: orden === 'nota' ? 'Aún nadie tiene simulacros' : 'Aún no hay participantes', texto: 'Estudia y vuelve más tarde.' }) : ''}
@@ -100,7 +110,8 @@ export function montar(raiz) {
     } else if (b.dataset.accion === 'actualizar') {
       cargar();
     } else if (b.dataset.accion === 'apodo') {
-      if (await pedirApodo()) cargar();
+      // Si la cuenta aún no respondió «¿quieres aparecer en el ranking?», se pregunta aquí mismo.
+      if (await pedirApodo({ conRanking: sync.metaNube().rankingVisible === null })) cargar();
     }
   }
 

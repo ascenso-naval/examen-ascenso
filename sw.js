@@ -10,7 +10,7 @@
  *
  * PARA PUBLICAR CAMBIOS: sube APP_VERSION (y la de js/version.js) — ver README.
  */
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.5.0';
 const PREFIJO = 'ascenso2026-';
 const CACHE = `${PREFIJO}${APP_VERSION}`;
 
@@ -77,6 +77,7 @@ const ARCHIVOS = [
   './js/ui/vista-bloqueo.js',
   './js/respaldo.js',
   './js/ui/admin-respaldo.js',
+  './js/ui/admin-cuentas.js',
   './iconos/favicon.svg',
   './iconos/favicon-32.png',
   './iconos/icon-192.png',

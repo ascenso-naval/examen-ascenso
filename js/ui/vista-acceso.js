@@ -1,8 +1,9 @@
-// vista-acceso.js — Pantalla de acceso (sin sesión): Ingresar / Registrarse con correo y
-// contraseña, «¿Olvidaste tu contraseña?», aviso de privacidad y mensaje sin conexión.
+// vista-acceso.js — Pantalla de acceso (sin sesión): Ingresar / Registrarse con correo,
+// contraseña, apodo y [1.5.0] nombre y apellido (obligatorios, con el texto de privacidad),
+// «¿Olvidaste tu contraseña?», aviso de privacidad y mensaje sin conexión.
 
 import * as nube from '../nube.js';
-import { APODO_RE, AYUDA_APODO, guardarApodoPendiente, tomarMensajeAcceso } from '../cuenta.js';
+import { APODO_RE, AYUDA_APODO, NOMBRE_RE, AYUDA_NOMBRE, PRIVACIDAD_DATOS, guardarApodoPendiente, tomarMensajeAcceso } from '../cuenta.js';
 import { esc } from '../util.js';
 import { icono } from './iconos.js';
 import { segmentos } from './comun.js';
@@ -24,6 +25,8 @@ export function montarAcceso(raiz, { alIngresar }) {
   let mensaje = tomarMensajeAcceso();
   let ocupado = false;
   let correoGuardado = '';
+  let nombreGuardado = '';
+  let apellidoGuardado = '';
 
   function pintar() {
     const registro = modo === 'registro';
@@ -52,20 +55,29 @@ export function montarAcceso(raiz, { alIngresar }) {
             ${registro ? '<span class="ayuda">Al menos 8 caracteres.</span>' : ''}
           </div>
           ${registro ? `<div class="campo">
+            <label class="rotulo" for="reg-nombre">Nombre</label>
+            <input class="entrada" id="reg-nombre" name="nombre" maxlength="60" autocomplete="given-name" required value="${esc(nombreGuardado)}">
+          </div>
+          <div class="campo">
+            <label class="rotulo" for="reg-apellido">Apellido</label>
+            <input class="entrada" id="reg-apellido" name="apellido" maxlength="60" autocomplete="family-name" required value="${esc(apellidoGuardado)}">
+            <span class="ayuda">${esc(AYUDA_NOMBRE)}</span>
+          </div>
+          <div class="campo">
             <label class="rotulo" for="apodo">Apodo para el ranking</label>
             <input class="entrada" id="apodo" name="apodo" maxlength="20" autocomplete="nickname" autocapitalize="off" spellcheck="false" required>
             <span class="ayuda">${esc(AYUDA_APODO)} Tu correo nunca se muestra.</span>
           </div>` : ''}
           <p class="error-campo" id="acceso-error" role="alert" hidden></p>
           <button type="submit" class="btn btn-primario btn-bloque" data-accion="enviar">${registro ? 'Crear cuenta' : 'Ingresar'}</button>
-          ${registro ? '' : '<button type="button" class="btn btn-fantasma btn-bloque mt-s" data-accion="olvide">¿Olvidaste tu contraseña?</button>'}
+          ${registro ? `<p class="peq atenuado" id="aviso-datos">${esc(PRIVACIDAD_DATOS)}</p>` : '<button type="button" class="btn btn-fantasma btn-bloque mt-s" data-accion="olvide">¿Olvidaste tu contraseña?</button>'}
         </form>`}
         <details class="desplegable privacidad mt-l">
           <summary><span class="fila-cuerpo">${icono('candado', { tam: 20 })} Privacidad: qué se guarda y quién lo ve</span>${icono('chev-abajo', { clase: 'chev', tam: 20 })}</summary>
           <div class="desplegable-cuerpo texto-largo">
-            <p><strong>Qué se guarda:</strong> tu correo, tu apodo, tu progreso de estudio (respuestas, XP, logros y simulacros), las sesiones que terminas y la fecha de tus ingresos. La contraseña la gestiona el servicio de autenticación (Supabase) y nadie puede leerla.</p>
-            <p><strong>Quién lo ve:</strong> tú, desde cualquier dispositivo con tu cuenta, y el administrador de la app (para seguimiento del estudio). En el ranking solo aparecen tu apodo, XP, nota promedio y racha.</p>
-            <p>No se comparte con terceros. Para borrar tu cuenta, pídelo al administrador.</p>
+            <p><strong>Qué se guarda:</strong> tu correo, tu nombre y apellido, tu apodo, tu progreso de estudio (respuestas, XP, logros y simulacros), las sesiones que terminas y la fecha de tus ingresos. La contraseña la gestiona el servicio de autenticación (Supabase) y nadie puede leerla.</p>
+            <p><strong>Quién lo ve:</strong> tú, desde cualquier dispositivo con tu cuenta, y el administrador de la app (para seguimiento del estudio y para verificar tu pago). Tu nombre, tu apellido y tu correo no los ve ningún otro usuario: en el ranking solo aparecen tu apodo, XP, nota promedio y racha, y solo si eliges aparecer.</p>
+            <p>No se comparte con terceros. Para borrar tu cuenta, pídelo al administrador: la elimina al instante y la puede restaurar durante 30 días; después se borra de forma definitiva.</p>
           </div>
         </details>
       </section>`;
@@ -101,28 +113,34 @@ export function montarAcceso(raiz, { alIngresar }) {
     const correo = form.correo.value.trim();
     const clave = form.clave.value;
     const apodo = form.apodo ? form.apodo.value.trim() : '';
+    const nombre = form.nombre ? form.nombre.value.trim() : '';
+    const apellido = form.apellido ? form.apellido.value.trim() : '';
     correoGuardado = correo;
+    nombreGuardado = nombre;
+    apellidoGuardado = apellido;
     mostrarError('');
     if (!CORREO_RE.test(correo)) { mostrarError('Escribe un correo válido.'); form.correo.focus(); return; }
     if (!clave) { mostrarError('Escribe tu contraseña.'); form.clave.focus(); return; }
     if (modo === 'registro') {
       if (clave.length < 8) { mostrarError('La contraseña debe tener al menos 8 caracteres.'); form.clave.focus(); return; }
+      if (!NOMBRE_RE.test(nombre)) { mostrarError(`Escribe tu nombre. ${AYUDA_NOMBRE}`); form.nombre.focus(); return; }
+      if (!NOMBRE_RE.test(apellido)) { mostrarError(`Escribe tu apellido. ${AYUDA_NOMBRE}`); form.apellido.focus(); return; }
       if (!APODO_RE.test(apodo)) { mostrarError(`Apodo no válido. ${AYUDA_APODO}`); form.apodo.focus(); return; }
     }
     if (!nube.enLinea()) { mostrarError(MSJ_SIN_RED); return; }
     try {
       if (modo === 'registro') {
         ocupar(true, 'Creando cuenta…');
-        const r = await nube.registrarse(correo, clave, apodo);
+        const r = await nube.registrarse(correo, clave, { apodo, nombre, apellido });
         if (r.requiereConfirmacion) {
-          guardarApodoPendiente(correo, apodo);
+          guardarApodoPendiente(correo, { apodo, nombre, apellido });
           ocupar(false);
           modo = 'revisa';
           mensaje = null;
           pintar();
           return;
         }
-        await alIngresar(r.sesion, { apodo });
+        await alIngresar(r.sesion, { apodo, nombre, apellido });
       } else {
         ocupar(true, 'Ingresando…');
         const u = await nube.iniciarSesion(correo, clave);
@@ -180,6 +198,10 @@ export function montarAcceso(raiz, { alIngresar }) {
     if (accion === 'modo') {
       const correo = raiz.querySelector('#correo');
       if (correo) correoGuardado = correo.value.trim();
+      const nom = raiz.querySelector('#reg-nombre');
+      const ape = raiz.querySelector('#reg-apellido');
+      if (nom) nombreGuardado = nom.value.trim();
+      if (ape) apellidoGuardado = ape.value.trim();
       modo = b.dataset.valor;
       pintar();
       raiz.querySelector('#correo')?.focus();

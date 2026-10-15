@@ -3,13 +3,19 @@
 //   errores de red, deduplicación por clave primaria y verificación «filas = total»;
 // · armado del archivo {formato:'ascenso2026-respaldo', version:1, …};
 // · validación de un archivo de respaldo para restaurar el progreso de un usuario;
-// · fecha de la última descarga (localStorage del administrador) y aviso de 7 días.
+// · fecha del último respaldo y aviso de 7 días: [1.5.0] la fuente es `admin_ultimo_respaldo()`
+//   (cuenta también el respaldo automático del Mac y el manual) con copia en el localStorage
+//   del administrador, más la última descarga hecha en este dispositivo.
 // Sin DOM: la interfaz está en js/ui/admin-respaldo.js.
 
 export const FORMATO = 'ascenso2026-respaldo';
 export const VERSION_FORMATO = 1;
 export const CLAVE_ULTIMO = 'ascenso2026:admin:ultimo-respaldo';
+/** [1.5.0] Último respaldo registrado en el servidor (admin_ultimo_respaldo), en caché. */
+export const CLAVE_ULTIMO_SERVIDOR = 'ascenso2026:admin:ultimo-respaldo-servidor';
 export const DIAS_AVISO = 7;
+/** Origen del respaldo tal como lo muestra la app. */
+export const NOMBRE_ORIGEN = { app: 'App', mac: 'Mac', manual: 'Manual' };
 
 /** Tablas del respaldo, su clave primaria y el tamaño de página que se pide. */
 export const TABLAS = [
@@ -41,11 +47,51 @@ export function anotarRespaldo(fecha = new Date()) {
   try { window.localStorage.setItem(CLAVE_ULTIMO, new Date(fecha).toISOString()); } catch { /* sin almacenamiento */ }
 }
 
-/** ¿Toca respaldar? (nunca se descargó o pasaron más de 7 días). */
+/**
+ * [1.5.0] Último respaldo registrado en el SERVIDOR (lo que devolvió `admin_ultimo_respaldo()`:
+ * también cuenta el del Mac y el manual), guardado en el dispositivo para que el aviso de los
+ * 7 días se pueda decidir sin esperar al servidor (p. ej. en Más → Administración).
+ * @returns {{origen:string, generado_en:string, bytes:number|null}|null}
+ */
+export function ultimoRespaldoServidor() {
+  try {
+    const o = JSON.parse(window.localStorage.getItem(CLAVE_ULTIMO_SERVIDOR) || 'null');
+    if (o && typeof o.generado_en === 'string' && !Number.isNaN(new Date(o.generado_en).getTime())) {
+      return { origen: NOMBRE_ORIGEN[o.origen] ? o.origen : 'manual', generado_en: o.generado_en, bytes: Number.isFinite(Number(o.bytes)) ? Number(o.bytes) : null };
+    }
+  } catch { /* sin almacenamiento */ }
+  return null;
+}
+
+/** Guarda (o borra, con null) lo que devolvió admin_ultimo_respaldo(). */
+export function anotarRespaldoServidor(r) {
+  try {
+    if (!r || !r.generado_en) window.localStorage.removeItem(CLAVE_ULTIMO_SERVIDOR);
+    else window.localStorage.setItem(CLAVE_ULTIMO_SERVIDOR, JSON.stringify({ origen: r.origen || 'manual', generado_en: r.generado_en, bytes: r.bytes ?? null }));
+  } catch { /* sin almacenamiento */ }
+}
+
+/**
+ * Respaldo más reciente que se conoce: el registrado en el servidor (app, Mac o manual) o la
+ * última descarga hecha en este dispositivo, lo que sea más nuevo.
+ * @returns {{fecha:string, origen:'app'|'mac'|'manual'}|null}
+ */
+export function ultimoEfectivo() {
+  const local = ultimoRespaldo();
+  const srv = ultimoRespaldoServidor();
+  const tl = local ? new Date(local).getTime() : -1;
+  const ts = srv ? new Date(srv.generado_en).getTime() : -1;
+  if (ts < 0 && tl < 0) return null;
+  // La descarga desde la app se registra en el servidor con origen «app»: si el servidor no
+  // respondió aún, la fecha local vale igual (mismo origen).
+  return ts >= tl ? { fecha: srv.generado_en, origen: srv.origen } : { fecha: local, origen: 'app' };
+}
+
+/** ¿Toca respaldar? (nunca se respaldó o pasaron más de 7 días, en cualquier origen). */
 export function respaldoVencido(ahora = Date.now()) {
-  const u = ultimoRespaldo();
+  const u = ultimoEfectivo();
   if (!u) return true;
-  return ahora - new Date(u).getTime() > DIAS_AVISO * DIA_MS;
+  return ahora - new Date(u.fecha).getTime() > DIAS_AVISO * DIA_MS;
 }
 
 // ---------------------------------------------------------------------------
