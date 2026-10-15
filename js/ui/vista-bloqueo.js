@@ -7,7 +7,14 @@
 //
 // Estados: formulario de pago (monto, Yape/Plin con número grande, titular y «Copiar número»;
 // voucher + número de operación) · «Pago en revisión» (con «Corregir») ·
-// rechazo con motivo · agradecimiento al desbloquearse (→ Inicio).
+// rechazo con motivo · agradecimiento al desbloquearse (→ Inicio) ·
+// [1.5.1] «No pudimos verificar tu acceso» cuando no hay red y el servidor nunca confirmó el
+// acceso en este dispositivo (ver acceso.js: el estado guardado solo vale si él lo confirmó) ·
+// [1.5.1 · ronda 2] «Comprobando tu acceso…» mientras se espera la respuesta del servidor (con
+// red, hasta que llega no hay acceso: la caché del dispositivo no decide nada).
+//
+// [1.5.1 · ronda 2] El voucher se rechaza por tamaño (> 10 MB) y por megapíxeles (> 12 MP, leídos
+// de la CABECERA del archivo) ANTES de decodificar la imagen: ver dimensionesCabecera().
 
 import * as acceso from '../acceso.js';
 import * as nube from '../nube.js';
@@ -24,6 +31,12 @@ const VERBO_MEDIO = { yape: 'Yapea', plin: 'Plinea' };
 const OPERACION_RE = /^[0-9]{6,12}$/;
 const MAX_BYTES = 1000000;   // el bucket admite 1 MB (1 048 576 bytes): margen de seguridad
 const LADO_MAX = 1280;
+// [1.5.1 · seguridad] Topes del archivo que se acepta ANTES de redimensionar: una imagen
+// enorme (p. ej. 10000 × 10000) agota la memoria del celular al decodificarla en el lienzo.
+const MAX_ARCHIVO_BYTES = 10 * 1024 * 1024;   // 10 MB
+const MAX_PIXELES = 12 * 1000 * 1000;         // 12 megapíxeles
+const MAX_INTENTOS = 3;                       // reducciones sucesivas como mucho
+const CABECERA_BYTES = 256 * 1024;            // trozo inicial donde se buscan las dimensiones
 const RETARDO_EN_SESION = 1500;
 const CIERRE_GRACIAS = 5000;
 
@@ -63,21 +76,105 @@ async function cargarImagen(archivo) {
 const aBlob = (lienzo, tipo, calidad) => new Promise((res) => lienzo.toBlob(res, tipo, calidad));
 
 /**
+ * [1.5.1 · ronda 2] Dimensiones leídas de la CABECERA del archivo, SIN decodificar la imagen:
+ * decodificar una imagen de 100 megapíxeles ya gasta ~400 MB (ancho × alto × 4 bytes) y puede
+ * tumbar la pestaña del celular, así que el tope de 12 MP se aplica antes de llegar a eso.
+ * Reconoce los formatos que manda un celular: PNG, JPEG, GIF, BMP, WebP y HEIC/AVIF (caja
+ * «ispe» de ISO-BMFF). Devuelve null si no las reconoce; entonces decide la comprobación que
+ * se hace de todos modos después de decodificar.
+ * @returns {Promise<{w:number, h:number}|null>}
+ */
+export async function dimensionesCabecera(archivo) {
+  let b;
+  try { b = new Uint8Array(await archivo.slice(0, CABECERA_BYTES).arrayBuffer()); } catch { return null; }
+  if (b.length < 16) return null;
+  const u16 = (i, le = false) => (le ? b[i] | (b[i + 1] << 8) : (b[i] << 8) | b[i + 1]);
+  const u24 = (i) => b[i] | (b[i + 1] << 8) | (b[i + 2] << 16);                 // little endian
+  const u32 = (i) => b[i] * 0x1000000 + ((b[i + 1] << 16) | (b[i + 2] << 8) | b[i + 3]);
+  const u32le = (i) => b[i] + b[i + 1] * 0x100 + b[i + 2] * 0x10000 + b[i + 3] * 0x1000000;
+  const txt = (i, n) => { let s = ''; for (let k = 0; k < n; k++) s += String.fromCharCode(b[i + k]); return s; };
+  const dim = (w, h) => (w > 0 && h > 0 ? { w, h } : null);
+
+  // PNG: firma + cabecera IHDR (ancho y alto, 4 bytes cada uno, big endian).
+  if (b[0] === 137 && txt(1, 3) === 'PNG' && txt(12, 4) === 'IHDR') return dim(u32(16), u32(20));
+  // GIF: pantalla lógica en los bytes 6..9 (little endian).
+  if (txt(0, 3) === 'GIF') return dim(u16(6, true), u16(8, true));
+  // BMP: cabecera DIB (el alto puede venir negativo si las filas van al revés).
+  if (txt(0, 2) === 'BM') return dim(u32le(18), Math.abs(u32le(22) | 0));
+  // WebP: contenedor RIFF con un trozo VP8X (extendido), VP8 (con pérdida) o VP8L (sin pérdida).
+  if (txt(0, 4) === 'RIFF' && txt(8, 4) === 'WEBP') {
+    const tag = txt(12, 4);
+    if (tag === 'VP8X') return dim(1 + u24(24), 1 + u24(27));
+    if (tag === 'VP8 ' && b[23] === 0x9D && b[24] === 0x01 && b[25] === 0x2A) return dim(u16(26, true) & 0x3FFF, u16(28, true) & 0x3FFF);
+    if (tag === 'VP8L' && b[20] === 0x2F) {
+      const bits = u32le(21);
+      return dim(1 + (bits & 0x3FFF), 1 + ((bits >>> 14) & 0x3FFF));
+    }
+    return null;
+  }
+  // HEIC/AVIF (ISO-BMFF): cajas «ispe» con las dimensiones de cada imagen; se toma la mayor
+  // (una foto de iPhone trae además miniaturas más pequeñas).
+  if (txt(4, 4) === 'ftyp') {
+    let mayor = null;
+    for (let i = 0; i + 16 <= b.length; i++) {
+      if (b[i] !== 0x69 || b[i + 1] !== 0x73 || b[i + 2] !== 0x70 || b[i + 3] !== 0x65) continue;   // «ispe»
+      const d = dim(u32(i + 8), u32(i + 12));
+      if (d && (!mayor || d.w * d.h > mayor.w * mayor.h)) mayor = d;
+    }
+    return mayor;
+  }
+  // JPEG: se recorren los marcadores hasta el SOF (0xFFC0…0xFFCF salvo C4, C8 y CC).
+  if (b[0] === 0xFF && b[1] === 0xD8) {
+    let i = 2;
+    while (i + 9 < b.length) {
+      if (b[i] !== 0xFF) { i += 1; continue; }
+      const m = b[i + 1];
+      if (m === 0xFF || m === 0x00 || m === 0x01 || (m >= 0xD0 && m <= 0xD9)) { i += 2; continue; }
+      const largo = u16(i + 2);
+      if (largo < 2) return null;
+      if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) return dim(u16(i + 7), u16(i + 5));
+      i += 2 + largo;
+    }
+  }
+  return null;
+}
+
+/** Mensaje único para las dos comprobaciones del tope de megapíxeles. */
+const errorMegapixeles = (w, h) => new Error(`La imagen es demasiado grande (${w} × ${h} px, más de 12 megapíxeles). Recórtala o haz una captura de pantalla del voucher.`);
+
+/**
  * Reduce la captura a JPEG (≤ 1 MB, lado mayor ≤ 1280 px) y crea una miniatura para mostrarla
  * sin conexión. @returns {Promise<{blob:Blob, miniatura:string, ancho:number, alto:number}>}
  */
 export async function comprimirImagen(archivo) {
   if (!archivo || !/^image\//.test(archivo.type || '')) throw new Error('El voucher debe ser una imagen (captura de pantalla o foto).');
+  // 1) Tamaño del archivo: se mira antes de decodificar nada.
+  if (archivo.size > MAX_ARCHIVO_BYTES) {
+    throw new Error(`La imagen pesa ${(archivo.size / 1048576).toFixed(1).replace('.', ',')} MB y el máximo es 10 MB. Haz una captura de pantalla del voucher en vez de enviar la foto original.`);
+  }
+  // 2) Dimensiones de la cabecera: ANTES de decodificar (decodificar una imagen gigantesca ya
+  //    gastaría cientos de MB de memoria).
+  const cab = await dimensionesCabecera(archivo);
+  if (cab && cab.w * cab.h > MAX_PIXELES) throw errorMegapixeles(cab.w, cab.h);
   let img;
   try { img = await cargarImagen(archivo); } catch { throw new Error('No se pudo leer la imagen. Prueba con otra captura.'); }
   const w0 = img.width || img.naturalWidth;
   const h0 = img.height || img.naturalHeight;
-  if (!w0 || !h0) throw new Error('No se pudo leer la imagen. Prueba con otra captura.');
+  if (!w0 || !h0) {
+    if (typeof img.close === 'function') img.close();
+    throw new Error('No se pudo leer la imagen. Prueba con otra captura.');
+  }
+  // 3) Segunda barrera para los formatos cuya cabecera no se reconoce: redimensionar una imagen
+  //    gigantesca bloquearía la pestaña.
+  if (w0 * h0 > MAX_PIXELES) {
+    if (typeof img.close === 'function') img.close();
+    throw errorMegapixeles(w0, h0);
+  }
   const lienzo = document.createElement('canvas');
   const ctx = lienzo.getContext('2d');
   let escala = Math.min(1, LADO_MAX / Math.max(w0, h0));
   let blob = null;
-  for (let intento = 0; intento < 6 && !blob; intento++) {
+  for (let intento = 0; intento < MAX_INTENTOS && !blob; intento++) {
     lienzo.width = Math.max(1, Math.round(w0 * escala));
     lienzo.height = Math.max(1, Math.round(h0 * escala));
     ctx.fillStyle = '#fff';
@@ -217,6 +314,36 @@ function htmlFormulario(st) {
     </div>`;
 }
 
+/**
+ * [1.5.1 · seguridad] Sin conexión y sin una respuesta del servidor confirmada en este
+ * dispositivo no se sabe si la cuenta puede estudiar: se bloquea y se explica por qué.
+ */
+function htmlSinVerificar() {
+  return `${htmlCabeza('No pudimos verificar tu acceso', esc('Para estudiar, la app comprueba con el servidor si tu cuenta tiene acceso.'))}
+    <div class="bloqueo-cuerpo">
+      <p class="aviso-acceso" id="bloqueo-sin-verificar" role="status">${icono('nube-off', { tam: 20 })}<span><strong>Sin conexión: no se pudo verificar tu acceso.</strong> Conéctate a internet y vuelve a intentarlo. Si ya habías entrado con internet en este celular, la app recuerda tu acceso y funciona sin conexión.</span></p>
+      <div class="botones">
+        <button type="button" class="btn btn-primario btn-bloque" data-accion="actualizar">${icono('repaso', { tam: 20 })}Reintentar</button>
+      </div>
+      ${htmlPie()}
+    </div>`;
+}
+
+/**
+ * [1.5.1 · ronda 2] Con red, hasta que estado_acceso() responde no se sabe si la cuenta puede
+ * estudiar: se espera con la app bloqueada (nunca se abre nada con la caché del dispositivo).
+ */
+function htmlVerificando() {
+  return `${htmlCabeza('Comprobando tu acceso…', esc('Estamos preguntando al servidor si tu cuenta puede estudiar. Tarda solo un momento.'))}
+    <div class="bloqueo-cuerpo">
+      <p class="aviso-acceso" id="bloqueo-verificando" role="status">${icono('reloj', { tam: 20 })}<span>Quien decide tu acceso es el servidor, no este celular. Si la espera se alarga, revisa tu conexión y vuelve a intentarlo.</span></p>
+      <div class="botones">
+        <button type="button" class="btn btn-secundario btn-bloque" data-accion="actualizar">${icono('repaso', { tam: 20 })}Reintentar</button>
+      </div>
+      ${htmlPie()}
+    </div>`;
+}
+
 function htmlRevision(st) {
   const p = st.pago || {};
   const mini = st.miniatura && st.miniatura.path === p.captura_path ? st.miniatura.dataUrl : null;
@@ -254,6 +381,8 @@ function htmlGracias() {
 
 function firmaDe(st) {
   if (modo === 'gracias') return `gracias|${planGracias}`;
+  if (st.verificando) return 'verificando';
+  if (!st.verificado) return `sin-verificar|${nube.enLinea()}`;
   const p = st.pago || {};
   return [enRevision(st) ? 'revision' : 'form', st.plan, p.id, p.estado, p.operacion, p.captura_path, p.motivo_rechazo,
     JSON.stringify(st.config), st.consumo.preguntas, st.consumo.simulacros, st.consumo.limitePreguntas, st.consumo.limiteSimulacros].join('|');
@@ -267,7 +396,10 @@ function pintar(forzar = false) {
   firma = f;
   const y = cont.scrollTop;
   cont.innerHTML = `<section class="bloqueo-panel" role="dialog" aria-modal="true" aria-labelledby="bloqueo-titulo">${
-    modo === 'gracias' ? htmlGracias() : enRevision(st) ? htmlRevision(st) : htmlFormulario(st)}</section>`;
+    modo === 'gracias' ? htmlGracias()
+      : st.verificando ? htmlVerificando()
+        : !st.verificado ? htmlSinVerificar()
+          : enRevision(st) ? htmlRevision(st) : htmlFormulario(st)}</section>`;
   cont.scrollTop = y;
   cargarMiniaturaRemota();
 }

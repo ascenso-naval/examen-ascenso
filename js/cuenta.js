@@ -187,11 +187,21 @@ export async function revisarDatosCuenta() {
   return exigirDatosCuenta(perfil);
 }
 
-/** Guarda en el dispositivo lo que la interfaz necesita del perfil (sin datos de otros). */
+/**
+ * Guarda en el dispositivo lo que la interfaz necesita del perfil (sin datos de otros).
+ * [1.5.1 · seguridad] `rolConfirmado` deja constancia de que este rol lo dijo el SERVIDOR para
+ * esta cuenta: acceso.js solo concede la exención de administrador con esa marca (y, si hay red,
+ * solo si el rol llegó en esta ejecución: por eso `marcarRolFresco`). [1.5.1 · ronda 2] La marca
+ * se ata al inicio de sesión actual con el sello del token del servidor (nube.selloSesion).
+ */
 function guardarPerfilEnMeta(perfil, usuario = null) {
+  const uid = perfil.id || (usuario && usuario.id) || sync.metaNube().usuario || null;
+  const sello = nube.selloSesion();
+  sync.marcarRolFresco();
   sync.actualizarMeta({
     apodo: perfil.apodo || null,
     rol: perfil.rol || 'usuario',
+    rolConfirmado: uid ? { uid, fecha: new Date().toISOString(), sesion: sello && sello.uid === uid ? sello.sesion : null } : null,
     correo: perfil.correo || (usuario ? usuario.correo : '') || sync.metaNube().correo || '',
     nombre: perfil.nombre || null,
     apellido: perfil.apellido || null,

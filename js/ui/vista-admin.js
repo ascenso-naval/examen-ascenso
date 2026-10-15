@@ -72,7 +72,9 @@ async function verificarAcceso() {
     // es_verificador() = admin o verificador: solo hace falta preguntarlo si no es admin.
     const verif = admin ? true : await nube.esVerificador();
     const rol = admin ? 'admin' : verif ? 'verificador' : 'usuario';
-    sync.actualizarMeta({ rol });
+    // [1.5.1 · seguridad] El rol viene del servidor: se deja la marca que acceso.js exige.
+    const uid = sync.metaNube().usuario || (nube.sesionLocal() || {}).id || null;
+    sync.actualizarMeta({ rol, rolConfirmado: uid ? { uid, fecha: new Date().toISOString() } : null });
     return admin ? 'admin' : verif ? 'verificador' : false;
   } catch (e) {
     return e.tipo === 'red' ? 'sin-red' : false;

@@ -198,7 +198,8 @@ export function montar(raiz, params) {
       if (!abierta) {
         resp.classList.remove('recien'); void resp.offsetWidth; resp.classList.add('recien');
         // Primera vez que se revela esta pregunta en la sesión: cuenta para la prueba gratis
-        // (acceso.js ignora el evento en planes exentos: pagado, cortesía y admin).
+        // ([1.5.1] acceso.js lo registra siempre y lo envía; el servidor ignora el consumo de
+        // admin, pagado y cortesía).
         const id = ficha.dataset.id;
         if (!reveladas.has(id)) {
           reveladas.add(id);

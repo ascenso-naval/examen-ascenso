@@ -142,6 +142,32 @@ export function sesionLocal() {
   return null;
 }
 
+/**
+ * [1.5.1 · ronda 2] Sello de la sesión guardada, leído del propio token que firmó el servidor
+ * (payload del JWT): {uid, sesion} con «sub» y «session_id». Sirve para atar al inicio de sesión
+ * actual las marcas de «esto lo confirmó el servidor» que la app guarda para el modo sin
+ * conexión (ver acceso.js): una marca copiada de otro dispositivo, de otra cuenta o de una
+ * sesión anterior deja de valer, y al cerrar sesión se invalida sola.
+ * NOTA HONESTA: el dueño del dispositivo puede leer su propio token con las herramientas del
+ * navegador, así que esto NO es una prueba criptográfica; el único control infalsificable es el
+ * del servidor (registrar_consumo / RLS, que ignoran lo que diga el cliente).
+ * @returns {{uid:string, sesion:string|null}|null}
+ */
+export function selloSesion() {
+  try {
+    const s = JSON.parse(window.localStorage.getItem(CLAVE_AUTH) || 'null');
+    const token = s && (s.access_token || s.currentSession?.access_token);
+    const parte = typeof token === 'string' ? token.split('.')[1] : null;
+    if (!parte) return null;
+    const json = window.atob(parte.replace(/-/g, '+').replace(/_/g, '/'));
+    const p = JSON.parse(json);
+    if (p && typeof p.sub === 'string' && p.sub) {
+      return { uid: p.sub, sesion: typeof p.session_id === 'string' && p.session_id ? p.session_id : null };
+    }
+  } catch { /* sin sesión legible */ }
+  return null;
+}
+
 /** Sesión vigente según supabase-js (puede refrescar el token si hay red). */
 export async function sesionActual() {
   const { data, error } = await cliente().auth.getSession();
@@ -467,7 +493,9 @@ export async function diagnostico() {
   pasos.push({
     nombre: 'Configuración',
     ok: !!(url && key),
-    detalle: `${new URL(url).host}${sustituida ? ' (sustituida para pruebas)' : ''} · clave ${key.slice(0, 15)}…`,
+    // [1.5.1 · seguridad] Nunca se muestra ningún fragmento de la clave (aunque sea pública,
+    // un trozo visible facilita buscarla de forma automatizada): solo si está configurada.
+    detalle: `${new URL(url).host}${sustituida ? ' (sustituida para pruebas)' : ''} · ${key ? 'clave configurada' : 'sin clave'}`,
     ms: 0,
   });
   pasos.push({ nombre: 'Red del dispositivo', ok: enLinea(), detalle: enLinea() ? 'El navegador indica conexión.' : 'El navegador indica que no hay conexión.', ms: 0 });

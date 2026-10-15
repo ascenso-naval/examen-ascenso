@@ -10,6 +10,14 @@
 
 export const FORMATO = 'ascenso2026-respaldo';
 export const VERSION_FORMATO = 1;
+/**
+ * [1.5.1 · seguridad] Topes de un archivo de respaldo que se abre para restaurar: el archivo
+ * completo (antes de leerlo con f.text()) y cada estado de progreso que se enviaría al
+ * servidor. Un archivo enorme bloquearía el navegador y un estado gigantesco llegaría tal cual
+ * a admin_restaurar_estado.
+ */
+export const MAX_ARCHIVO_BYTES = 50 * 1024 * 1024;   // 50 MB
+export const MAX_ESTADO_BYTES = 2 * 1024 * 1024;     // 2 MB por estado de progreso
 export const CLAVE_ULTIMO = 'ascenso2026:admin:ultimo-respaldo';
 /** [1.5.0] Último respaldo registrado en el servidor (admin_ultimo_respaldo), en caché. */
 export const CLAVE_ULTIMO_SERVIDOR = 'ascenso2026:admin:ultimo-respaldo-servidor';
@@ -201,8 +209,14 @@ export async function armarRespaldo(op) {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const esObjeto = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
 
+/** Tamaño aproximado en bytes de un valor ya interpretado (para los topes del respaldo). */
+const bytesDe = (v) => {
+  try { return JSON.stringify(v).length; } catch { return Infinity; }
+};
+
 /**
- * Valida un respaldo ya interpretado como JSON.
+ * Valida un respaldo ya interpretado como JSON (formato, versión, tablas y cada estado de
+ * progreso: objeto y de menos de 2 MB, porque se envía tal cual a admin_restaurar_estado).
  * @returns {{ok:true}|{ok:false, error:string}}
  */
 export function validarRespaldo(obj) {
@@ -219,6 +233,10 @@ export function validarRespaldo(obj) {
   if (perfiles.some((p) => !esObjeto(p) || typeof p.id !== 'string' || !UUID_RE.test(p.id))) return mal('Hay perfiles sin un id válido en el respaldo.');
   const estados = obj.tablas.estado_progreso || [];
   if (estados.some((e) => !esObjeto(e) || typeof e.usuario_id !== 'string' || !esObjeto(e.estado))) return mal('Hay estados de progreso incompletos en el respaldo.');
+  const gordo = estados.find((e) => bytesDe(e.estado) > MAX_ESTADO_BYTES);
+  if (gordo) {
+    return mal(`El progreso de la cuenta ${gordo.usuario_id} pesa más de ${Math.round(MAX_ESTADO_BYTES / 1048576)} MB: el archivo no parece un respaldo de la app. No se restaura.`);
+  }
   return { ok: true };
 }
 

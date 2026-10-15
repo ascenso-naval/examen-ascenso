@@ -22,6 +22,12 @@ export const CLAVE_META = 'ascenso2026:nube';
 const RETARDO_SUBIDA = 20000;
 const BASE = {
   usuario: null, correo: '', apodo: null, rol: null,
+  // [1.5.1 · seguridad] Marca {uid, fecha, sesion} de la última vez que el ROL vino del servidor
+  // (lo escribe cuenta.js al leer el perfil, atada al inicio de sesión actual). Sin ella,
+  // acceso.js no concede la exención de admin: un «rol: admin» escrito a mano en localStorage
+  // solo sirve para pintar el panel, que el servidor niega función por función. [1.5.1 · ronda 2]
+  // Con red tampoco basta la marca: hace falta rolFresco() (el rol llegó en esta ejecución).
+  rolConfirmado: null,
   // [1.5.0] Datos de la cuenta propia que la interfaz necesita sin consultar al servidor
   // (Ajustes → Cuenta y el modo oculto del ranking). Nunca hay datos de otras cuentas.
   nombre: null, apellido: null, rankingVisible: null,
@@ -58,6 +64,16 @@ function guardarMeta() {
 
 /** Metadatos actuales (solo lectura). */
 export const metaNube = () => meta;
+
+/**
+ * [1.5.1 · ronda 2] ¿El ROL guardado llegó del servidor en ESTA ejecución de la app? Vive solo en
+ * memoria (nadie lo puede escribir desde DevTools): con red, es lo único que concede a acceso.js
+ * la exención de administrador.
+ */
+let rolDelServidor = false;
+export const rolFresco = () => rolDelServidor;
+/** Lo llama cuenta.js cada vez que el perfil (y con él el rol) llega del servidor. */
+export function marcarRolFresco() { rolDelServidor = true; }
 
 /** Cambia datos de la cuenta guardados en el dispositivo (apodo, rol, ranking en caché…). */
 export function actualizarMeta(cambiosMeta) {
@@ -115,6 +131,7 @@ export const usuarioVinculado = () => meta.usuario;
  * @param {{conservarLocal:boolean}} op  true → el progreso local se sube (o se fusiona)
  */
 export function vincular(usuario, { conservarLocal }) {
+  rolDelServidor = false;
   meta = { ...BASE, cola: [], usuario: usuario.id, correo: usuario.correo || '' };
   if (conservarLocal) {
     meta.pendiente = true;
@@ -129,6 +146,7 @@ export function vincular(usuario, { conservarLocal }) {
 /** Borra el progreso y los metadatos de la nube del dispositivo (al cerrar sesión). */
 export function limpiarDispositivo() {
   detener();
+  rolDelServidor = false;
   const limpio = estadoInicial();
   const a = estado.ajustes || {};
   // Se conservan solo las preferencias de apariencia del dispositivo.

@@ -8,6 +8,8 @@
 //   barra de progreso por tabla, reintento por página y verificación «filas = total».
 // · «Restaurar progreso de un usuario»: archivo de respaldo → cuenta → vista previa →
 //   confirmación → admin_restaurar_estado (+ admin_restaurar_perfil) → «Deshacer».
+// · [1.5.1 · seguridad] El archivo se rechaza antes de leerlo si pesa más de 50 MB, y
+//   js/respaldo.js valida formato, versión, tablas y que cada estado sea un objeto < 2 MB.
 // La monta vista-admin.js; el servidor exige rol admin en todas las funciones (42501).
 
 import * as nube from '../nube.js';
@@ -216,6 +218,14 @@ export function crearRespaldo({ raiz, pintar, activa, alCambiarAviso }) {
     leyendo = true;
     repintar();
     let datos = null;
+    // [1.5.1 · seguridad] El tamaño se mira ANTES de leer el archivo: un JSON de cientos de MB
+    // bloquearía el navegador al interpretarlo.
+    if (f.size > R.MAX_ARCHIVO_BYTES) {
+      errorArchivo = `El archivo pesa ${kb(f.size)} y el máximo es ${Math.round(R.MAX_ARCHIVO_BYTES / 1048576)} MB. Elige un respaldo de la app (ascenso2026-respaldo-...json).`;
+      leyendo = false;
+      repintar();
+      return;
+    }
     try {
       datos = JSON.parse(await f.text());
     } catch {

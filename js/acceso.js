@@ -12,11 +12,34 @@
 //   primer plano y tras cada simulacro; con el plan «pendiente», además cada 60 s.
 // · «Agotado» local = último estado conocido en prueba y (contadores del servidor + consumo
 //   local pendiente) ≥ límites conocidos; también bloquea sin conexión. Plan «pendiente»
-//   bloquea siempre. Admin, «pagado» y «cortesia» nunca se bloquean. Sin estado conocido
-//   (nunca se pudo consultar) no se bloquea.
+//   bloquea siempre. Admin, «pagado» y «cortesia» nunca se bloquean.
+//
+// [1.5.1 · seguridad] QUIÉN DECIDE EL ACCESO. Con red lo decide SIEMPRE la respuesta fresca de
+// estado_acceso() del servidor (se consulta al arrancar, al reconectar y al volver a primer
+// plano). Lo guardado en el dispositivo es solo una CACHÉ para el modo sin conexión.
+//
+// [1.5.1 · ronda 2] MIENTRAS NO HAY RESPUESTA FRESCA NO HAY ACCESO. La caché NO se usa si se
+// puede preguntar al servidor: con red y sin respuesta todavía, agotado() es verdadero y la
+// pantalla de bloqueo muestra «Comprobando tu acceso…» (main.js tampoco monta el enrutador hasta
+// que la consulta termina, así que ninguna ruta de estudio se abre con la caché). La caché solo
+// decide cuando NO hay forma de preguntar (sin red, o la consulta falló por red) y además:
+//   · la respuesta la confirmó el servidor para ESTA cuenta (marca «confirmado» {uid, fecha}),
+//   · la marca pertenece al INICIO DE SESIÓN actual (nube.selloSesion(): «sub» y «session_id»
+//     del token firmado por el servidor; otra cuenta, otro dispositivo o una sesión anterior →
+//     no vale), y
+//   · no tiene más de 30 días (pasado ese plazo hay que volver a conectarse).
+// Sin eso → se trata como agotado y la pantalla avisa «sin conexión: no se pudo verificar tu
+// acceso». Lo mismo con el rol: la exención de administrador exige que el rol venga del servidor
+// en esta ejecución (sincronizacion.rolFresco()) o una marca «rolConfirmado» válida sin red.
+// LÍMITE CONOCIDO (deuda registrada): el dueño del dispositivo puede leer su token y fabricar
+// una marca con DevTools; sin firma del servidor en la respuesta (cambiaría backend/) no hay
+// forma de impedirlo desde el navegador. Por eso el consumo se registra y se envía SIEMPRE que
+// haya red aunque el cliente se crea exento: quien decide si cuenta es el servidor
+// (registrar_consumo ya ignora admin, pagado y cortesía) y todo lo sensible lo niega RLS.
 // · Avisos por bus.js: 'acceso-cambio' (snapshot) y 'acceso-desbloqueado' ({plan}).
 //
-// Persistencia: localStorage['ascenso2026:acceso'] = {usuario, servidor, actualizado, pend:{p,s}, miniatura}.
+// Persistencia: localStorage['ascenso2026:acceso'] = {usuario, servidor, actualizado,
+// confirmado:{uid,fecha,sesion}, pend:{p,s}, miniatura}.
 // [Auditoría H2] El consumo pendiente se copia además, por cuenta, en
 // localStorage['ascenso2026:acceso:pend:<uid>'] = {p,s}; limpiar() (cerrar sesión) NO la borra,
 // de modo que si se cierra sesión sin conexión el consumo no se pierde: al volver a ingresar
@@ -24,7 +47,7 @@
 // conserva intacto el de la anterior (nunca se mezclan). Se borra al quedar en cero.
 
 import * as nube from './nube.js';
-import { metaNube } from './sincronizacion.js';
+import { metaNube, rolFresco } from './sincronizacion.js';
 import { emitir, escuchar } from './bus.js';
 
 export const CLAVE_ACCESO = 'ascenso2026:acceso';
@@ -32,8 +55,11 @@ const LOTE_PREGUNTAS = 10;
 const SONDEO_MS = 60000;
 const MAX_P = 200;   // por llamada a registrar_consumo (contrato del servidor)
 const MAX_S = 5;
+/** [1.5.1 · ronda 2] Caducidad de la caché sin conexión: pasado el plazo hay que reconectarse. */
+const MAX_EDAD_CONFIRMACION_MS = 30 * 86400000;          // 30 días
+const MARGEN_FUTURO_MS = 86400000;                       // tolerancia de reloj (1 día)
 
-const base = (usuario = null) => ({ usuario, servidor: null, actualizado: null, pend: { p: 0, s: 0 }, miniatura: null });
+const base = (usuario = null) => ({ usuario, servidor: null, actualizado: null, confirmado: null, pend: { p: 0, s: 0 }, miniatura: null });
 
 let datos = leer();
 let activo = false;
@@ -41,15 +67,53 @@ let cadena = Promise.resolve();      // las llamadas al servidor se hacen de una
 let sondeo = null;
 let ultimoAgotado = null;
 let alExpulsar = null;
+/** true si la última llamada al servidor falló por red (no se pudo verificar el acceso). */
+let falloDeRed = false;
+/**
+ * [1.5.1 · ronda 2] true si el servidor respondió estado_acceso() en ESTA ejecución de la app.
+ * Vive solo en memoria: no hay forma de escribirlo desde DevTools, así que es lo único que
+ * concede acceso mientras haya red.
+ */
+let respuestaFresca = false;
+
+/**
+ * ¿No hay forma de preguntarle al servidor? (sin red, o la última consulta falló por red).
+ * Solo en ese caso la caché del dispositivo decide algo.
+ */
+const sinPoderPreguntar = () => !nube.enLinea() || falloDeRed;
+
+/**
+ * Marca de confirmación del servidor: {uid, fecha, sesion}. Vale si es de esta cuenta, del inicio
+ * de sesión actual (sello del token del servidor) y de hace menos de 30 días.
+ */
+function marcaValida(c, uid) {
+  if (!(c && typeof c === 'object' && typeof c.uid === 'string' && c.uid && c.uid === uid && typeof c.fecha === 'string')) return false;
+  const t = Date.parse(c.fecha);
+  if (Number.isNaN(t) || Date.now() - t > MAX_EDAD_CONFIRMACION_MS || t - Date.now() > MARGEN_FUTURO_MS) return false;
+  const sello = nube.selloSesion();
+  if (!sello || sello.uid !== uid) return false;            // sin sesión del servidor no vale nada
+  if (sello.sesion && c.sesion !== sello.sesion) return false;   // marca de otra sesión o dispositivo
+  return true;
+}
+
+/** Sello que se guarda con cada respuesta del servidor (ata la marca a esta sesión). */
+function selloActual() {
+  const s = nube.selloSesion();
+  return s && datos.usuario && s.uid === datos.usuario ? s.sesion : null;
+}
 
 function leer() {
   try {
     const o = JSON.parse(window.localStorage.getItem(CLAVE_ACCESO) || 'null');
     if (o && typeof o === 'object') {
+      const usuario = o.usuario || null;
       return {
-        ...base(o.usuario || null),
+        ...base(usuario),
         servidor: o.servidor && typeof o.servidor === 'object' ? o.servidor : null,
         actualizado: o.actualizado || null,
+        // La marca se guarda tal cual (su validez se comprueba al usarla, con marcaValida).
+        confirmado: o.confirmado && typeof o.confirmado === 'object'
+          ? { uid: o.confirmado.uid, fecha: o.confirmado.fecha, sesion: o.confirmado.sesion ?? null } : null,
         pend: { p: Math.max(0, Number(o.pend?.p) || 0), s: Math.max(0, Number(o.pend?.s) || 0) },
         miniatura: o.miniatura && typeof o.miniatura.dataUrl === 'string' ? o.miniatura : null,
       };
@@ -108,23 +172,56 @@ function normalizar(r) {
 // Consultas (síncronas) para la interfaz
 // ---------------------------------------------------------------------------
 
-/** Cuenta administradora (rol guardado al ingresar): nunca se bloquea ni cuenta consumo. */
+/**
+ * Rol guardado al ingresar. Sirve para mostrar el panel de administración (el servidor niega
+ * igual cada función), NO para decidir el acceso al estudio: para eso hace falta
+ * `rolConfirmado` (la marca que deja cuenta.js cuando el rol viene del servidor).
+ */
 export const esAdmin = () => metaNube().rol === 'admin';
 
-/** Sin límites: admin, plan pagado o cortesía. */
-export function esExento() {
-  if (esAdmin()) return true;
-  const s = datos.servidor;
-  return !!s && (s.plan === 'pagado' || s.plan === 'cortesia');
+/**
+ * Administrador según el servidor: o lo dijo en esta ejecución de la app (rolFresco), o no hay
+ * forma de preguntar y la marca «rolConfirmado» de este inicio de sesión lo respalda.
+ */
+function adminConfirmado() {
+  const m = metaNube();
+  if (m.rol !== 'admin') return false;
+  if (rolFresco()) return true;
+  return sinPoderPreguntar() && marcaValida(m.rolConfirmado, datos.usuario);
 }
 
-export const enPendiente = () => !esAdmin() && datos.servidor?.plan === 'pendiente';
-export const enPrueba = () => !esExento() && !!datos.servidor && datos.servidor.plan !== 'pendiente';
-export const conocido = () => !!datos.servidor;
+/**
+ * ¿Hay un estado de acceso en el que se pueda confiar? Con red, solo la respuesta fresca del
+ * servidor de esta ejecución; sin poder preguntar, la caché que el servidor confirmó para esta
+ * cuenta en este inicio de sesión (ver marcaValida).
+ */
+export function verificado() {
+  if (!datos.servidor) return false;
+  if (respuestaFresca) return true;
+  return sinPoderPreguntar() && marcaValida(datos.confirmado, datos.usuario);
+}
 
-/** Preguntas y simulacros consumidos (servidor + pendientes de enviar). */
-export function consumo() {
+/**
+ * ¿Se está esperando la respuesta del servidor? (hay red y aún no contestó). Mientras tanto no
+ * hay acceso: la pantalla de bloqueo lo explica con «Comprobando tu acceso…».
+ */
+export const verificando = () => !!datos.usuario && !verificado() && nube.enLinea() && !falloDeRed;
+
+/** Sin límites: admin, plan pagado o cortesía, según lo que haya confirmado el servidor. */
+export function esExento() {
+  if (!verificado()) return false;
+  if (adminConfirmado()) return true;
   const s = datos.servidor;
+  return s.plan === 'pagado' || s.plan === 'cortesia';
+}
+
+export const enPendiente = () => !adminConfirmado() && verificado() && datos.servidor.plan === 'pendiente';
+export const enPrueba = () => !esExento() && verificado() && datos.servidor.plan !== 'pendiente';
+export const conocido = () => verificado();
+
+/** Preguntas y simulacros consumidos (servidor confirmado + pendientes de enviar). */
+export function consumo() {
+  const s = verificado() ? datos.servidor : null;
   return {
     preguntas: (s ? s.preguntas_prueba : 0) + datos.pend.p,
     simulacros: (s ? s.simulacros_prueba : 0) + datos.pend.s,
@@ -133,11 +230,17 @@ export function consumo() {
   };
 }
 
-/** ¿Debe bloquearse la app? (también sin conexión, con el último estado conocido). */
+/**
+ * ¿Debe bloquearse la app? Con un estado en el que se puede confiar manda lo que dijo el servidor
+ * (más el consumo local pendiente). Sin él se bloquea SIEMPRE: mientras se espera la respuesta
+ * («Comprobando tu acceso…») y también si no hay forma de preguntar («no se pudo verificar tu
+ * acceso»). Criterio: nunca se concede acceso que el servidor no haya confirmado.
+ */
 export function agotado() {
+  if (!datos.usuario) return false;
   if (esExento()) return false;
+  if (!verificado()) return true;
   const s = datos.servidor;
-  if (!s) return false;
   if (s.plan === 'pendiente') return true;
   if (s.agotado) return true;
   const c = consumo();
@@ -146,9 +249,11 @@ export function agotado() {
 
 /** Fotografía del estado para las vistas. */
 export function estadoAcceso() {
-  const s = datos.servidor;
+  const s = verificado() ? datos.servidor : null;
   return {
     conocido: !!s,
+    verificado: verificado(),
+    verificando: verificando(),
     plan: s ? s.plan : null,
     exento: esExento(),
     admin: esAdmin(),
@@ -171,20 +276,35 @@ function notificar() {
   if (ultimoAgotado === true && !ahora && (snap.plan === 'pagado' || snap.plan === 'cortesia')) {
     emitir('acceso-desbloqueado', { plan: snap.plan });
   }
-  ultimoAgotado = ahora;
+  // [1.5.1 · ronda 2] Solo un bloqueo VERIFICADO cuenta como «estaba bloqueado»: mientras se
+  // espera la respuesta del servidor no se sabe nada, y pasar de «esperando» a «con acceso» no
+  // es un desbloqueo (si no, el agradecimiento del pago saldría en cada arranque).
+  ultimoAgotado = snap.verificado ? ahora : null;
   emitir('acceso-cambio', snap);
   programarSondeo();
 }
 
-function aplicarServidor(r) {
+/**
+ * Guarda una respuesta FRESCA del servidor y deja la marca de confirmación de esta cuenta en
+ * este dispositivo (atada a este inicio de sesión): a partir de aquí la caché sirve también sin
+ * conexión. Que la respuesta sea de esta ejecución es lo que concede el acceso con red.
+ */
+function guardarServidor(r) {
   datos.servidor = normalizar(r);
   datos.actualizado = new Date().toISOString();
+  datos.confirmado = datos.usuario ? { uid: datos.usuario, fecha: datos.actualizado, sesion: selloActual() } : null;
+  respuestaFresca = !!datos.usuario;
+  falloDeRed = false;
   guardar();
+}
+
+function aplicarServidor(r) {
+  guardarServidor(r);
   notificar();
 }
 
 function programarSondeo() {
-  const debe = activo && datos.servidor?.plan === 'pendiente' && !esAdmin();
+  const debe = activo && verificado() && datos.servidor.plan === 'pendiente' && !adminConfirmado();
   if (debe && !sondeo) {
     sondeo = setInterval(() => {
       if (document.visibilityState !== 'hidden') consultar();
@@ -203,6 +323,9 @@ function enCola(fn) {
 }
 
 async function manejarError(e) {
+  // Sin respuesta por red no se puede verificar el acceso: si no había confirmación previa,
+  // agotado() pasa a bloquear (con el aviso «no se pudo verificar tu acceso»).
+  if (e && e.tipo === 'red') falloDeRed = true;
   if (e && e.tipo === 'bloqueado' && alExpulsar) { alExpulsar('bloqueada'); return; }
   // [1.5.0] La cuenta se fue a la papelera: deja de existir para su dueño al instante.
   if (e && e.tipo === 'eliminado' && alExpulsar) { alExpulsar('eliminada'); return; }
@@ -226,14 +349,12 @@ export function enviarConsumo() {
         datos.pend.p = Math.max(0, datos.pend.p - p);
         datos.pend.s = Math.max(0, datos.pend.s - s);
         ultimo = r;
-        datos.servidor = normalizar(r);
-        datos.actualizado = new Date().toISOString();
-        guardar();
+        guardarServidor(r);
       }
     } catch (e) {
       await manejarError(e);
     }
-    if (ultimo) notificar();
+    notificar();   // también sin respuesta: un fallo de red puede cambiar agotado()
     return ultimo ? estadoAcceso() : null;
   });
 }
@@ -255,8 +376,13 @@ export function consultar() {
   });
 }
 
+/**
+ * Suma consumo de la prueba. Se cuenta SIEMPRE (aunque el cliente se crea exento): quien decide
+ * si cuenta es el servidor, que ignora el consumo de admin, pagado y cortesía. Así un
+ * localStorage manipulado no sirve para estudiar sin registrar nada.
+ */
 function sumar(tipo) {
-  if (!activo || esExento()) return;
+  if (!activo) return;
   datos.pend[tipo] += 1;
   guardar();
   notificar();
@@ -287,13 +413,17 @@ export function enviarComprobante({ medio, operacion, imagen = null, capturaPath
 let oyentesListos = false;
 
 /**
- * Arranca con la sesión activa (lo llama main.js al entrar).
+ * Arranca con la sesión activa (lo llama main.js al entrar). Devuelve la promesa de la PRIMERA
+ * consulta al servidor: main.js la espera antes de montar el enrutador, de modo que ninguna ruta
+ * de estudio se abra con la caché del dispositivo.
  * @param {{id:string}} usuario
  * @param {{alExpulsar?:(motivo:string)=>void}} op
  */
 export function iniciar(usuario, op = {}) {
   alExpulsar = op.alExpulsar || alExpulsar;
   if (!usuario || datos.usuario !== usuario.id) {
+    // Otra cuenta: lo confirmado para la anterior no vale para esta.
+    respuestaFresca = false;
     // Otra cuenta (o sesión nueva tras cerrar): el consumo pendiente de la anterior queda en su
     // propia clave; el de ESTA cuenta (si lo dejó al cerrar sesión sin conexión) se recupera.
     datos = base(usuario ? usuario.id : null);
@@ -316,7 +446,7 @@ export function iniciar(usuario, op = {}) {
       if (document.visibilityState === 'hidden') { if (datos.pend.p || datos.pend.s) enviarConsumo(); } else consultar();
     });
   }
-  ultimoAgotado = agotado();
+  ultimoAgotado = verificado() ? agotado() : null;
   notificar();
   return consultar();
 }
@@ -336,5 +466,7 @@ export function limpiar() {
   guardarPend();
   datos = base();
   ultimoAgotado = null;
+  respuestaFresca = false;
+  falloDeRed = false;
   try { window.localStorage.removeItem(CLAVE_ACCESO); } catch { /* sin almacenamiento */ }
 }

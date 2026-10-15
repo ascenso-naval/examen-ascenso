@@ -10,7 +10,7 @@
  *
  * PARA PUBLICAR CAMBIOS: sube APP_VERSION (y la de js/version.js) — ver README.
  */
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.1';
 const PREFIJO = 'ascenso2026-';
 const CACHE = `${PREFIJO}${APP_VERSION}`;
 

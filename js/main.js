@@ -109,9 +109,15 @@ function quitarCarga() {
 
 let routerIniciado = false;
 let recuperandoClave = false;
+/**
+ * [1.5.1 · ronda 2] Espera máxima por la primera respuesta de estado_acceso() antes de montar el
+ * enrutador. Si el servidor tarda más, la app sigue (nunca se queda colgada) pero el acceso
+ * continúa sin verificar: acceso.agotado() sigue bloqueando hasta que llegue la respuesta.
+ */
+const ESPERA_VERIFICACION_MS = 8000;
 
 /** Entra a la app con una sesión válida (o persistida, aunque no haya red). */
-function entrar(usuario) {
+async function entrar(usuario) {
   document.body.classList.remove('sin-sesion');
   sync.iniciar({
     alExpulsar: (motivo) => cuenta.expulsar(motivo),
@@ -121,8 +127,15 @@ function entrar(usuario) {
     },
   });
   // [1.3.0] Prueba gratis: estado de acceso (consulta al servidor) y pantalla de bloqueo.
-  acceso.iniciar(usuario, { alExpulsar: (motivo) => cuenta.expulsar(motivo) });
+  // [1.5.1 · ronda 2] El enrutador no se monta hasta que el servidor responde (o se sabe que no
+  // hay red): con la caché del dispositivo —que su dueño puede manipular— no se abre ninguna
+  // ruta de estudio. Mientras se espera, la pantalla de bloqueo muestra «Comprobando tu acceso…».
+  const verificacion = acceso.iniciar(usuario, { alExpulsar: (motivo) => cuenta.expulsar(motivo) });
   montarBloqueo();
+  await Promise.race([
+    Promise.resolve(verificacion).catch(() => null),
+    new Promise((r) => setTimeout(r, ESPERA_VERIFICACION_MS)),
+  ]);
   if (!routerIniciado) {
     routerIniciado = true;
     iniciarRouter(document.getElementById('vista'));
@@ -145,7 +158,7 @@ function mostrarAcceso() {
       await cuenta.trasIngresar(usuario, op);
       if (limpiar) limpiar();
       vista.innerHTML = '';
-      entrar(usuario);
+      await entrar(usuario);
       // [1.5.0] Con la app ya montada: «Completa tus datos» y la pregunta del ranking si faltan.
       cuenta.revisarDatosCuenta();
     },
@@ -209,7 +222,7 @@ async function arrancar() {
     // Sesión nueva en este dispositivo (p. ej. tras confirmar el correo): vincular primero.
     try {
       await cuenta.trasIngresar(usuario, {});
-      entrar(usuario);
+      await entrar(usuario);
       cuenta.revisarDatosCuenta();
     } catch (e) {
       if (e && e.tipo === 'bloqueado') { cuenta.expulsar('bloqueada'); return; }
@@ -218,10 +231,10 @@ async function arrancar() {
         mostrarAcceso();
         return;
       }
-      entrar(usuario);
+      await entrar(usuario);
     }
   } else {
-    entrar(usuario);
+    await entrar(usuario);
     cuenta.revisarAlAbrir(usuario, (motivo) => cuenta.expulsar(motivo));
   }
 

@@ -67,6 +67,9 @@ function marcarNav(nav) {
 }
 
 function resolver() {
+  // [1.5.1 · ronda 2] El enrutador aún no se montó (main.js espera la verificación del acceso
+  // antes de montarlo): nada que pintar todavía; al montarlo se resuelve la ruta actual.
+  if (!raiz) return;
   const completo = location.hash.replace(/^#/, '') || '/inicio';
   const [camino, consulta] = completo.split('?');
   const m = coincidir(camino);
